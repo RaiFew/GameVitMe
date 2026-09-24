@@ -50,7 +50,8 @@ export function useAuth() {
       }
     } catch (err: any) {
       console.error('Google login failed:', err);
-      alert('ไม่สามารถเชื่อมต่อ Google Login ได้ กรุณาตรวจสอบว่าตั้งค่า GOOGLE_CLIENT_ID และ SECRET บน Railway ครบถ้วนแล้ว');
+      const detail = err?.message || 'Network Error';
+      alert(`ไม่สามารถเชื่อมต่อ Google Login ได้: ${detail}\nกรุณาตรวจสอบว่าเซิร์ฟเวอร์บน Railway รันอยู่และตั้งค่าตัวแปรถูกต้อง`);
     }
   };
 

@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { toNodeHandler } from 'better-auth/node';
+import { fromNodeHeaders } from 'better-auth/node';
 import { auth } from '../auth/auth.js';
 import { db } from '../db/client.js';
 import { users, sessions } from '../db/schema.js';
@@ -97,10 +97,32 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       token,
     };
   });
+  // Official Better Auth adapter for Fastify (preserves CORS, headers, and body parsing)
+  fastify.route({
+  method: ['GET', 'POST', 'PUT', 'DELETE'],
+  url: '/api/auth/*',
+  async handler(request, reply) {
+    const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
+    const headers = fromNodeHeaders(request.headers);
+    const req = new Request(url.toString(), {
+      method: request.method,
+      headers,
+      ...(request.body && request.method !== 'GET' && request.method !== 'HEAD'
+        ? { body: typeof request.body === 'string' ? request.body : JSON.stringify(request.body) }
+        : {}),
+    });
 
-  fastify.all('/api/auth/*', async (request, reply) => {
-    return toNodeHandler(auth)(request.raw, reply.raw);
-  });
+    const response = await auth.handler(req);
+
+    reply.status(response.status);
+    response.headers.forEach((value, key) => {
+      reply.header(key, value);
+    });
+
+    const responseBody = response.body ? await response.text() : null;
+    return reply.send(responseBody);
+  },
+});
 };
 
 export default authRoutes;
