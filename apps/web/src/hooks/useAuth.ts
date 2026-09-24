@@ -38,7 +38,8 @@ export function useAuth() {
 
   const login = () => {
     const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-    window.location.href = `${apiBase}/api/auth/sign-in/social?provider=google`;
+    const callback = encodeURIComponent(window.location.origin);
+    window.location.href = `${apiBase}/api/auth/sign-in/social?provider=google&callbackURL=${callback}`;
   };
 
   const devLogin = async (displayName?: string) => {

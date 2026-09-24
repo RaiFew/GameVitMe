@@ -35,6 +35,11 @@ export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
   ...(googleProvider && { socialProviders: googleProvider }),
+  trustedOrigins: [
+    env.VITE_APP_URL,
+    'http://localhost:3000',
+    'http://localhost:3001',
+  ],
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
