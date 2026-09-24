@@ -36,10 +36,22 @@ export function useAuth() {
     };
   }, []);
 
-  const login = () => {
-    const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-    const callback = encodeURIComponent(window.location.origin);
-    window.location.href = `${apiBase}/api/auth/sign-in/social?provider=google&callbackURL=${callback}`;
+  const login = async () => {
+    try {
+      const res = await api.post('/api/auth/sign-in/social', {
+        provider: 'google',
+        callbackURL: window.location.origin,
+      });
+      const redirectUrl = res?.data?.url || res?.url;
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else {
+        console.error('No redirect URL returned by auth server', res);
+      }
+    } catch (err: any) {
+      console.error('Google login failed:', err);
+      alert('ไม่สามารถเชื่อมต่อ Google Login ได้ กรุณาตรวจสอบว่าตั้งค่า GOOGLE_CLIENT_ID และ SECRET บน Railway ครบถ้วนแล้ว');
+    }
   };
 
   const devLogin = async (displayName?: string) => {
