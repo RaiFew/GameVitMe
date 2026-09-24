@@ -38,6 +38,11 @@ export function useAuth() {
 
   const login = async () => {
     try {
+      const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+      if (!apiBase && window.location.hostname !== 'localhost') {
+        alert('ยังไม่ได้เชื่อมต่อกับ Backend: ไม่พบค่า VITE_API_URL ในระบบ\nกรุณาเพิ่ม VITE_API_URL ใน Vercel แล้วกด Redeploy 1 ครั้งครับ');
+        return;
+      }
       const res = await api.post('/api/auth/sign-in/social', {
         provider: 'google',
         callbackURL: window.location.origin,

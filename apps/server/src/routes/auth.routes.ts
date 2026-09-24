@@ -98,10 +98,10 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     };
   });
   // Official Better Auth adapter for Fastify (preserves CORS, headers, and body parsing)
-  fastify.route({
-  method: ['GET', 'POST', 'PUT', 'DELETE'],
-  url: '/api/auth/*',
-  async handler(request, reply) {
+  fastify.all('/api/auth/*', async (request, reply) => {
+    if (request.method === 'OPTIONS') {
+      return reply.status(204).send();
+    }
     const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
     const headers = fromNodeHeaders(request.headers);
     const req = new Request(url.toString(), {
@@ -121,8 +121,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
     const responseBody = response.body ? await response.text() : null;
     return reply.send(responseBody);
-  },
-});
+  });
 };
 
 export default authRoutes;
