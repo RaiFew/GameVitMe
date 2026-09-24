@@ -1,3 +1,4 @@
+import http from 'http';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
@@ -72,10 +73,36 @@ async function bootstrap() {
   try {
     await fastify.listen({ port: env.PORT, host: '0.0.0.0' });
     console.log(`Server listening on port ${env.PORT}`);
+
+    // Railway Target Port resilience:
+    // If Railway routes traffic to 3000, 3001, or 8080, bind those ports too
+    const backupServers: http.Server[] = [];
+    const candidatePorts = [8080, 3000, 3001].filter((p) => p !== env.PORT);
+
+    for (const port of candidatePorts) {
+      try {
+        const backupServer = http.createServer((req, res) => {
+          fastify.server.emit('request', req, res);
+        });
+        io.attach(backupServer);
+        backupServer.on('error', (err: any) => {
+          // Port already in use or unavailable - safely ignore
+        });
+        backupServer.listen(port, '0.0.0.0', () => {
+          console.log(`[MultiPort] Also listening on backup port ${port}`);
+        });
+        backupServers.push(backupServer);
+      } catch (e) {
+        // ignore
+      }
+    }
     
     // Handle graceful shutdown
     const shutdown = async () => {
       console.log('Shutting down...');
+      for (const s of backupServers) {
+        s.close();
+      }
       io.close();
       await fastify.close();
       process.exit(0);
