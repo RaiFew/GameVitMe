@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.turbo/
+*.tsbuildinfo
+
+# Environment — NEVER commit real credentials
+# .env.example is the only env file that should be committed
+.env
+.env.local
+.env.production
+.env.staging
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Database
+*.sqlite
+*.sqlite3
+
+# Coverage
+coverage/
+
+# Temporary / Scratch
+scratch*

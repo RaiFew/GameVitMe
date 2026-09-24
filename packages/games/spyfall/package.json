@@ -1,0 +1,24 @@
+{
+  "name": "@party/spyfall",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "test": "tsx --test test/spyfall.test.ts"
+  },
+  "dependencies": {
+    "@party/game-engine": "workspace:*",
+    "@party/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "tsx": "^4.7.2",
+    "typescript": "^5.7.0",
+    "vitest": "^5.0.0"
+  }
+}
