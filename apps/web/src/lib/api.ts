@@ -1,7 +1,8 @@
 import { useAuthStore } from '../stores/authStore';
 
-// In development, use relative path so Vite proxy forwards requests seamlessly (same-origin, preserving cookies)
-const BASE_URL = '';
+// In development, default to relative path so Vite proxy forwards requests; in production, use VITE_API_URL
+const BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
 
 function getHeaders(extraHeaders?: Record<string, string>): Record<string, string> {
   const headers: Record<string, string> = {

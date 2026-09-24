@@ -37,7 +37,8 @@ export function useAuth() {
   }, []);
 
   const login = () => {
-    window.location.href = '/api/auth/sign-in/social?provider=google';
+    const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+    window.location.href = `${apiBase}/api/auth/sign-in/social?provider=google`;
   };
 
   const devLogin = async (displayName?: string) => {

@@ -7,8 +7,9 @@ class SocketService {
   connect(): Socket {
     if (!this.socket) {
       const { user, token } = useAuthStore.getState();
-      // Connect to same-origin so cookies are automatically sent through Vite proxy
-      this.socket = io(window.location.origin, {
+      const targetUrl = import.meta.env.VITE_WS_URL || window.location.origin;
+      this.socket = io(targetUrl, {
+
         withCredentials: true,
         reconnection: true,
         auth: {
