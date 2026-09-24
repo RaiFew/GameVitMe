@@ -26,8 +26,14 @@ async function bootstrap() {
 
   // Register core plugins
   await fastify.register(cors, {
-    origin: true,
+    origin: (origin, callback) => {
+      // Allow any origin dynamically (reflects origin back, satisfying credentials: true)
+      callback(null, true);
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
+    exposedHeaders: ['Set-Cookie'],
   });
   
   await fastify.register(cookie);
