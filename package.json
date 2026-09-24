@@ -5,7 +5,7 @@
   "packageManager": "pnpm@9.15.4",
   "scripts": {
     "dev": "turbo dev",
-    "start": "node apps/server/dist/index.js",
+    "start": "pnpm --filter @party/server start",
     "start:dev": "turbo dev",
     "dev:web": "pnpm --filter @party/web dev",
     "dev:server": "pnpm --filter @party/server dev",
