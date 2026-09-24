@@ -28,14 +28,14 @@ const envSchema = z.object({
   // Database — required in all environments
   DATABASE_URL: z.string().url(),
 
-  // Redis — required in all environments
-  REDIS_URL: z.string().url(),
+  // Redis — optional with single-node memory fallback
+  REDIS_URL: z.string().optional(),
 
-  // Auth — secret required; Google OAuth optional in development
+  // Auth — secret required; Google OAuth optional
   BETTER_AUTH_SECRET: z.string().min(16),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:3001'),
 
-  // Google OAuth: optional in development, required in production
+  // Google OAuth: optional in dev and prod
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
 
@@ -45,12 +45,11 @@ const envSchema = z.object({
 
 const _env = envSchema.parse(process.env);
 
-// Validate that Google OAuth is set in production
 if (_env.NODE_ENV === 'production') {
   if (!_env.GOOGLE_CLIENT_ID || !_env.GOOGLE_CLIENT_SECRET) {
-    throw new Error(
-      '[env] GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required in production. ' +
-      'Set them in your deployment environment variables.'
+    console.warn(
+      '[env] GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set in production. ' +
+      'Google OAuth will be disabled until credentials are provided.'
     );
   }
 }

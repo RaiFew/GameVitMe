@@ -41,6 +41,10 @@ async function bootstrap() {
   // Auth Context Middleware
   await fastify.register(authMiddleware);
 
+  // Health check routes
+  fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
+  fastify.get('/', async () => ({ status: 'ok', service: 'GameVitMe API Server' }));
+
   // Register Routes
   await fastify.register(authRoutes);
   await fastify.register(userRoutes);

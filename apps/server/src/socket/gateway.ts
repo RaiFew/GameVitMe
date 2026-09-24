@@ -18,22 +18,26 @@ import { guestSessions } from '../auth/guest-sessions.js';
 export const initSocketGateway = (fastify: FastifyInstance) => {
   // Graceful Redis connection with memory fallback
   let adapter: any = undefined;
-  try {
-    const pubClient = new Redis(env.REDIS_URL, {
-      maxRetriesPerRequest: 1,
-      retryStrategy: () => null,
-      lazyConnect: true,
-      enableOfflineQueue: false,
-    });
-    const subClient = pubClient.duplicate();
-    pubClient.on('error', () => {});
-    subClient.on('error', () => {});
-    
-    // Attempt connecting in background, non-blocking
-    pubClient.connect().catch(() => {});
-    subClient.connect().catch(() => {});
-  } catch (err) {
-    console.warn('[SocketGateway] Redis not available, running in single-node memory mode');
+  if (env.REDIS_URL) {
+    try {
+      const pubClient = new Redis(env.REDIS_URL, {
+        maxRetriesPerRequest: 1,
+        retryStrategy: () => null,
+        lazyConnect: true,
+        enableOfflineQueue: false,
+      });
+      const subClient = pubClient.duplicate();
+      pubClient.on('error', () => {});
+      subClient.on('error', () => {});
+      
+      // Attempt connecting in background, non-blocking
+      pubClient.connect().catch(() => {});
+      subClient.connect().catch(() => {});
+    } catch (err) {
+      console.warn('[SocketGateway] Redis not available, running in single-node memory mode');
+    }
+  } else {
+    console.log('[SocketGateway] REDIS_URL not configured, running in single-node memory mode');
   }
 
   const io = new Server(fastify.server, {
