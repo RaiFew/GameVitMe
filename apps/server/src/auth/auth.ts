@@ -34,6 +34,15 @@ export const auth = betterAuth({
   }),
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
+  // Force UUID format to match PostgreSQL uuid column type.
+  // Better Auth's default generateId produces alphanumeric strings like
+  // 'gsTFK5TWptas7Be4F8A9SbHCVxnZeJ0s' which PostgreSQL rejects with
+  // "invalid input syntax for type uuid".
+  advanced: {
+    database: {
+      generateId: 'uuid',
+    },
+  },
   ...(googleProvider && { socialProviders: googleProvider }),
   trustedOrigins: [
     'https://*.vercel.app',
@@ -56,3 +65,4 @@ export const auth = betterAuth({
     },
   },
 });
+
