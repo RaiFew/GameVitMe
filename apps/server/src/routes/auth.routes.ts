@@ -112,9 +112,29 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     const response = await auth.handler(req);
 
     reply.status(response.status);
+
+    // Collect Set-Cookie values separately — Fastify's reply.header() overwrites
+    // previous values for the same key. Set-Cookie must be forwarded as an array
+    // so ALL cookies (state cookie + session cookie) are preserved.
+    // Without this, the better-auth.state cookie is lost, causing state_mismatch.
+    const setCookies: string[] = [];
     response.headers.forEach((value, key) => {
-      reply.header(key, value);
+      if (key.toLowerCase() === 'set-cookie') {
+        setCookies.push(value);
+      } else {
+        reply.header(key, value);
+      }
     });
+    // Also use getSetCookie() if available (Node 18+) to catch any that forEach missed
+    if (typeof (response.headers as any).getSetCookie === 'function') {
+      const additional = (response.headers as any).getSetCookie() as string[];
+      for (const c of additional) {
+        if (!setCookies.includes(c)) setCookies.push(c);
+      }
+    }
+    if (setCookies.length > 0) {
+      reply.header('set-cookie', setCookies);
+    }
 
     const responseBody = response.body ? await response.text() : null;
     return reply.send(responseBody);
