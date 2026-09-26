@@ -129,6 +129,10 @@ export const friendshipsRelations = relations(friendships, ({ one }) => ({
   addressee: one(users, { fields: [friendships.addresseeId], references: [users.id], relationName: 'addressee' }),
 }));
 
+export const accountsRelations = relations(accounts, ({ one }) => ({
+  user: one(users, { fields: [accounts.userId], references: [users.id] }),
+}));
+
 export const sessionsRelations = relations(sessions, ({ one }) => ({
   user: one(users, { fields: [sessions.userId], references: [users.id] }),
 }));

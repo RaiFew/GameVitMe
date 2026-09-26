@@ -1,5 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { env } from '../config/env.js';
 import { users, accounts, sessions, verifications } from '../db/schema.js';
@@ -68,11 +69,15 @@ export const auth = betterAuth({
   },
   callbacks: {
     onSessionCreate: async (session: any) => {
-      // Update lastSeenAt on login/session creation
-      if (session?.session?.userId) {
-        await db.update(users)
-          .set({ lastSeenAt: new Date() })
-          .where({ id: session.session.userId } as any);
+      // Update lastSeenAt on login/session creation (non-blocking, safe)
+      try {
+        if (session?.session?.userId) {
+          await db.update(users)
+            .set({ lastSeenAt: new Date() })
+            .where(eq(users.id, session.session.userId));
+        }
+      } catch (err) {
+        console.warn('[auth] Could not update lastSeenAt onSessionCreate:', err);
       }
     },
   },
