@@ -34,6 +34,12 @@ export const auth = betterAuth({
   }),
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
+  account: {
+    // Cross-domain OAuth resilience: Frontend (vercel.app) and Backend (railway.app)
+    // reside on different domains. Browsers block third-party state cookies on cross-origin redirects.
+    // OAuth state is already cryptographically stored and validated in PostgreSQL (verifications table).
+    skipStateCookieCheck: true,
+  },
   // Force UUID format to match PostgreSQL uuid column type.
   // Better Auth's default generateId produces alphanumeric strings like
   // 'gsTFK5TWptas7Be4F8A9SbHCVxnZeJ0s' which PostgreSQL rejects with
@@ -41,6 +47,12 @@ export const auth = betterAuth({
   advanced: {
     database: {
       generateId: 'uuid',
+    },
+    // Cross-site cookie attributes for separated frontend (Vercel) and backend (Railway)
+    defaultCookieAttributes: {
+      sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: env.NODE_ENV === 'production',
+      partitioned: env.NODE_ENV === 'production',
     },
   },
   ...(googleProvider && { socialProviders: googleProvider }),

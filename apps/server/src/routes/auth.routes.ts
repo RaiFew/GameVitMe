@@ -99,7 +99,9 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   });
   // Official Better Auth adapter for Fastify (preserves CORS, headers, and body parsing)
   fastify.all('/api/auth/*', async (request, reply) => {
-    const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
+    const proto = (request.headers['x-forwarded-proto'] as string) || (request.headers.host?.includes('railway.app') ? 'https' : 'http');
+    const host = (request.headers['x-forwarded-host'] as string) || request.headers.host || 'localhost';
+    const url = new URL(request.url, `${proto}://${host}`);
     const headers = fromNodeHeaders(request.headers);
     const req = new Request(url.toString(), {
       method: request.method,
