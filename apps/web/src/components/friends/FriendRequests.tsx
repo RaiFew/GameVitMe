@@ -11,9 +11,11 @@ export function FriendRequests() {
   }, []);
 
   const handleAction = (id: string, accept: boolean) => {
-    api.post(`/api/friends/${accept ? 'accept' : 'reject'}`, { requestId: id }).then(() => {
-      setRequests(prev => prev.filter(r => r.id !== id));
-    });
+    api.post(`/api/friends/${accept ? 'accept' : 'reject'}`, { friendshipId: id })
+      .then(() => {
+        setRequests(prev => prev.filter(r => r.id !== id));
+      })
+      .catch((err) => alert(err.message || 'Failed to update request.'));
   };
 
   if (requests.length === 0) {
@@ -29,9 +31,9 @@ export function FriendRequests() {
       {requests.map((req) => (
         <div key={req.id} className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
-            <Avatar fallback={req.from.displayName} />
+            <Avatar fallback={req.requester.displayName} />
             <div>
-              <div className="text-black dark:text-white font-bold text-sm">{req.from.displayName}</div>
+              <div className="text-black dark:text-white font-bold text-sm">{req.requester.displayName}</div>
               <div className="text-zinc-500 text-xs font-mono">Wants to connect</div>
             </div>
           </div>

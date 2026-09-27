@@ -8,11 +8,12 @@ export function FriendSearch() {
   const [q, setQ] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [sentMap, setSentMap] = useState<Record<string, boolean>>({});
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const t = setTimeout(() => {
       if (q.trim()) {
-        api.get<any[]>(`/api/users/search?q=${q}`).then(setResults).catch(() => {});
+        api.get<any[]>(`/api/users/search?q=${encodeURIComponent(q)}`).then(setResults).catch(() => {});
       } else {
         setResults([]);
       }
@@ -20,9 +21,13 @@ export function FriendSearch() {
     return () => clearTimeout(t);
   }, [q]);
 
-  const addFriend = (id: string) => {
-    api.post('/api/friends/request', { targetUserId: id });
-    setSentMap(prev => ({ ...prev, [id]: true }));
+  const addFriend = async (id: string) => {
+    try {
+      await api.post('/api/friends/request', { addresseeId: id });
+      setSentMap(prev => ({ ...prev, [id]: true }));
+    } catch (err: any) {
+      setError(err.message || 'Failed to send friend request.');
+    }
   };
 
   return (
@@ -33,6 +38,8 @@ export function FriendSearch() {
         onChange={(e) => setQ(e.target.value)}
         className="font-mono text-xs"
       />
+
+      {error && <p className="text-xs font-mono text-red-600 dark:text-red-400 font-bold">{error}</p>}
 
       <div className="space-y-2">
         {results.map((user) => (

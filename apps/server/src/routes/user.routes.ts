@@ -2,7 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { requireAuth } from '../auth/middleware.js';
 import { db } from '../db/client.js';
 import { users } from '../db/schema.js';
-import { eq, ilike, or } from 'drizzle-orm';
+import { and, eq, ilike, ne, or } from 'drizzle-orm';
 import { z } from 'zod';
 
 const userRoutes: FastifyPluginAsync = async (fastify) => {
@@ -56,9 +56,12 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
         })
         .from(users)
         .where(
-          or(
-            ilike(users.username, searchTerm),
-            ilike(users.displayName, searchTerm)
+          and(
+            ne(users.id, request.user.id),
+            or(
+              ilike(users.username, searchTerm),
+              ilike(users.displayName, searchTerm)
+            )
           )
         )
         .limit(20);
