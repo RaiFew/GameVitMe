@@ -1,13 +1,104 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { fromNodeHeaders } from 'better-auth/node';
+import { eq } from 'drizzle-orm';
 import { auth } from '../auth/auth.js';
 import { db } from '../db/client.js';
-import { users, sessions } from '../db/schema.js';
+import { users, sessions, verifications } from '../db/schema.js';
+import { env } from '../config/env.js';
 import { randomUUID } from 'crypto';
 
 import { guestSessions } from '../auth/guest-sessions.js';
 
+const HANDOFF_IDENTIFIER = 'oauth-handoff';
+const HANDOFF_TTL_MS = 60_000;
+
+export async function issueHandoffCode(sessionToken: string): Promise<string> {
+  // Must be a UUID: verifications.id is a uuid column, and Postgres rejects
+  // non-uuid strings even in an equality comparison.
+  const code = randomUUID();
+  await db.insert(verifications).values({
+    id: code,
+    identifier: HANDOFF_IDENTIFIER,
+    value: sessionToken,
+    expiresAt: new Date(Date.now() + HANDOFF_TTL_MS),
+  });
+  return code;
+}
+
+export async function redeemHandoffCode(
+  code: string
+): Promise<{ token: string; user: Record<string, unknown> } | null> {
+  const row = await db.query.verifications.findFirst({
+    where: eq(verifications.id, code),
+  });
+  if (!row || row.identifier !== HANDOFF_IDENTIFIER) return null;
+
+  // Burn the code before validating the session so a replay can never resolve.
+  await db.delete(verifications).where(eq(verifications.id, code));
+
+  if (new Date(row.expiresAt).getTime() < Date.now()) return null;
+
+  const dbSession = await db.query.sessions.findFirst({
+    where: eq(sessions.token, row.value),
+    with: { user: true },
+  });
+  if (!dbSession?.user || new Date(dbSession.expiresAt) <= new Date()) return null;
+
+  return {
+    token: dbSession.token,
+    user: {
+      id: dbSession.user.id,
+      displayName: dbSession.user.displayName || dbSession.user.name,
+      avatarUrl: dbSession.user.avatarUrl || undefined,
+      username: dbSession.user.username || undefined,
+      email: dbSession.user.email || undefined,
+    },
+  };
+}
+
 const authRoutes: FastifyPluginAsync = async (fastify) => {
+  // OAuth landing pad. Reached as a top-level navigation on the API domain, so the
+  // session cookie is first-party here even when the browser blocks third-party
+  // cookies. Trades that cookie for a single-use code the frontend can redeem.
+  fastify.get('/auth/finish', async (request, reply) => {
+    const appUrl = (env.VITE_APP_URL || '').replace(/\/$/, '');
+    if (!appUrl) {
+      return reply.code(500).send('VITE_APP_URL is not configured');
+    }
+
+    try {
+      const session: any = await auth.api.getSession({
+        headers: fromNodeHeaders(request.headers),
+      });
+      if (!session?.session?.token) {
+        return reply.redirect(`${appUrl}/?error=no_session`, 302);
+      }
+
+      // Must be a UUID: verifications.id is a uuid column, and Postgres rejects
+      // non-uuid strings even in an equality comparison.
+      const code = await issueHandoffCode(session.session.token);
+
+      return reply.redirect(`${appUrl}/?code=${encodeURIComponent(code)}`, 302);
+    } catch (err) {
+      console.warn('[auth] /auth/finish handoff failed:', err);
+      return reply.redirect(`${appUrl}/?error=handoff_failed`, 302);
+    }
+  });
+
+  fastify.post('/api/auth/handoff', async (request, reply) => {
+    const code = (request.body as any)?.code;
+    if (!code) {
+      return reply.code(400).send({ error: 'Missing code' });
+    }
+
+    const result = await redeemHandoffCode(code);
+    if (!result) {
+      return reply.code(400).send({ error: 'Invalid, expired, or already used code' });
+    }
+
+    return result;
+  });
+
   fastify.post('/api/auth/dev-login', async (request, reply) => {
     const body = (request.body as any) || {};
     const displayName = body.displayName || `Player ${Math.floor(1000 + Math.random() * 9000)}`;

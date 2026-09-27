@@ -49,16 +49,21 @@ export const auth = betterAuth({
     database: {
       generateId: 'uuid',
     },
-    // Cross-site cookie attributes for separated frontend (Vercel) and backend (Railway)
+    // Frontend and backend are subdomains of one registrable domain
+    // (app.frostespresso.site / api.frostespresso.site), so requests between them
+    // are same-site and the session cookie needs no partition key. Partitioning
+    // would bind the cookie to whichever subdomain was the top-level site when
+    // the cookie was set, which breaks on every later request.
     defaultCookieAttributes: {
-      sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: 'lax',
       secure: env.NODE_ENV === 'production',
-      partitioned: env.NODE_ENV === 'production',
     },
   },
   ...(googleProvider && { socialProviders: googleProvider }),
   trustedOrigins: [
     'https://*.vercel.app',
+    'https://*.frostespresso.site',
+    'https://frostespresso.site',
     env.VITE_APP_URL,
     'http://localhost:3000',
     'http://localhost:3001',

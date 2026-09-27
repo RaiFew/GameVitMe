@@ -9,6 +9,27 @@ export function useAuth() {
   useEffect(() => {
     let mounted = true;
 
+    // OAuth handoff: the API domain minted a single-use code and redirected us here.
+    // Redeem it for a session token — the browser will not send the cross-site
+    // session cookie, so this is the only way the token reaches the client.
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get('code');
+    if (code) {
+      url.searchParams.delete('code');
+      window.history.replaceState({}, '', url.toString());
+      api.post('/api/auth/handoff', { code })
+        .then((res) => {
+          if (!mounted) return;
+          const handoffUser = res?.user || res?.data?.user;
+          if (handoffUser) setUser(handoffUser, res?.token || res?.data?.token);
+        })
+        .catch((err) => console.error('Auth handoff failed:', err))
+        .finally(() => {
+          if (mounted) setLocalLoading(false);
+        });
+      return;
+    }
+
     const fetchSession = async () => {
       try {
         const response = await api.get('/api/auth/get-session');
@@ -45,7 +66,9 @@ export function useAuth() {
       }
       const res = await api.post('/api/auth/sign-in/social', {
         provider: 'google',
-        callbackURL: window.location.origin,
+        // Lands on the API domain on purpose: the session cookie is only readable
+        // there. It hands back a code we exchange for the token.
+        callbackURL: `${apiBase || window.location.origin}/auth/finish`,
       });
       const redirectUrl = res?.data?.url || res?.url;
       if (redirectUrl) {
