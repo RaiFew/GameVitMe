@@ -6,13 +6,14 @@ dist/
 .turbo/
 *.tsbuildinfo
 
+# Vercel CLI local state
+.vercel
+
 # Environment — NEVER commit real credentials
-# .env.example is the only env file that should be committed
-.env
-.env.local
-.env.production
-.env.staging
-.env.*.local
+# Wildcard, because Vite/pnpm also read .env.development, .env.test, etc.
+.env*
+# ...except the committed template.
+!.env.example
 
 # IDE
 .vscode/
