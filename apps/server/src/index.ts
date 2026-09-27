@@ -9,6 +9,7 @@ import authMiddleware from './auth/middleware.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import friendRoutes from './routes/friend.routes.js';
+import invitationRoutes from './routes/invitation.routes.js';
 import roomRoutes from './routes/room.routes.js';
 import codenamesRoutes from './routes/codenames.routes.js';
 
@@ -50,6 +51,7 @@ async function bootstrap() {
   await fastify.register(authRoutes);
   await fastify.register(userRoutes);
   await fastify.register(friendRoutes);
+  await fastify.register(invitationRoutes);
   await fastify.register(roomRoutes);
   await fastify.register(codenamesRoutes);
 

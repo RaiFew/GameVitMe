@@ -39,6 +39,7 @@ class RoomManager {
       isPrivate: options.isPrivate || false,
       settings: { maxPlayers: options.maxPlayers || 8 },
       players: [],
+      kickedPlayerIds: [],
       createdAt: Date.now(),
       lastActivityAt: Date.now(),
       timers: new Map(),
@@ -87,6 +88,22 @@ class RoomManager {
     }
 
     return { room, player };
+  }
+
+  /**
+   * Records a kick so the player cannot immediately rejoin. Without this the
+   * host's kick was cosmetic: the player re-joined on the next room:join.
+   */
+  public kickPlayer(roomId: string, userId: string): void {
+    const room = this.rooms.get(roomId);
+    if (!room) return;
+    if (!room.kickedPlayerIds.includes(userId)) {
+      room.kickedPlayerIds.push(userId);
+    }
+  }
+
+  public isKicked(roomId: string, userId: string): boolean {
+    return this.rooms.get(roomId)?.kickedPlayerIds.includes(userId) ?? false;
   }
 
   public leaveRoom(roomId: string, userId: string): void {

@@ -30,6 +30,7 @@ export interface InMemoryRoom {
   isPrivate: boolean;
   settings: RoomGameSettings;
   players: PlayerState[];
+  kickedPlayerIds: string[];
   gameRunner?: any; // Should be RoomRunner from @party/game-engine
   createdAt: number;
   lastActivityAt: number;

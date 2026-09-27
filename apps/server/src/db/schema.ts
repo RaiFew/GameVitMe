@@ -1,10 +1,17 @@
-import { pgTable, text, timestamp, uuid, pgEnum, boolean, integer, jsonb, unique } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { pgTable, text, timestamp, uuid, pgEnum, boolean, integer, jsonb, unique, uniqueIndex } from 'drizzle-orm/pg-core';
+import { relations, sql } from 'drizzle-orm';
 
 export const userStatusEnum = pgEnum('user_status', ['online', 'offline', 'in-game']);
 export const friendshipStatusEnum = pgEnum('friendship_status', ['pending', 'accepted', 'blocked']);
 export const roomStatusEnum = pgEnum('room_status', ['waiting', 'playing', 'finished']);
 export const gameSessionStatusEnum = pgEnum('game_session_status', ['active', 'completed', 'aborted']);
+export const invitationStatusEnum = pgEnum('invitation_status', [
+  'PENDING',
+  'ACCEPTED',
+  'DECLINED',
+  'EXPIRED',
+  'CANCELLED',
+]);
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -96,6 +103,29 @@ export const roomParticipants = pgTable('room_participants', {
   unq: unique().on(t.roomId, t.userId),
 }));
 
+export const gameInvitations = pgTable(
+  'game_invitations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    roomId: uuid('room_id').notNull().references(() => rooms.id, { onDelete: 'cascade' }),
+    inviterId: uuid('inviter_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    inviteeId: uuid('invitee_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    gameType: text('game_type').notNull(),
+    status: invitationStatusEnum('status').default('PENDING').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+  },
+  (t) => ({
+    // Partial unique index: one live invite per (room, invitee). A plain unique()
+    // would also block re-inviting someone whose earlier invite was declined,
+    // and the accept path would then race two simultaneous joins into the last
+    // room slot instead of failing the second one.
+    unqPending: uniqueIndex('game_invitations_pending_unq')
+      .on(t.roomId, t.inviteeId)
+      .where(sql`${t.status} = 'PENDING'`),
+  }),
+);
+
 export const gameSessions = pgTable('game_sessions', {
   id: uuid('id').primaryKey().defaultRandom(),
   roomId: uuid('room_id').references(() => rooms.id, { onDelete: 'set null' }),
@@ -122,6 +152,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   sessions: many(sessions),
   sentFriendships: many(friendships, { relationName: 'requester' }),
   receivedFriendships: many(friendships, { relationName: 'addressee' }),
+  sentInvitations: many(gameInvitations, { relationName: 'inviter' }),
+  receivedInvitations: many(gameInvitations, { relationName: 'invitee' }),
 }));
 
 export const friendshipsRelations = relations(friendships, ({ one }) => ({
@@ -135,6 +167,12 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
   user: one(users, { fields: [sessions.userId], references: [users.id] }),
+}));
+
+export const gameInvitationsRelations = relations(gameInvitations, ({ one }) => ({
+  room: one(rooms, { fields: [gameInvitations.roomId], references: [rooms.id] }),
+  inviter: one(users, { fields: [gameInvitations.inviterId], references: [users.id], relationName: 'inviter' }),
+  invitee: one(users, { fields: [gameInvitations.inviteeId], references: [users.id], relationName: 'invitee' }),
 }));
 
 export const codenamesWordFiles = pgTable('codenames_word_files', {

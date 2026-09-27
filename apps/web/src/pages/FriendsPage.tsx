@@ -1,11 +1,15 @@
 ﻿import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { FriendList } from '../components/friends/FriendList';
 import { FriendSearch } from '../components/friends/FriendSearch';
 import { FriendRequests } from '../components/friends/FriendRequests';
 
 export function FriendsPage() {
-  const [tab, setTab] = useState<'friends' | 'requests'>('friends');
+  const [params, setParams] = useSearchParams();
+  const tab = params.get('tab') === 'requests' ? 'requests' : 'friends';
+  const setTab = (next: 'friends' | 'requests') =>
+    setParams(next === 'requests' ? { tab: 'requests' } : {}, { replace: true });
 
   return (
     <div className="container mx-auto px-4 py-10 max-w-5xl space-y-8">

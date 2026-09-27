@@ -4,6 +4,8 @@ import { db } from '../db/client.js';
 import { friendships } from '../db/schema.js';
 import { eq, and, or } from 'drizzle-orm';
 import { z } from 'zod';
+import { getIo } from '../socket/io-ref.js';
+import { presence } from '../socket/presence.js';
 
 const friendRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/api/friends', { preHandler: [requireAuth] }, async (request) => {
@@ -24,7 +26,21 @@ const friendRoutes: FastifyPluginAsync = async (fastify) => {
         },
       });
 
-      return friends.map((f) => (f.requesterId === userId ? f.addressee : f.requester));
+      // Project to public profile fields only. The related user rows carry
+      // email and other private columns, so nothing is spread wholesale.
+      return friends.map((f) => {
+        const friend = f.requesterId === userId ? f.addressee : f.requester;
+        if (!friend) return null;
+        return {
+          id: friend.id,
+          username: friend.username,
+          displayName: friend.displayName || friend.name,
+          avatarUrl: friend.avatarUrl,
+          // Live socket presence beats the denormalised status column, which
+          // only updates when a user's own session writes it.
+          isOnline: presence.isUserOnline(friend.id),
+        };
+      }).filter(Boolean);
     } catch (err) {
       console.warn('[Friends] Database unavailable, returning empty friend list');
       return [];
@@ -96,6 +112,17 @@ const friendRoutes: FastifyPluginAsync = async (fastify) => {
         .values({ requesterId, addresseeId, status: 'pending' })
         .returning();
 
+      if (!newRequest) {
+        return reply.status(503).send({ error: 'Friend service temporarily unavailable' });
+      }
+
+      getIo()?.to(`user:${addresseeId}`).emit('friend:request_received', {
+        friendshipId: newRequest.id,
+        fromUserId: requesterId,
+        fromDisplayName: request.user.displayName || request.user.name || 'Player',
+        createdAt: newRequest.createdAt,
+      });
+
       return newRequest;
     } catch (err: any) {
       return reply.status(503).send({ error: 'Friend service temporarily unavailable' });
@@ -121,6 +148,13 @@ const friendRoutes: FastifyPluginAsync = async (fastify) => {
         .returning();
 
       if (!updated) return reply.status(404).send({ error: 'Request not found or unauthorized' });
+
+      getIo()?.to(`user:${updated.requesterId}`).emit('friend:request_accepted', {
+        friendshipId: updated.id,
+        byUserId: request.user.id,
+        byDisplayName: request.user.displayName || request.user.name || 'Player',
+      });
+
       return updated;
     } catch (err: any) {
       return reply.status(503).send({ error: 'Friend service temporarily unavailable' });

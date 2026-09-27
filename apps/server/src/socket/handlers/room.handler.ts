@@ -1,6 +1,7 @@
 import type { Server, Socket } from 'socket.io';
 import { roomManager } from '../../rooms/room-manager.js';
 import { updateRoomDefaultRolesIfUncustomized, calculateDefaultRoleCounts } from '../../rooms/role-defaults.js';
+import { hasValidRoomInvite } from '../../services/invitations.js';
 
 export const registerRoomHandlers = (io: Server, socket: Socket) => {
   const user = socket.data.user;
@@ -70,7 +71,7 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
   });
 
   // ─── Room Joining ───────────────────────────────────────────────
-  socket.on('room:join', (payload, callback) => {
+  socket.on('room:join', async (payload, callback) => {
     const code = payload?.code || payload?.roomCode;
     if (!code) {
       if (callback) callback({ error: 'Room code is required' });
@@ -85,6 +86,20 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
     }
 
     try {
+      if (roomManager.isKicked(room.id, user.id)) {
+        if (callback) callback({ error: 'You were removed from this room by the host.' });
+        return;
+      }
+
+      if (room.isPrivate) {
+        const invited = await hasValidRoomInvite(user.id, room.id);
+        if (!invited) {
+          if (callback) callback({ error: 'This room is private. Ask the host for an invitation.' });
+          socket.emit('room:error', { code: 'PRIVATE_ROOM', message: 'This room is private.' });
+          return;
+        }
+      }
+
       const result = roomManager.joinRoom(room.id, user);
       if (!result) {
         if (callback) callback({ error: 'Failed to join room' });
@@ -205,6 +220,7 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
     }
 
     roomManager.leaveRoom(roomId, targetUserId);
+    roomManager.kickPlayer(roomId, targetUserId);
     updateRoomDefaultRolesIfUncustomized(room);
     io.to(`room:${roomId}`).emit('room:player_kicked', { userId: targetUserId });
     io.to(`room:${roomId}`).emit('room:state', room);

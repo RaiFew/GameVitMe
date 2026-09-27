@@ -4,6 +4,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { Sun, Moon, Menu, X, Gamepad2, Users, User, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../ui/Button';
+import { NotificationBell } from '../notifications/NotificationBell';
 
 export default function Navbar() {
   const { isAuthenticated, clearUser, user } = useAuthStore();
@@ -54,6 +55,8 @@ export default function Navbar() {
           </div>
 
           <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
+
+          <NotificationBell />
 
           {/* Theme Toggle */}
           <button

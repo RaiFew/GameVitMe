@@ -11,6 +11,7 @@ import { sessions } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 
 import { guestSessions } from '../auth/guest-sessions.js';
+import { setIo } from './io-ref.js';
 
 export const initSocketGateway = (fastify: FastifyInstance) => {
   const io = new Server(fastify.server, {
@@ -21,6 +22,7 @@ export const initSocketGateway = (fastify: FastifyInstance) => {
   });
 
   presence.init(io);
+  setIo(io);
 
   // Authentication Middleware
   io.use(async (socket, next) => {
