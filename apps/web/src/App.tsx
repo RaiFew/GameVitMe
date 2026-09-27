@@ -1,5 +1,5 @@
 ﻿import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from './hooks/useAuth';
+import { useAuth, useAuthHandoff } from './hooks/useAuth';
 import Navbar from './components/layout/Navbar';
 import { DashboardPage } from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
@@ -34,6 +34,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 export function App() {
   const location = useLocation();
   const isGameRoute = location.pathname.startsWith('/game/');
+
+  useAuthHandoff();
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text-primary)] flex flex-col transition-colors">

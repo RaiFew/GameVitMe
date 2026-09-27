@@ -2,6 +2,31 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import { api } from '../lib/api';
 
+/**
+ * Redeems the one-time code left in the URL by the API domain after Google login.
+ * Must be mounted at the app root: it depends on `?code=` surviving the redirect,
+ * and pages like HomePage never call useAuth, so a page-level hook would miss it.
+ */
+export function useAuthHandoff() {
+  const setUser = useAuthStore((s) => s.setUser);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get('code');
+    if (!code) return;
+
+    url.searchParams.delete('code');
+    window.history.replaceState({}, '', url.toString());
+
+    api.post('/api/auth/handoff', { code })
+      .then((res) => {
+        const handoffUser = res?.user || res?.data?.user;
+        if (handoffUser) setUser(handoffUser, res?.token || res?.data?.token);
+      })
+      .catch((err) => console.error('Auth handoff failed:', err));
+  }, [setUser]);
+}
+
 export function useAuth() {
   const { user, isAuthenticated, isLoading, setUser, clearUser } = useAuthStore();
   const [localLoading, setLocalLoading] = useState(false);
@@ -9,40 +34,23 @@ export function useAuth() {
   useEffect(() => {
     let mounted = true;
 
-    // OAuth handoff: the API domain minted a single-use code and redirected us here.
-    // Redeem it for a session token — the browser will not send the cross-site
-    // session cookie, so this is the only way the token reaches the client.
-    const url = new URL(window.location.href);
-    const code = url.searchParams.get('code');
-    if (code) {
-      url.searchParams.delete('code');
-      window.history.replaceState({}, '', url.toString());
-      api.post('/api/auth/handoff', { code })
-        .then((res) => {
-          if (!mounted) return;
-          const handoffUser = res?.user || res?.data?.user;
-          if (handoffUser) setUser(handoffUser, res?.token || res?.data?.token);
-        })
-        .catch((err) => console.error('Auth handoff failed:', err))
-        .finally(() => {
-          if (mounted) setLocalLoading(false);
-        });
-      return;
-    }
-
     const fetchSession = async () => {
+      // Read live store state, not the mount-time closure: the root-level handoff
+      // may have landed a session while this request was in flight, and clobbering
+      // it here would log the user straight back out.
+      const hasUser = () => !!useAuthStore.getState().user;
       try {
         const response = await api.get('/api/auth/get-session');
         const sessionUser = response?.data?.user || response?.user;
         if (mounted) {
           if (sessionUser) {
             setUser(sessionUser);
-          } else if (!user) {
+          } else if (!hasUser()) {
             clearUser();
           }
         }
       } catch (err) {
-        if (mounted && !user) {
+        if (mounted && !hasUser()) {
           clearUser();
         }
       } finally {
