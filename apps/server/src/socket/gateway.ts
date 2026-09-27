@@ -1,5 +1,4 @@
 import { Server } from 'socket.io';
-import { createAdapter } from '@socket.io/redis-adapter';
 import type { FastifyInstance } from 'fastify';
 import { auth } from '../auth/auth.js';
 import { presence } from './presence.js';
@@ -7,8 +6,6 @@ import { registerRoomHandlers } from './handlers/room.handler.js';
 import { registerGameHandlers } from './handlers/game.handler.js';
 import { registerChatHandlers } from './handlers/chat.handler.js';
 import { registerFriendHandlers } from './handlers/friend.handler.js';
-import { Redis } from 'ioredis';
-import { env } from '../config/env.js';
 import { db } from '../db/client.js';
 import { sessions } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
@@ -16,30 +13,6 @@ import { eq } from 'drizzle-orm';
 import { guestSessions } from '../auth/guest-sessions.js';
 
 export const initSocketGateway = (fastify: FastifyInstance) => {
-  // Graceful Redis connection with memory fallback
-  let adapter: any = undefined;
-  if (env.REDIS_URL) {
-    try {
-      const pubClient = new Redis(env.REDIS_URL, {
-        maxRetriesPerRequest: 1,
-        retryStrategy: () => null,
-        lazyConnect: true,
-        enableOfflineQueue: false,
-      });
-      const subClient = pubClient.duplicate();
-      pubClient.on('error', () => {});
-      subClient.on('error', () => {});
-      
-      // Attempt connecting in background, non-blocking
-      pubClient.connect().catch(() => {});
-      subClient.connect().catch(() => {});
-    } catch (err) {
-      console.warn('[SocketGateway] Redis not available, running in single-node memory mode');
-    }
-  } else {
-    console.log('[SocketGateway] REDIS_URL not configured, running in single-node memory mode');
-  }
-
   const io = new Server(fastify.server, {
     cors: {
       origin: true,
