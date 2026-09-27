@@ -57,7 +57,11 @@ export function validateNumberGridMove(
       return { valid: false, error: 'Can only advance to next round from round results phase.' };
     }
 
-    // Host or any alive player can trigger advance
+    // The host owns round pacing. Guest rooms have no host, so anyone may advance.
+    if (state.hostPlayerId && playerId !== state.hostPlayerId) {
+      return { valid: false, error: 'Only the host can start the next round.' };
+    }
+
     return { valid: true };
   }
 
@@ -256,8 +260,12 @@ export function executeRoundResolution(
   const currentAlive = Object.values(state.players).filter((p) => p.hp > 0 && !p.eliminated);
   const totalRounds = state.totalRounds;
   const isFinalRound = state.currentRoundNumber >= totalRounds;
+  // "Last player standing" only decides the match if someone was actually
+  // knocked out. In a solo game the single survivor is not a win after round 1.
+  const decidedByElimination = allPlayers.length >= 2 && currentAlive.length <= 1;
+  const everyoneDead = currentAlive.length === 0;
 
-  if (currentAlive.length <= 1 || isFinalRound) {
+  if (decidedByElimination || everyoneDead || isFinalRound) {
     state.phase = 'GAME_OVER';
 
     if (currentAlive.length === 1 && currentAlive[0]) {
@@ -277,14 +285,9 @@ export function executeRoundResolution(
       state.winnerPlayerIds = completedOrder.length > 0 && completedOrder[0] ? [completedOrder[0]] : [];
     }
 
-    ctx.broadcast('game:finished', {
-      winners: state.winnerPlayerIds,
-      summary: {
-        totalRounds: state.currentRoundNumber,
-        winners: state.winnerPlayerIds,
-        results: state.roundResults,
-      },
-    });
+    // No 'game:finished' broadcast here: the socket handler emits it from
+    // checkGameEnd() after broadcasting player views, so emitting it here too
+    // delivered the same event to clients twice.
   } else {
     state.phase = 'ROUND_RESULT';
 

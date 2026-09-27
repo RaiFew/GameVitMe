@@ -103,16 +103,22 @@ export function RoundResultModal({
             : 'Last player to finish takes round damage'}
         </p>
 
-        {/* Advance button */}
+        {/* Advance button — only the host may start the next round */}
         <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800">
-          <Button
-            variant="primary"
-            onClick={onNextRound}
-            className="w-full text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2"
-          >
-            <span>{currentRoundNumber >= totalRounds ? 'View Final Results' : 'Next Round'}</span>
-            <ArrowRight size={14} />
-          </Button>
+          {isHost ? (
+            <Button
+              variant="primary"
+              onClick={onNextRound}
+              className="w-full text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2"
+            >
+              <span>{currentRoundNumber >= totalRounds ? 'View Final Results' : 'Next Round'}</span>
+              <ArrowRight size={14} />
+            </Button>
+          ) : (
+            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 text-center">
+              Waiting for host to start the next round...
+            </p>
+          )}
         </div>
       </Card>
     </div>

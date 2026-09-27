@@ -92,6 +92,17 @@ export const numberGridGame: GameDefinition<
       description: 'Damage rule applied when players complete or finish a round',
     },
     {
+      key: 'wrongClickDamage',
+      label: 'Wrong Click Damage',
+      type: 'select',
+      default: true,
+      options: [
+        { label: 'Lose 1 HP per wrong click', value: true },
+        { label: 'No penalty for wrong clicks', value: false },
+      ],
+      description: 'Whether clicking the wrong number costs HP',
+    },
+    {
       key: 'hostMode',
       label: 'Screen Mode',
       type: 'select',
@@ -165,7 +176,8 @@ export const numberGridGame: GameDefinition<
       },
       players: playersMap,
       winnerPlayerIds: [],
-      hostPlayerId: hostMode ? hostPlayerId : undefined,
+      // Kept even outside host mode: it is what identifies who may advance rounds.
+      hostPlayerId,
     };
 
     return state;

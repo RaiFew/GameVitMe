@@ -11,7 +11,7 @@ import {
 
 function createMockContext(players: { id: string; displayName?: string }[]): GameContext {
   const events: { event: string; payload: unknown }[] = [];
-  return {
+  const ctx: GameContext = {
     roomId: 'test-room-1',
     gameSessionId: 'session-123',
     players: players.map((p, i) => ({
@@ -28,6 +28,7 @@ function createMockContext(players: { id: string; displayName?: string }[]): Gam
     scheduleTimer: () => {},
     clearTimer: () => {},
   };
+  return Object.assign(ctx, { events });
 }
 
 function doMove(
@@ -292,6 +293,181 @@ describe('Number Grid Engine & Rules', () => {
       assert.equal(viewP1.me?.expectedNumber, 1);
       assert.equal(viewP1.opponents.length, 1);
       assert.equal(viewP1.opponents[0].id, 'p2');
+    });
+
+    it('exposes a host in the player view even outside host mode', () => {
+      const ctx = createMockContext([{ id: 'p1' }, { id: 'p2' }]);
+      const state = numberGridGame.setup(ctx, {
+        ...DEFAULT_NUMBER_GRID_SETTINGS,
+        hostMode: false,
+        hostPlayerId: 'p2',
+      });
+
+      assert.equal(numberGridGame.getPlayerView(state, 'p2', ctx).isHost, true);
+      assert.equal(numberGridGame.getPlayerView(state, 'p1', ctx).isHost, false);
+    });
+  });
+
+  describe('Round Advance Gating', () => {
+    /** Drives a player through the whole current board, 1..N. */
+    function completeBoard(state: any, playerId: string, ctx: GameContext): any {
+      let cur = state;
+      const total = cur.currentRound.totalNumbers;
+      for (let n = 1; n <= total; n++) {
+        const card = cur.currentRound.cards.find((c: any) => c.number === n)!;
+        const res = doMove(cur, playerId, 'CLICK_NUMBER', { cardId: card.id, number: n }, ctx);
+        assert.equal(res.success, true);
+        cur = res.newState;
+      }
+      return cur;
+    }
+
+    function reachRoundResult(ctx: GameContext) {
+      const setup = numberGridGame.setup(ctx, {
+        ...DEFAULT_NUMBER_GRID_SETTINGS,
+        totalRounds: 3,
+        hostPlayerId: 'p1',
+      });
+      // The round only resolves once every alive player has finished.
+      return completeBoard(completeBoard(setup, 'p1', ctx), 'p2', ctx);
+    }
+
+    it('rejects START_NEXT_ROUND from a non-host player', () => {
+      const ctx = createMockContext([{ id: 'p1' }, { id: 'p2' }]);
+      const resolved = reachRoundResult(ctx);
+      assert.equal(resolved.phase, 'ROUND_RESULT');
+
+      const res = doMove(resolved, 'p2', 'START_NEXT_ROUND', {}, ctx);
+      assert.equal(res.success, false);
+      assert.match(res.error!, /host/i);
+      assert.equal(res.newState.currentRoundNumber, 1);
+    });
+
+    it('allows the host to advance and generates a fresh board', () => {
+      const ctx = createMockContext([{ id: 'p1' }, { id: 'p2' }]);
+      const resolved = reachRoundResult(ctx);
+      const firstBoardIds = resolved.currentRound.cards.map((c: any) => c.id);
+
+      const res = doMove(resolved, 'p1', 'START_NEXT_ROUND', {}, ctx);
+      assert.equal(res.success, true);
+      assert.equal(res.newState.currentRoundNumber, 2);
+      assert.equal(res.newState.phase, 'PLAYING');
+      assert.equal(res.newState.currentRound.gridSize, 3);
+      assert.notDeepEqual(res.newState.currentRound.cards.map((c: any) => c.id), firstBoardIds);
+    });
+
+    it('lets any player advance when the room has no host', () => {
+      const ctx = createMockContext([{ id: 'p1' }]);
+      const state = numberGridGame.setup(ctx, {
+        ...DEFAULT_NUMBER_GRID_SETTINGS,
+        totalRounds: 2,
+      });
+      delete (state as any).hostPlayerId;
+
+      // Solo play must survive round 1: one survivor alone is not a match win.
+      const finished = completeBoard(state, 'p1', ctx);
+      assert.equal(finished.phase, 'ROUND_RESULT');
+
+      const res = doMove(finished, 'p1', 'START_NEXT_ROUND', {}, ctx);
+      assert.equal(res.success, true);
+      assert.equal(res.newState.currentRoundNumber, 2);
+    });
+
+    it('emits game:finished exactly once when the game ends', () => {
+      const ctx = createMockContext([{ id: 'p1' }]);
+      const state = numberGridGame.setup(ctx, {
+        ...DEFAULT_NUMBER_GRID_SETTINGS,
+        totalRounds: 1,
+      });
+      completeBoard(state, 'p1', ctx);
+
+      const finishedEvents = (ctx as any).events.filter(
+        (e: any) => e.event === 'game:finished',
+      );
+      // The socket handler emits game:finished from checkGameEnd(); the engine
+      // must not also emit it or clients receive the event twice.
+      assert.equal(finishedEvents.length, 0);
+      assert.equal(numberGridGame.checkGameEnd(state).isEnded, true);
+    });
+  });
+
+  describe('RoomRunner Integration', () => {
+    it('plays a full match through the registry-backed runner the server uses', async () => {
+      const { GameRegistry, RoomRunner } = await import('@party/game-engine');
+      GameRegistry.getInstance().register(numberGridGame);
+
+      const emitted: { playerId: string; event: string; payload: any }[] = [];
+      const runner = new RoomRunner<any, any, any>('number-grid', 'room-1', 'sess-1');
+      runner.setPlayers([
+        { id: 'p1', displayName: 'Host', seatNumber: 1, isConnected: true },
+        { id: 'p2', displayName: 'Guest', seatNumber: 2, isConnected: true },
+      ]);
+      runner.setBroadcast(() => {});
+      runner.setEmitToPlayer((playerId, event, payload) =>
+        emitted.push({ playerId, event, payload }),
+      );
+
+      runner.setup({
+        ...DEFAULT_NUMBER_GRID_SETTINGS,
+        totalRounds: 2,
+        maxHp: 3,
+        damageMode: 'LAST_PLAYER',
+        hostMode: false,
+        hostPlayerId: 'p1',
+      } as any);
+
+      assert.equal(runner.getCurrentPhase(), 'PLAYING');
+
+      for (let round = 1; round <= 2; round++) {
+        const view = runner.getPlayerView('p1')!;
+        const total = view.totalNumbers;
+        assert.equal(total, view.gridSize * view.gridSize);
+        assert.equal(view.cards.length, total);
+
+        // Numbers are exactly 1..N with no duplicates.
+        const numbers = view.cards.map((c: any) => c.number).sort((a: number, b: number) => a - b);
+        assert.deepEqual(numbers, Array.from({ length: total }, (_, i) => i + 1));
+
+        for (const playerId of ['p1', 'p2']) {
+          for (let n = 1; n <= total; n++) {
+            const card = runner.getPlayerView(playerId)!.cards.find((c: any) => c.number === n)!;
+            const res = runner.processMove({
+              type: 'CLICK_NUMBER',
+              playerId,
+              payload: { cardId: card.id, number: n },
+              timestamp: Date.now(),
+            } as any);
+            assert.equal(res.success, true);
+          }
+        }
+
+        if (round < 2) {
+          assert.equal(runner.getCurrentPhase(), 'ROUND_RESULT');
+
+          // Non-host is rejected, host advances.
+          const denied = runner.processMove({
+            type: 'START_NEXT_ROUND', playerId: 'p2', payload: {}, timestamp: Date.now(),
+          } as any);
+          assert.equal(denied.success, false);
+
+          const advanced = runner.processMove({
+            type: 'START_NEXT_ROUND', playerId: 'p1', payload: {}, timestamp: Date.now(),
+          } as any);
+          assert.equal(advanced.success, true);
+          assert.equal(runner.getCurrentPhase(), 'PLAYING');
+        }
+      }
+
+      assert.equal(runner.getCurrentPhase(), 'GAME_OVER');
+      const end = runner.checkGameEnd();
+      assert.equal(end?.isEnded, true);
+      assert.ok(end!.winners.length > 0);
+
+      // Exactly one game:finished is left for the socket handler to emit.
+      assert.equal(
+        emitted.filter((e) => e.event === 'game:finished').length,
+        0,
+      );
     });
   });
 });
