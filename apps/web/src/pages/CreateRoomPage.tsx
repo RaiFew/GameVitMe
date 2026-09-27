@@ -47,7 +47,7 @@ export function CreateRoomPage() {
   useEffect(() => {
     api.get('/api/games')
       .then((res) => {
-        const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        const list = Array.isArray(res) ? res : [];
         if (list.length > 0) {
           setGames(list);
           if (!searchParams.get('game')) {
@@ -121,7 +121,7 @@ export function CreateRoomPage() {
     setTimeout(async () => {
       if (resolved) return;
       try {
-        const res = await api.post('/api/rooms', {
+        const res = await api.post<any>('/api/rooms', {
           name: targetName,
           gameType: targetGame,
           maxPlayers: clampedPlayers,
@@ -129,11 +129,11 @@ export function CreateRoomPage() {
           hostMode: isHostMode,
         });
 
-        const code = res?.roomCode || res?.code || res?.data?.code || res?.data?.roomCode;
+        const code = res?.roomCode || res?.code;
         if (code && !resolved) {
           resolved = true;
-          if (res?.room || res?.data?.room) {
-            setRoom(res?.room || res?.data?.room);
+          if (res?.room) {
+            setRoom(res.room);
           }
           navigate(`/lobby/${code}`);
         }

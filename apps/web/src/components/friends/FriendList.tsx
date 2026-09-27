@@ -6,7 +6,7 @@ export function FriendList({ onInvite }: { onInvite?: (id: string) => void }) {
   const [friends, setFriends] = useState<any[]>([]);
 
   useEffect(() => {
-    api.get('/api/friends').then(res => setFriends(res.data)).catch(() => {});
+    api.get<any[]>('/api/friends').then(setFriends).catch(() => {});
   }, []);
 
   if (friends.length === 0) {

@@ -12,7 +12,7 @@ export function FriendSearch() {
   useEffect(() => {
     const t = setTimeout(() => {
       if (q.trim()) {
-        api.get(`/api/users/search?q=${q}`).then(res => setResults(res.data)).catch(() => {});
+        api.get<any[]>(`/api/users/search?q=${q}`).then(setResults).catch(() => {});
       } else {
         setResults([]);
       }

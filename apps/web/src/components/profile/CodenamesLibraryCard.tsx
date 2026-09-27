@@ -37,8 +37,8 @@ export function CodenamesLibraryCard() {
   const loadFiles = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get('/api/codenames/word-files');
-      const list = res.files || res.data?.files || [];
+      const res = await api.get<any>('/api/codenames/word-files');
+      const list = res?.files ?? [];
       setFiles(list);
     } catch (err) {
       console.warn('Failed to load word files:', err);

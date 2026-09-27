@@ -50,8 +50,8 @@ export function CodenamesWordSourceCard({ roomId, isHost, settings, onUpdateSett
   const loadFiles = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get('/api/codenames/word-files');
-      const list = res.files || res.data?.files || [];
+      const res = await api.get<any>('/api/codenames/word-files');
+      const list = res?.files ?? [];
       setFiles(list);
 
       // If custom source selected but no file chosen or invalid, auto-pick first if available
@@ -125,13 +125,13 @@ export function CodenamesWordSourceCard({ roomId, isHost, settings, onUpdateSett
     setSaveError('');
 
     try {
-      const res = await api.post('/api/codenames/word-files', {
+      const res = await api.post<{ file?: any }>('/api/codenames/word-files', {
         name: customName || uploadFileName,
         fileName: uploadFileName,
         content: fileContent,
       });
 
-      const newFile = res.file || res.data?.file;
+      const newFile = res?.file;
       await loadFiles();
       setIsUploadModalOpen(false);
       resetUploadModal();

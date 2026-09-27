@@ -198,14 +198,14 @@ export function DashboardPage() {
   useEffect(() => {
     api.get('/api/friends')
       .then((res) => {
-        const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        const list = Array.isArray(res) ? res : [];
         setFriends(list);
       })
       .catch(() => setFriends([]));
 
     api.get('/api/games')
       .then((res) => {
-        const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        const list = Array.isArray(res) ? res : [];
         setGames(list);
       })
       .catch(() => setGames([]));

@@ -7,7 +7,7 @@ export function FriendRequests() {
   const [requests, setRequests] = useState<any[]>([]);
 
   useEffect(() => {
-    api.get('/api/friends/requests').then(res => setRequests(res.data)).catch(() => {});
+    api.get<any[]>('/api/friends/requests').then(setRequests).catch(() => {});
   }, []);
 
   const handleAction = (id: string, accept: boolean) => {

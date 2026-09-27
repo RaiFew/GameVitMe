@@ -13,7 +13,7 @@ export function InviteFriends({ onClose }: { onClose: () => void }) {
   const { roomCode } = useParams<{ roomCode: string }>();
 
   useEffect(() => {
-    api.get('/api/friends').then(res => setFriends(res.data)).catch(() => {});
+    api.get<any[]>('/api/friends').then(setFriends).catch(() => {});
   }, []);
 
   const handleInvite = (friendId: string) => {
