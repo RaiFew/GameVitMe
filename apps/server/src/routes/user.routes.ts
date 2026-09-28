@@ -56,6 +56,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
         .select({
           id: users.id,
           username: users.username,
+          name: users.name,
           displayName: users.displayName,
           avatarUrl: users.avatarUrl,
         })
@@ -65,7 +66,10 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
             ne(users.id, request.user.id),
             or(
               ilike(users.username, searchTerm),
-              ilike(users.displayName, searchTerm)
+              ilike(users.displayName, searchTerm),
+              // Google/OAuth signups only populate `name`, so without this the
+              // search box matches nothing for every real account.
+              ilike(users.name, searchTerm)
             )
           )
         )
@@ -110,7 +114,13 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
         // The id is only handed over for an incoming request, which is the one
         // case where the viewer is allowed to act on it.
         const actionable = relationship === 'REQUEST_RECEIVED' && rel ? { friendshipId: rel.id } : {};
-        return { ...u, isOnline: presence.isUserOnline(u.id), relationship, ...actionable };
+        return {
+          ...u,
+          displayName: u.displayName || u.name,
+          isOnline: presence.isUserOnline(u.id),
+          relationship,
+          ...actionable,
+        };
       });
     } catch (err) {
       return [];
