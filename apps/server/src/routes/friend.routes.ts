@@ -7,6 +7,29 @@ import { z } from 'zod';
 import { getIo } from '../socket/io-ref.js';
 import { presence } from '../socket/presence.js';
 
+/**
+ * Projects one pending request to the public fields the list renders, under the
+ * key the client reads it from. Google signups leave display_name null and only
+ * set name, so a client reading displayName alone would dereference null and
+ * blank the whole tab. Fields are listed explicitly because the related user
+ * rows also carry email and other private columns.
+ */
+function toRequestView(row: any, key: 'requester' | 'addressee') {
+  const other = row[key];
+  const publicUser = other && {
+    id: other.id,
+    username: other.username,
+    displayName: other.displayName || other.name,
+    avatarUrl: other.avatarUrl,
+  };
+  return {
+    id: row.id,
+    status: row.status,
+    createdAt: row.createdAt,
+    [key]: publicUser,
+  };
+}
+
 const friendRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/api/friends', { preHandler: [requireAuth] }, async (request) => {
     const userId = request.user.id;
@@ -54,10 +77,11 @@ const friendRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      return await db.query.friendships.findMany({
+      const rows = await db.query.friendships.findMany({
         where: and(eq(friendships.addresseeId, userId), eq(friendships.status, 'pending')),
         with: { requester: true },
       });
+      return rows.map((r: any) => toRequestView(r, 'requester'));
     } catch (err) {
       return [];
     }
@@ -70,10 +94,11 @@ const friendRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      return await db.query.friendships.findMany({
+      const rows = await db.query.friendships.findMany({
         where: and(eq(friendships.requesterId, userId), eq(friendships.status, 'pending')),
         with: { addressee: true },
       });
+      return rows.map((r: any) => toRequestView(r, 'addressee'));
     } catch (err) {
       return [];
     }

@@ -3,7 +3,7 @@ import { cn } from '../../lib/utils';
 
 export interface AvatarProps {
   src?: string;
-  fallback: string;
+  fallback?: string | null;
   status?: 'online' | 'offline' | 'in_game' | 'away';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
@@ -23,7 +23,7 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
           {src ? (
             <img src={src} alt="Avatar" className="h-full w-full object-cover" />
           ) : (
-            <span>{fallback.substring(0, 2).toUpperCase()}</span>
+            <span>{(fallback || '?').substring(0, 2).toUpperCase()}</span>
           )}
         </div>
         {status && (

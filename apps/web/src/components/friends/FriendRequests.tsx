@@ -29,6 +29,10 @@ export function FriendRequests() {
       .catch((err) => setError(err.message || 'Failed to cancel request.'));
   };
 
+  // The server projects displayName, but a missing user row would otherwise
+  // throw here and blank the whole tab.
+  const nameOf = (r: any) => r?.displayName || r?.name || 'Player';
+
   if (requests.length === 0 && sent.length === 0) {
     return (
       <div className="text-zinc-500 font-mono text-xs text-center py-12">
@@ -46,10 +50,10 @@ export function FriendRequests() {
       {requests.map((req) => (
         <div key={req.id} className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
-            <Avatar fallback={req.requester.displayName} />
+            <Avatar fallback={nameOf(req.requester)} src={req.requester?.avatarUrl ?? undefined} />
             <div>
               <div className="text-black dark:text-white font-bold text-sm">
-                {req.requester.displayName}
+                {nameOf(req.requester)}
               </div>
               <div className="text-zinc-500 text-xs font-mono">Wants to connect</div>
             </div>
@@ -68,10 +72,10 @@ export function FriendRequests() {
       {sent.map((req) => (
         <div key={req.id} className="flex items-center justify-between p-4 opacity-70">
           <div className="flex items-center gap-3">
-            <Avatar fallback={req.addressee.displayName} />
+            <Avatar fallback={nameOf(req.addressee)} src={req.addressee?.avatarUrl ?? undefined} />
             <div>
               <div className="text-black dark:text-white font-bold text-sm">
-                {req.addressee.displayName}
+                {nameOf(req.addressee)}
               </div>
               <div className="text-zinc-500 text-xs font-mono">Request sent · awaiting reply</div>
             </div>

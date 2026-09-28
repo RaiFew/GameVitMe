@@ -165,7 +165,7 @@ export function NotificationBell() {
                     <UserPlus size={14} className="mt-0.5 shrink-0 text-zinc-500" />
                     <span className="text-xs text-zinc-600 dark:text-zinc-400">
                       <span className="font-bold text-black dark:text-white">
-                        {req.requester?.displayName}
+                        {req.requester?.displayName || req.requester?.name || 'Someone'}
                       </span>{' '}
                       sent you a friend request
                     </span>
