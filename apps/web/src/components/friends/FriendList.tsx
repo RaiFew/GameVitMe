@@ -21,8 +21,11 @@ export function FriendList({ onInvite }: { onInvite?: (id: string) => void }) {
 
   if (friends.length === 0) {
     return (
-      <div className="text-zinc-500 font-mono text-xs text-center py-12">
-        No friends added yet. Search by username to connect.
+      <div className="px-6 py-14 text-center">
+        <p className="text-body font-semibold text-ink">No friends yet</p>
+        <p className="mt-1 text-body text-ink-muted">
+          Find a player by name on the Add Friend tab to connect.
+        </p>
       </div>
     );
   }

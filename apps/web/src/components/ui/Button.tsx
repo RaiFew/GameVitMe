@@ -1,29 +1,36 @@
-﻿import { ButtonHTMLAttributes, forwardRef } from 'react';
+import { ButtonHTMLAttributes, forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 import { Loader2 } from 'lucide-react';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost' | 'live';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', isLoading, children, disabled, ...props }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center font-medium tracking-tight transition-all focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none cursor-pointer rounded-xs';
-    
+    const baseStyles =
+      'inline-flex items-center justify-center gap-2 rounded-xs font-semibold transition-colors ' +
+      'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-live ' +
+      'active:translate-y-px disabled:opacity-40 disabled:pointer-events-none cursor-pointer';
+
     const variants = {
-      primary: 'bg-black text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 border border-black dark:border-white shadow-xs',
-      secondary: 'bg-white text-black hover:bg-zinc-100 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-700',
-      outline: 'bg-transparent text-black dark:text-white border border-black dark:border-white hover:bg-black/5 dark:hover:bg-white/10',
-      danger: 'bg-transparent text-red-600 dark:text-red-400 border border-red-600 dark:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/30',
-      ghost: 'bg-transparent text-zinc-600 hover:text-black hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800 border border-transparent'
+      primary: 'bg-ink text-canvas hover:opacity-90 border border-transparent',
+      secondary: 'bg-canvas text-ink border border-rule hover:bg-surface-hover hover:border-ink',
+      outline: 'bg-transparent text-ink border border-rule hover:border-ink hover:bg-surface-hover',
+      danger: 'bg-transparent text-danger border border-danger/40 hover:bg-danger/10',
+      ghost: 'bg-transparent text-ink-muted border border-transparent hover:text-ink hover:bg-surface-hover',
+      // The one accent surface: your turn, right now.
+      live: 'bg-live text-live-ink border border-transparent hover:opacity-90',
     };
 
+    // Sentence case, not tracked-out caps. Caps come back only where the text
+    // is a fixed short label, which is what caps are actually for.
     const sizes = {
-      sm: 'h-9 px-3 text-xs uppercase tracking-wider font-semibold',
-      md: 'h-11 px-5 text-sm uppercase tracking-wider font-semibold',
-      lg: 'h-13 px-7 text-base uppercase tracking-wider font-bold'
+      sm: 'h-8 px-3 text-label',
+      md: 'h-10 px-4 text-label',
+      lg: 'h-12 px-6 text-body font-bold',
     };
 
     return (
@@ -33,7 +40,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || isLoading}
         {...props}
       >
-        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {isLoading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
         {children}
       </button>
     );

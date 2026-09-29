@@ -1,76 +1,76 @@
-﻿import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
-import { ArrowRight, Users, Shield, Zap } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
+
+/** The product's signature artifact: five characters and everyone is in. */
+const CODE_SPECIMEN = 'PXR42';
+
+const PILLARS = [
+  {
+    title: 'Instant rooms',
+    body: 'Start a lobby in seconds. Players join by scanning a QR code or typing a five-character code — no account required to get started.',
+  },
+  {
+    title: 'Host and screen mode',
+    body: 'Cast a TV or laptop as the room screen while players hold private roles and votes on their own phones.',
+  },
+  {
+    title: 'Server-authoritative',
+    body: 'The server holds the truth. Secret roles, locations, and timers are masked per player, so nothing worth hiding ever reaches a client.',
+  },
+];
 
 export default function HomePage() {
   const { isAuthenticated } = useAuthStore();
 
   return (
-    <div className="flex-1 flex flex-col justify-center">
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 max-w-5xl text-center space-y-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 text-xs font-mono uppercase tracking-widest font-semibold rounded-xs">
-          Multiplayer Party Platform
-        </div>
-
-        <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tighter uppercase text-black dark:text-white leading-[1.05]">
-          Play Real-Time<br />Social Games With Friends
+    <div className="flex-1 flex flex-col">
+      <section className="container mx-auto px-4 pt-20 pb-24 max-w-5xl">
+        <h1 className="text-display sm:text-[3.25rem] sm:leading-[1.05] font-extrabold max-w-[18ch]">
+          Everyone in the room in one code.
         </h1>
 
-        <p className="text-base sm:text-lg md:text-xl text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-          Minimal, fast, and server-authoritative party games. Join effortlessly on mobile or desktop via QR code or 5-character room code.
+        <p className="mt-6 text-body sm:text-title text-ink-muted max-w-[52ch]">
+          Real-time party games that run in the browser. No install, no lobby
+          naming arguments — a host makes a room, everyone reads out five
+          characters, and the game starts.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-          <Link to={isAuthenticated ? "/room/create" : "/login"} className="w-full sm:w-auto">
-            <Button size="lg" className="w-full sm:w-auto min-w-[200px]">
-              Create Room <ArrowRight size={16} className="ml-2" />
+        {/* The one ornament on the page: the code as a specimen, revealed once. */}
+        <div
+          className="mt-10 flex items-end gap-3 motion-safe:animate-[rise_600ms_cubic-bezier(0.2,0.8,0.2,1)_both]"
+          style={{ animationDelay: '120ms' }}
+        >
+          <span className="tabular font-mono text-[3.5rem] leading-none font-semibold tracking-[0.02em]">
+            {CODE_SPECIMEN}
+          </span>
+          <span className="pb-1.5 text-label text-ink-faint font-mono">
+            a room code
+          </span>
+        </div>
+
+        <div className="mt-10 flex flex-col sm:flex-row gap-3">
+          <Link to={isAuthenticated ? '/room/create' : '/login'} className="w-full sm:w-auto">
+            <Button size="lg" className="w-full sm:w-auto min-w-44">
+              Create a room
             </Button>
           </Link>
-          <Link to={isAuthenticated ? "/dashboard" : "/login"} className="w-full sm:w-auto">
-            <Button size="lg" variant="secondary" className="w-full sm:w-auto min-w-[200px]">
-              Join Game
+          <Link to={isAuthenticated ? '/dashboard' : '/login'} className="w-full sm:w-auto">
+            <Button size="lg" variant="secondary" className="w-full sm:w-auto min-w-44">
+              Join a game
             </Button>
           </Link>
         </div>
       </section>
 
-      {/* Feature Pillars */}
-      <section className="border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 py-16">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="p-6 border border-zinc-300 dark:border-zinc-800">
-              <span className="font-mono text-xs font-bold text-zinc-500">01</span>
-              <h3 className="text-lg font-black uppercase text-black dark:text-white mt-2 mb-2">
-                Instant Rooms
-              </h3>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Start a game lobby in seconds. Friends join directly by scanning a QR code or entering a 5-letter code.
-              </p>
-            </Card>
-
-            <Card className="p-6 border border-zinc-300 dark:border-zinc-800">
-              <span className="font-mono text-xs font-bold text-zinc-500">02</span>
-              <h3 className="text-lg font-black uppercase text-black dark:text-white mt-2 mb-2">
-                Host / Screen Mode
-              </h3>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Connect your TV or laptop as the room screen while players use their phones for private roles and voting.
-              </p>
-            </Card>
-
-            <Card className="p-6 border border-zinc-300 dark:border-zinc-800">
-              <span className="font-mono text-xs font-bold text-zinc-500">03</span>
-              <h3 className="text-lg font-black uppercase text-black dark:text-white mt-2 mb-2">
-                Server-Authoritative
-              </h3>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                State masking ensures secret roles, locations, and timers remain strictly protected from cheating.
-              </p>
-            </Card>
-          </div>
+      <section className="border-t border-rule bg-canvas-sunk">
+        <div className="container mx-auto px-4 py-16 max-w-5xl grid gap-10 md:grid-cols-3">
+          {PILLARS.map((p) => (
+            <div key={p.title}>
+              <h2 className="text-title font-bold">{p.title}</h2>
+              <p className="mt-3 text-body text-ink-muted">{p.body}</p>
+            </div>
+          ))}
         </div>
       </section>
     </div>

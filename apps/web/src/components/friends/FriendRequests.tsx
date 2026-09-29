@@ -35,8 +35,11 @@ export function FriendRequests() {
 
   if (requests.length === 0 && sent.length === 0) {
     return (
-      <div className="text-zinc-500 font-mono text-xs text-center py-12">
-        No pending friend requests.
+      <div className="px-6 py-14 text-center">
+        <p className="text-body font-semibold text-ink">No pending requests</p>
+        <p className="mt-1 text-body text-ink-muted">
+          Requests you send and receive will show up here.
+        </p>
       </div>
     );
   }

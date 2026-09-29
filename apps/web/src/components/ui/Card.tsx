@@ -1,29 +1,21 @@
-﻿import { HTMLAttributes, forwardRef } from 'react';
+import { HTMLAttributes, forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'subtle' | 'bordered';
+  /** 'live' is the single accent surface, for the player on turn. */
+  tone?: 'default' | 'sunk' | 'outline' | 'live';
 }
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = 'default', ...props }, ref) => {
-    const variants = {
-      default: 'bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100',
-      subtle: 'bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 text-zinc-900 dark:text-zinc-100',
-      bordered: 'bg-white dark:bg-zinc-950 border-2 border-black dark:border-white text-zinc-900 dark:text-zinc-100',
+  ({ className, tone = 'default', ...props }, ref) => {
+    const tones = {
+      default: 'bg-surface border border-rule',
+      sunk: 'bg-canvas-sunk border border-transparent',
+      outline: 'bg-transparent border border-rule',
+      live: 'bg-surface border border-live',
     };
 
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          'rounded-xs p-6 transition-colors',
-          variants[variant],
-          className
-        )}
-        {...props}
-      />
-    );
+    return <div ref={ref} className={cn('rounded-xs text-ink', tones[tone], className)} {...props} />;
   }
 );
 Card.displayName = 'Card';

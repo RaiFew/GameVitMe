@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -12,17 +12,43 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, className }: ModalProps) {
+  const panel = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+    if (!isOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      // Keep focus inside the dialog: a modal the keyboard can walk out of is
+      // not modal as far as a screen reader is concerned.
+      if (e.key !== 'Tab' || !panel.current) return;
+      const focusable = panel.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-    }
+
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    document.addEventListener('keydown', onKeyDown);
+    document.body.style.overflow = 'hidden';
+    panel.current?.focus();
+
     return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = '';
+      previouslyFocused?.focus();
     };
   }, [isOpen, onClose]);
 
@@ -38,26 +64,29 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             className="fixed inset-0 bg-black/70"
           />
           <motion.div
+            ref={panel}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.15 }}
             className={cn(
-              "relative w-full max-w-lg overflow-hidden rounded-xs bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 text-black dark:text-white p-6 shadow-2xl z-10",
+              'relative w-full max-w-lg overflow-hidden rounded-xs bg-surface border border-rule text-ink p-6 shadow-2xl z-10 focus:outline-none',
               className
             )}
           >
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 p-1 text-zinc-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
-              aria-label="Close modal"
+              className="absolute top-3 right-3 p-1.5 text-ink-faint hover:text-ink transition-colors cursor-pointer"
+              aria-label="Close"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
             {title && (
-              <h3 className="text-lg font-black uppercase tracking-tight text-black dark:text-white mb-4 pr-8">
-                {title}
-              </h3>
+              <h3 className="text-title font-bold text-ink mb-4 pr-8">{title}</h3>
             )}
             {children}
           </motion.div>

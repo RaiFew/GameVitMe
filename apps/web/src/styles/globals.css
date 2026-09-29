@@ -1,77 +1,156 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Semantic tokens. `inline` makes the generated utilities reference the
+   variables rather than copy their values, so .dark can flip them. */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-canvas-sunk: var(--canvas-sunk);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-hover: var(--surface-hover);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-live: var(--live);
+  --color-live-ink: var(--live-ink);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+
+  --font-display: var(--face-display);
+  --font-sans: var(--face-text);
+  --font-mono: var(--face-data);
+
+  /* Tracking tightens as size grows — the reverse of tracking-out labels. */
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1rem;
+  --text-micro--letter-spacing: 0.04em;
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.25rem;
+  --text-label--letter-spacing: 0.01em;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.6rem;
+  --text-title: 1.375rem;
+  --text-title--line-height: 1.75rem;
+  --text-title--letter-spacing: -0.015em;
+  --text-display: 2.25rem;
+  --text-display--line-height: 2.5rem;
+  --text-display--letter-spacing: -0.03em;
+
+  /* Near-zero radius is the brutalist signature; kept deliberately. */
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+}
+
 @layer base {
   :root {
-    --bg: #ffffff;
-    --bg-subtle: #f7f7f8;
+    --face-display: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --face-text: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --face-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+    --canvas: #ffffff;
+    --canvas-sunk: #f6f6f5;
     --surface: #ffffff;
-    --surface-hover: #f3f3f5;
-    --surface-active: #eaeaea;
-    --surface-muted: #f4f4f5;
+    --surface-raised: #ffffff;
+    --surface-hover: #f4f4f3;
+    --ink: #0a0a0a;
+    --ink-muted: #5c5c5a;
+    --ink-faint: #8e8e8b;
+    --rule: #e3e3e0;
+    --rule-strong: #0a0a0a;
 
-    --text-primary: #000000;
-    --text-secondary: #52525b;
-    --text-muted: #71717a;
-
-    --border: #000000;
-    --border-muted: #d4d4d8;
-    --border-subtle: #e4e4e7;
-
-    --btn-primary-bg: #000000;
-    --btn-primary-text: #ffffff;
-    --btn-primary-hover: #18181b;
-
-    --btn-secondary-bg: #ffffff;
-    --btn-secondary-text: #000000;
-    --btn-secondary-border: #000000;
-    --btn-secondary-hover: #f4f4f5;
-
-    --status-success: #15803d;
-    --status-danger: #b91c1c;
-    --status-warning: #b45309;
-    --status-info: #1d4ed8;
+    /* The one accent. Reserved for live/turn state, never decoration. */
+    --live: #2b50ff;
+    --live-ink: #ffffff;
+    --warn: #a35a00;
+    --success: #15714a;
+    --danger: #b42318;
   }
 
   .dark {
-    --bg: #09090b;
-    --bg-subtle: #121215;
-    --surface: #111113;
-    --surface-hover: #18181b;
-    --surface-active: #222226;
-    --surface-muted: #1c1c20;
+    --canvas: #0a0a0a;
+    --canvas-sunk: #131312;
+    --surface: #131312;
+    --surface-raised: #1c1c1a;
+    --surface-hover: #242421;
+    --ink: #f4f4f2;
+    --ink-muted: #a3a3a0;
+    --ink-faint: #777774;
+    --rule: #2c2c29;
+    --rule-strong: #f4f4f2;
 
-    --text-primary: #ffffff;
-    --text-secondary: #a1a1aa;
-    --text-muted: #71717a;
+    --live: #6b8bff;
+    --live-ink: #0a0a0a;
+    --warn: #e0a144;
+    --success: #4ade80;
+    --danger: #f87171;
+  }
 
-    --border: #ffffff;
-    --border-muted: #3f3f46;
-    --border-subtle: #27272a;
-
-    --btn-primary-bg: #ffffff;
-    --btn-primary-text: #000000;
-    --btn-primary-hover: #e4e4e7;
-
-    --btn-secondary-bg: #111113;
-    --btn-secondary-text: #ffffff;
-    --btn-secondary-border: #3f3f46;
-    --btn-secondary-hover: #18181b;
-
-    --status-success: #22c55e;
-    --status-danger: #ef4444;
-    --status-warning: #f59e0b;
-    --status-info: #3b82f6;
+  html {
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
-    background-color: var(--bg);
-    color: var(--text-primary);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    letter-spacing: -0.01em;
+    background-color: var(--canvas);
+    color: var(--ink);
+    font-family: var(--face-text);
+    font-size: 0.9375rem;
+    line-height: 1.6rem;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--face-display);
+    letter-spacing: -0.02em;
+  }
+
+  /* One visible focus treatment across every interactive element, instead of
+     the ad-hoc focus:ring-* overrides scattered through the components. */
+  :focus-visible {
+    outline: 2px solid var(--live);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--live);
+    color: var(--live-ink);
+  }
+
+  /* The single orchestrated entrance on the home page, referenced by name from
+     Tailwind's arbitrary animate value. */
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* The interface is a scoreboard watched at a distance: numerals must not
+     jitter as scores change. */
+  .tabular,
+  table,
+  time {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

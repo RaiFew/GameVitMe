@@ -1,5 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
+import { PageHeader } from '../components/ui/PageHeader';
 import { FriendList } from '../components/friends/FriendList';
 import { FriendSearch } from '../components/friends/FriendSearch';
 import { FriendRequests } from '../components/friends/FriendRequests';
@@ -18,24 +19,23 @@ export function FriendsPage() {
 
   return (
     <div className="container mx-auto px-4 py-10 max-w-3xl space-y-8">
-      <div className="border-b border-zinc-200 dark:border-zinc-800 pb-4">
-        <span className="text-xs font-mono font-bold uppercase tracking-widest text-zinc-500">
-          Social Network
-        </span>
-        <h1 className="text-3xl font-black uppercase tracking-tight text-black dark:text-white mt-1">
-          Friends
-        </h1>
-      </div>
+      <PageHeader
+        eyebrow="Social"
+        title="Friends"
+        description="Search for players by name, connect, then pull them into a room."
+      />
 
       <div className="space-y-6">
-        <div className="flex gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-2">
+        <div role="tablist" className="flex gap-1 border-b border-rule">
           {TABS.map((t) => (
             <button
               key={t.key}
-              className={`px-4 py-2 text-xs uppercase font-mono font-bold tracking-wider transition-colors cursor-pointer rounded-xs ${
+              role="tab"
+              aria-selected={active === t.key}
+              className={`-mb-px border-b-2 px-4 py-2.5 text-label font-semibold transition-colors cursor-pointer ${
                 active === t.key
-                  ? 'bg-black text-white dark:bg-white dark:text-black'
-                  : 'text-zinc-500 hover:text-black dark:hover:text-white'
+                  ? 'border-live text-ink'
+                  : 'border-transparent text-ink-muted hover:text-ink'
               }`}
               onClick={() => setTab(t.key)}
             >
@@ -44,7 +44,7 @@ export function FriendsPage() {
           ))}
         </div>
 
-        <Card className="p-0 border border-zinc-300 dark:border-zinc-800 overflow-hidden">
+        <Card className="p-0 overflow-hidden">
           {active === 'friends' && <FriendList />}
           {active === 'search' && (
             <div className="p-6">
