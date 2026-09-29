@@ -145,7 +145,9 @@ export function GamesPage() {
 
                 {isPlayable ? (
                   <Link to={`/room/create?game=${game.id}`} className="block w-full">
-                    <Button className="w-full">Start a room</Button>
+                    <Button variant="secondary" className="w-full">
+                      Start a room
+                    </Button>
                   </Link>
                 ) : (
                   <Button variant="secondary" className="w-full" disabled>
