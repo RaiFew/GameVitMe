@@ -1,9 +1,19 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Users, Shield, ArrowRight } from 'lucide-react';
+import { Input } from '../components/ui/Input';
 
 export function GamesPage() {
+  const [code, setCode] = useState('');
+  const navigate = useNavigate();
+
+  // JoinRoomPage forwards to the dashboard, which owns the socket handshake.
+  const submitCode = (e: React.FormEvent) => {
+    e.preventDefault();
+    const roomCode = code.trim().toUpperCase();
+    if (roomCode) navigate(`/join/${roomCode}`);
+  };
   const games = [
     {
       id: 'spyfall',
@@ -63,17 +73,40 @@ export function GamesPage() {
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-6xl">
-      <div className="border-b border-zinc-200 dark:border-zinc-800 pb-8 mb-10">
-        <span className="text-xs uppercase tracking-widest font-mono font-bold text-zinc-500 dark:text-zinc-400">
-          Game Catalogue
-        </span>
-        <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black dark:text-white mt-1">
-          Available Games
-        </h1>
-        <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2 max-w-xl">
-          Browse multiplayer party and social deduction games optimized for mobile and desktop screens.
+      <div className="border-b border-rule pb-8 mb-10">
+        <h1 className="text-display font-extrabold">Available Games</h1>
+        <p className="mt-2 text-body text-ink-muted max-w-xl">
+          Browse multiplayer party and social deduction games optimized for mobile and
+          desktop screens.
         </p>
       </div>
+
+      {/* Joining a room is one code, so it gets one field above the catalogue
+          rather than a button on every card. */}
+      <form
+        onSubmit={submitCode}
+        className="mb-12 flex flex-col sm:flex-row gap-3 sm:items-end"
+      >
+        <div className="flex-1">
+          <label htmlFor="join-code" className="block text-label font-semibold mb-2">
+            Got a room code?
+          </label>
+          <Input
+            id="join-code"
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            placeholder="5-character code"
+            maxLength={5}
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            className="font-mono tracking-[0.2em]"
+          />
+        </div>
+        <Button type="submit" size="lg" disabled={!code.trim()}>
+          Join room
+        </Button>
+      </form>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {games.map((game) => {
@@ -81,46 +114,42 @@ export function GamesPage() {
           return (
             <Card
               key={game.id}
-              className={`flex flex-col justify-between h-full border ${
-                isPlayable
-                  ? 'border-black dark:border-white'
-                  : 'border-zinc-200 dark:border-zinc-800 opacity-60'
+              className={`flex flex-col justify-between h-full ${
+                isPlayable ? 'border-rule-strong' : 'opacity-60'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-4">
-                  <span className="text-[10px] uppercase tracking-widest font-mono font-bold px-2 py-0.5 border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200">
+                  <span className="text-micro font-mono px-2 py-0.5 border border-rule bg-canvas-sunk text-ink-muted">
                     {game.category}
                   </span>
-                  <span className="text-[10px] uppercase tracking-wider font-semibold text-zinc-500">
-                    {game.status}
-                  </span>
+                  {isPlayable && (
+                    <span className="text-micro font-mono font-semibold text-live">
+                      {game.status}
+                    </span>
+                  )}
                 </div>
 
-                <h2 className="text-2xl font-black tracking-tight uppercase text-black dark:text-white mb-2">
-                  {game.name}
-                </h2>
+                <h2 className="text-title font-bold mb-2">{game.name}</h2>
 
-                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
+                <p className="text-label text-ink-muted leading-relaxed mb-6">
                   {game.description}
                 </p>
               </div>
 
               <div>
-                <div className="flex items-center justify-between text-xs font-mono text-zinc-500 dark:text-zinc-400 border-t border-zinc-200 dark:border-zinc-800 pt-4 mb-4">
+                <div className="flex items-center justify-between text-micro font-mono text-ink-faint border-t border-rule pt-4 mb-4">
                   <span>{game.players}</span>
                   <span>{game.duration}</span>
                 </div>
 
                 {isPlayable ? (
                   <Link to={`/room/create?game=${game.id}`} className="block w-full">
-                    <Button className="w-full text-xs">
-                      Play Now <ArrowRight size={14} className="ml-1" />
-                    </Button>
+                    <Button className="w-full">Start a room</Button>
                   </Link>
                 ) : (
-                  <Button variant="secondary" className="w-full text-xs" disabled>
-                    Coming Soon
+                  <Button variant="secondary" className="w-full" disabled>
+                    Coming soon
                   </Button>
                 )}
               </div>

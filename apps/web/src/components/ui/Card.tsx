@@ -15,7 +15,13 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       live: 'bg-surface border border-live',
     };
 
-    return <div ref={ref} className={cn('rounded-xs text-ink', tones[tone], className)} {...props} />;
+    return (
+      <div
+        ref={ref}
+        className={cn('rounded-xs p-6 text-ink transition-colors', tones[tone], className)}
+        {...props}
+      />
+    );
   }
 );
 Card.displayName = 'Card';
