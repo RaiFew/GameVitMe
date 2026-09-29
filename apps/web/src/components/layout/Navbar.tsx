@@ -15,12 +15,7 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Home', path: isAuthenticated ? '/dashboard' : '/' },
     { name: 'Games', path: '/games' },
-    ...(isAuthenticated
-      ? [
-          { name: 'Friends', path: '/friends' },
-          { name: 'Profile', path: '/profile' },
-        ]
-      : []),
+    ...(isAuthenticated ? [{ name: 'Friends', path: '/friends' }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -72,9 +67,13 @@ export default function Navbar() {
           {/* Auth Action */}
           {isAuthenticated ? (
             <div className="flex items-center gap-3">
-              <span className="text-label text-ink-muted">
+              <Link
+                to="/profile"
+                className="flex items-center gap-1.5 text-label text-ink-muted hover:text-ink transition-colors"
+              >
+                <User size={15} />
                 {user?.displayName}
-              </span>
+              </Link>
               <Button
                 variant="outline"
                 size="sm"
@@ -136,7 +135,10 @@ export default function Navbar() {
           <div className="pt-2 border-t border-rule flex items-center justify-between">
             {isAuthenticated ? (
               <div className="flex items-center justify-between w-full">
-                <span className="text-label text-ink-muted">{user?.displayName}</span>
+                <Link to="/profile" className="flex items-center gap-1.5 text-label text-ink-muted">
+                  <User size={15} />
+                  {user?.displayName}
+                </Link>
                 <Button
                   variant="outline"
                   size="sm"
