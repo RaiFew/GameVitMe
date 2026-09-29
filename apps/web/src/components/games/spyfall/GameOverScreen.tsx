@@ -37,31 +37,31 @@ export function GameOverScreen({ playerView, onPlayAgain, onReturnLobby }: GameO
       animate={{ opacity: 1, scale: 1 }}
       className="w-full max-w-2xl mx-auto"
     >
-      <Card className="text-center p-8 border-2 border-black dark:border-white">
-        <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block mb-1">
+      <Card className="text-center p-8 border-2 border-rule-strong">
+        <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block mb-1">
           Round Concluded
         </span>
         <h1 className={`text-3xl sm:text-4xl font-black uppercase mb-2 ${spyWon ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
           {spyWon ? 'The Spy Wins' : 'Normal Players Win'}
         </h1>
-        <p className="text-xs text-zinc-500 mb-8 max-w-lg mx-auto font-mono">{data.reason}</p>
+        <p className="text-xs text-ink-muted mb-8 max-w-lg mx-auto font-mono">{data.reason}</p>
 
         {/* Location & Spy Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-          <div className="border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-4 rounded-xs text-center">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 block mb-1">Secret Location</span>
-            <p className="text-xl font-black uppercase text-black dark:text-white">{data.location}</p>
+          <div className="border border-rule bg-canvas-sunk p-4 rounded-xs text-center">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-ink-muted block mb-1">Secret Location</span>
+            <p className="text-xl font-black uppercase text-ink">{data.location}</p>
           </div>
 
-          <div className="border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-4 rounded-xs text-center">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 block mb-1">The Spy Was</span>
+          <div className="border border-rule bg-canvas-sunk p-4 rounded-xs text-center">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-ink-muted block mb-1">The Spy Was</span>
             <p className="text-xl font-black uppercase text-red-600 dark:text-red-400">{spyPlayer?.displayName ?? 'The Spy'}</p>
           </div>
         </div>
 
         {/* All Roles Breakdown */}
-        <div className="border border-zinc-200 dark:border-zinc-800 p-4 rounded-xs mb-6 text-left">
-          <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-3 text-center">
+        <div className="border border-rule p-4 rounded-xs mb-6 text-left">
+          <p className="text-[10px] font-mono uppercase tracking-wider text-ink-muted mb-3 text-center">
             Player Roles Breakdown
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -75,7 +75,7 @@ export function GameOverScreen({ playerView, onPlayAgain, onReturnLobby }: GameO
                   className={`flex justify-between items-center p-2.5 rounded-xs border text-xs ${
                     isTheSpy
                       ? 'border-red-600/40 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400'
-                      : 'border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200'
+                      : 'border-rule text-ink'
                   }`}
                 >
                   <span className="font-bold">{p.displayName}</span>
@@ -88,8 +88,8 @@ export function GameOverScreen({ playerView, onPlayAgain, onReturnLobby }: GameO
 
         {/* Host Timer Controls */}
         {playerView.isHost && playerView.hostMode && onPlayAgain && (
-          <div className="border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-4 mb-6 rounded-xs max-w-md mx-auto">
-            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block mb-2">
+          <div className="border border-rule bg-canvas-sunk p-4 mb-6 rounded-xs max-w-md mx-auto">
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block mb-2">
               Next Round Duration
             </span>
             <div className="flex items-center justify-center gap-2 mb-3">
@@ -99,16 +99,16 @@ export function GameOverScreen({ playerView, onPlayAgain, onReturnLobby }: GameO
                 max="99"
                 value={minutes}
                 onChange={(e) => setMinutes(Math.max(0, parseInt(e.target.value) || 0))}
-                className="w-14 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-center font-mono text-base font-bold text-black dark:text-white rounded-xs p-1"
+                className="w-14 bg-canvas border border-rule text-center font-mono text-base font-bold text-ink rounded-xs p-1"
               />
-              <span className="font-mono text-zinc-400">:</span>
+              <span className="font-mono text-ink-faint">:</span>
               <input
                 type="number"
                 min="0"
                 max="59"
                 value={seconds}
                 onChange={(e) => setSeconds(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
-                className="w-14 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-center font-mono text-base font-bold text-black dark:text-white rounded-xs p-1"
+                className="w-14 bg-canvas border border-rule text-center font-mono text-base font-bold text-ink rounded-xs p-1"
               />
             </div>
             <div className="flex gap-1 justify-center">
@@ -122,8 +122,8 @@ export function GameOverScreen({ playerView, onPlayAgain, onReturnLobby }: GameO
                   }}
                   className={`px-2 py-0.5 text-[10px] font-mono font-bold border rounded-xs ${
                     minutes === m && seconds === 0
-                      ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white'
-                      : 'border-zinc-300 dark:border-zinc-700 text-zinc-500'
+                      ? 'bg-ink text-canvas border-rule-strong'
+                      : 'border-rule text-ink-muted'
                   }`}
                 >
                   {m}m
@@ -148,7 +148,7 @@ export function GameOverScreen({ playerView, onPlayAgain, onReturnLobby }: GameO
         </div>
 
         {!playerView.isHost && (
-          <p className="text-zinc-500 text-xs font-mono mt-4">
+          <p className="text-ink-muted text-xs font-mono mt-4">
             Waiting for Host to start another round or return to lobby...
           </p>
         )}

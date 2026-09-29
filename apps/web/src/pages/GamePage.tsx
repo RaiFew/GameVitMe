@@ -48,11 +48,11 @@ export function GamePage() {
   if (!room || !playerView) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-black dark:border-white border-t-transparent mb-4" />
-        <p className="text-zinc-500 font-mono text-xs uppercase tracking-wider">Synchronizing round state...</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-rule-strong border-t-transparent mb-4" />
+        <p className="text-ink-muted font-mono text-xs uppercase tracking-wider">Synchronizing round state...</p>
         <button
           onClick={() => socket?.emit('game:sync', { roomId: room?.id })}
-          className="text-xs font-mono text-zinc-500 underline mt-2 hover:text-black dark:hover:text-white"
+          className="text-xs font-mono text-ink-muted underline mt-2 hover:text-ink"
         >
           Tap to reconnect
         </button>
@@ -104,19 +104,19 @@ export function GamePage() {
   return (
     <div className="flex-1 flex flex-col bg-canvas">
       {/* Game Top Control Bar */}
-      <div className="bg-zinc-100/90 dark:bg-zinc-900/90 border-b border-zinc-200 dark:border-zinc-800 px-4 py-2 flex items-center justify-between text-xs font-mono">
+      <div className="bg-canvas-sunk/90 border-b border-rule px-4 py-2 flex items-center justify-between text-xs font-mono">
         <div className="flex items-center gap-2">
-          <span className="font-black uppercase tracking-wider text-black dark:text-white">
+          <span className="font-black uppercase tracking-wider text-ink">
             {room.name || room.gameType}
           </span>
-          <span className="text-zinc-400">•</span>
-          <span className="text-zinc-500 font-bold">CODE: {room.code}</span>
+          <span className="text-ink-faint">•</span>
+          <span className="text-ink-muted font-bold">CODE: {room.code}</span>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleReturnLobby}
-            className="px-2.5 py-1 text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white transition-colors cursor-pointer border border-zinc-300 dark:border-zinc-700 rounded-xs bg-white dark:bg-zinc-950 font-bold text-[11px]"
+            className="px-2.5 py-1 text-ink hover:text-ink transition-colors cursor-pointer border border-rule rounded-xs bg-canvas font-bold text-[11px]"
           >
             Lobby
           </button>
@@ -175,7 +175,7 @@ export function GamePage() {
         />
       ) : (
         <div className="p-8 text-center">
-          <p className="text-sm font-mono text-zinc-500">Unsupported game type: {room.gameType}</p>
+          <p className="text-sm font-mono text-ink-muted">Unsupported game type: {room.gameType}</p>
         </div>
       )}
     </div>

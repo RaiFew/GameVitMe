@@ -27,21 +27,21 @@ export function DayPhaseScreen({ playerView, onAction, isHost }: DayPhaseScreenP
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl space-y-8">
       {/* Day Banner */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="border-b border-rule pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500">
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted">
               Round {roundNumber}
             </span>
             <span className="border border-amber-600 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
               Day Phase
             </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black dark:text-white flex items-center gap-3">
+          <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-ink flex items-center gap-3">
             <Sun size={32} className="text-amber-500" />
             The Town Awakens
           </h1>
-          <p className="text-xs text-zinc-500 font-mono mt-1">
+          <p className="text-xs text-ink-muted font-mono mt-1">
             {isAnnouncement
               ? 'Dawn breaks over the village. Gather and witness what transpired in the dark.'
               : 'Real Talk Discussion in progress. No timer — discuss openly out loud or in chat.'}
@@ -61,7 +61,7 @@ export function DayPhaseScreen({ playerView, onAction, isHost }: DayPhaseScreenP
               </Button>
             )
           ) : (
-            <div className="border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-4 py-2 rounded-xs font-mono text-xs text-zinc-500">
+            <div className="border border-rule bg-canvas-sunk px-4 py-2 rounded-xs font-mono text-xs text-ink-muted">
               Waiting for Moderator to proceed...
             </div>
           )}
@@ -69,8 +69,8 @@ export function DayPhaseScreen({ playerView, onAction, isHost }: DayPhaseScreenP
       </div>
 
       {/* Night Casualties Banner */}
-      <Card className="p-6 border border-zinc-300 dark:border-zinc-800">
-        <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block mb-3">
+      <Card className="p-6 border border-rule">
+        <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block mb-3">
           Dawn Report
         </span>
 
@@ -107,11 +107,11 @@ export function DayPhaseScreen({ playerView, onAction, isHost }: DayPhaseScreenP
       {/* Living Town Roster */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-mono uppercase tracking-widest font-bold text-zinc-500 flex items-center gap-2">
+          <h3 className="text-xs font-mono uppercase tracking-widest font-bold text-ink-muted flex items-center gap-2">
             <Users size={15} />
             Living Citizens ({livingPlayers.length})
           </h3>
-          <span className="text-xs font-mono text-zinc-500">
+          <span className="text-xs font-mono text-ink-muted">
             Deceased: {deadPlayers.length}
           </span>
         </div>
@@ -122,13 +122,13 @@ export function DayPhaseScreen({ playerView, onAction, isHost }: DayPhaseScreenP
             return (
               <div
                 key={p.id}
-                className="p-3.5 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 rounded-xs flex items-center justify-between"
+                className="p-3.5 border border-rule bg-canvas rounded-xs flex items-center justify-between"
               >
                 <div className="min-w-0">
-                  <span className="block text-xs font-black uppercase text-black dark:text-white truncate">
+                  <span className="block text-xs font-black uppercase text-ink truncate">
                     {p.displayName} {isMe && '(You)'}
                   </span>
-                  <span className="text-[9px] font-mono text-zinc-500 block">
+                  <span className="text-[9px] font-mono text-ink-muted block">
                     Seat #{p.seatNumber}
                   </span>
                 </div>
@@ -141,8 +141,8 @@ export function DayPhaseScreen({ playerView, onAction, isHost }: DayPhaseScreenP
 
       {/* Cemetery / Dead Players */}
       {deadPlayers.length > 0 && (
-        <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
-          <h4 className="text-xs font-mono uppercase tracking-widest font-bold text-zinc-500 flex items-center gap-2">
+        <div className="pt-4 border-t border-rule space-y-3">
+          <h4 className="text-xs font-mono uppercase tracking-widest font-bold text-ink-muted flex items-center gap-2">
             <Skull size={15} />
             The Cemetery ({deadPlayers.length})
           </h4>
@@ -150,10 +150,10 @@ export function DayPhaseScreen({ playerView, onAction, isHost }: DayPhaseScreenP
             {deadPlayers.map((p) => (
               <div
                 key={p.id}
-                className="p-2 border border-zinc-200 dark:border-zinc-800 bg-zinc-100/50 dark:bg-zinc-900/40 rounded-xs text-xs font-mono text-zinc-500 flex items-center justify-between"
+                className="p-2 border border-rule bg-canvas-sunk/40 rounded-xs text-xs font-mono text-ink-muted flex items-center justify-between"
               >
                 <span className="line-through truncate">{p.displayName}</span>
-                <span className="text-[9px] uppercase font-bold text-zinc-400">DEAD</span>
+                <span className="text-[9px] uppercase font-bold text-ink-faint">DEAD</span>
               </div>
             ))}
           </div>

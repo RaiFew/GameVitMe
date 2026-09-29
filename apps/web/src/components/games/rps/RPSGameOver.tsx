@@ -36,48 +36,48 @@ export function RPSGameOver({
         className={`p-6 sm:p-8 text-center border-2 ${
           isMeWinner
             ? 'border-emerald-500 bg-emerald-500/10'
-            : 'border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950'
+            : 'border-rule bg-canvas'
         }`}
       >
         <div className="inline-flex p-3 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 mb-3">
           <Trophy className="w-8 h-8" />
         </div>
 
-        <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block">
+        <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
           Match Concluded
         </span>
 
-        <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black dark:text-white mt-1">
+        <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-ink mt-1">
           {winners.length === 1
             ? `${winners[0]?.displayName} Wins!`
             : 'Match Ended in Joint Victory!'}
         </h2>
 
         {winReason && (
-          <p className="text-xs font-mono font-bold text-zinc-600 dark:text-zinc-400 mt-2">
+          <p className="text-xs font-mono font-bold text-ink-muted mt-2">
             {winReason}
           </p>
         )}
 
         {/* Match Stats Summary */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-          <div className="p-2 rounded-xs bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-            <span className="text-[9px] font-mono text-zinc-500 uppercase block">Total Rounds</span>
-            <span className="text-sm font-black font-mono text-black dark:text-white">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-6 pt-4 border-t border-rule">
+          <div className="p-2 rounded-xs bg-canvas-sunk border border-rule">
+            <span className="text-[9px] font-mono text-ink-muted uppercase block">Total Rounds</span>
+            <span className="text-sm font-black font-mono text-ink">
               {stats?.totalRounds || playerView.roundNumber}
             </span>
           </div>
 
-          <div className="p-2 rounded-xs bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-            <span className="text-[9px] font-mono text-zinc-500 uppercase block">Most Thrown</span>
-            <span className="text-sm font-black font-mono text-black dark:text-white">
+          <div className="p-2 rounded-xs bg-canvas-sunk border border-rule">
+            <span className="text-[9px] font-mono text-ink-muted uppercase block">Most Thrown</span>
+            <span className="text-sm font-black font-mono text-ink">
               {stats?.mostCommonWeapon ? `${stats.mostCommonWeapon}` : 'Balanced'}
             </span>
           </div>
 
-          <div className="col-span-2 sm:col-span-1 p-2 rounded-xs bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-            <span className="text-[9px] font-mono text-zinc-500 uppercase block">Game Format</span>
-            <span className="text-sm font-black font-mono text-black dark:text-white">
+          <div className="col-span-2 sm:col-span-1 p-2 rounded-xs bg-canvas-sunk border border-rule">
+            <span className="text-[9px] font-mono text-ink-muted uppercase block">Game Format</span>
+            <span className="text-sm font-black font-mono text-ink">
               {gameMode === 'DUEL' ? '1v1 Duel' : gameMode === 'BATTLE_ROYALE' ? 'Battle Royale' : 'Points Race'}
             </span>
           </div>
@@ -85,8 +85,8 @@ export function RPSGameOver({
       </Card>
 
       {/* Leaderboard */}
-      <Card className="p-5 border border-zinc-300 dark:border-zinc-800 space-y-3">
-        <h3 className="text-xs font-mono uppercase tracking-wider font-bold text-zinc-500">
+      <Card className="p-5 border border-rule space-y-3">
+        <h3 className="text-xs font-mono uppercase tracking-wider font-bold text-ink-muted">
           Final Leaderboard
         </h3>
 
@@ -102,21 +102,21 @@ export function RPSGameOver({
                   isWinner
                     ? 'border-emerald-500 bg-emerald-500/10'
                     : isMe
-                    ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900'
-                    : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950'
+                    ? 'border-rule-strong bg-canvas-sunk'
+                    : 'border-rule bg-canvas'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="w-5 font-mono text-xs font-bold text-zinc-400">
+                  <span className="w-5 font-mono text-xs font-bold text-ink-faint">
                     #{index + 1}
                   </span>
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-xs sm:text-sm text-black dark:text-white">
+                      <span className="font-bold text-xs sm:text-sm text-ink">
                         {player.displayName}
                       </span>
                       {isMe && (
-                        <span className="text-[8px] font-mono uppercase px-1 rounded-xs bg-black dark:bg-white text-white dark:text-black">
+                        <span className="text-[8px] font-mono uppercase px-1 rounded-xs bg-ink text-canvas">
                           YOU
                         </span>
                       )}
@@ -129,11 +129,11 @@ export function RPSGameOver({
                   </div>
                 </div>
 
-                <div className="font-mono text-xs font-black text-black dark:text-white">
+                <div className="font-mono text-xs font-black text-ink">
                   {gameMode !== 'BATTLE_ROYALE' ? (
                     <span>{player.score} pts</span>
                   ) : (
-                    <span className={player.isAlive ? 'text-emerald-500' : 'text-zinc-400'}>
+                    <span className={player.isAlive ? 'text-emerald-500' : 'text-ink-faint'}>
                       {player.isAlive ? 'Survivor' : 'Eliminated'}
                     </span>
                   )}

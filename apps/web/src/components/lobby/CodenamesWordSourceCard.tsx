@@ -160,19 +160,19 @@ export function CodenamesWordSourceCard({ roomId, isHost, settings, onUpdateSett
   const isLimitReached = files.length >= 3;
 
   return (
-    <Card className="p-6 border border-zinc-300 dark:border-zinc-800 space-y-6">
-      <div className="border-b border-zinc-200 dark:border-zinc-800 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+    <Card className="p-6 border border-rule space-y-6">
+      <div className="border-b border-rule pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block">
+          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
             Codenames Word Configuration
           </span>
-          <h3 className="text-xl font-black uppercase tracking-tight text-black dark:text-white flex items-center gap-2 mt-0.5">
+          <h3 className="text-xl font-black uppercase tracking-tight text-ink flex items-center gap-2 mt-0.5">
             <BookOpen size={20} />
             Word Source Library
           </h3>
         </div>
 
-        <span className="text-xs font-mono font-bold text-zinc-500 border border-zinc-200 dark:border-zinc-800 px-2.5 py-1 rounded-xs">
+        <span className="text-xs font-mono font-bold text-ink-muted border border-rule px-2.5 py-1 rounded-xs">
           {files.length} / 3 Custom Files Used
         </span>
       </div>
@@ -186,20 +186,20 @@ export function CodenamesWordSourceCard({ roomId, isHost, settings, onUpdateSett
           onClick={() => handleSourceChange('DEFAULT')}
           className={`p-4 border rounded-xs text-left transition-all flex items-start justify-between ${
             currentSource === 'DEFAULT'
-              ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-2 ring-black dark:ring-white shadow-xs'
-              : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 bg-white dark:bg-zinc-950'
+              ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink shadow-xs'
+              : 'border-rule hover:border-ink/40 bg-canvas'
           }`}
         >
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-black text-sm uppercase text-black dark:text-white tracking-wider">
+              <span className="font-black text-sm uppercase text-ink tracking-wider">
                 Default Words
               </span>
-              <span className="text-[9px] font-mono uppercase bg-zinc-200 dark:bg-zinc-800 px-1.5 py-0.5 rounded-xs font-bold">
+              <span className="text-[9px] font-mono uppercase bg-surface-hover px-1.5 py-0.5 rounded-xs font-bold">
                 Built-In
               </span>
             </div>
-            <p className="text-xs font-mono text-zinc-500 mt-1">
+            <p className="text-xs font-mono text-ink-muted mt-1">
               Classic Codenames dictionary (~400 balanced words).
             </p>
           </div>
@@ -207,11 +207,11 @@ export function CodenamesWordSourceCard({ roomId, isHost, settings, onUpdateSett
           <div
             className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
               currentSource === 'DEFAULT'
-                ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black'
-                : 'border-zinc-400'
+                ? 'border-rule-strong bg-ink text-canvas'
+                : 'border-ink/40'
             }`}
           >
-            {currentSource === 'DEFAULT' && <div className="w-1.5 h-1.5 rounded-full bg-white dark:bg-black" />}
+            {currentSource === 'DEFAULT' && <div className="w-1.5 h-1.5 rounded-full bg-canvas" />}
           </div>
         </button>
 
@@ -222,20 +222,20 @@ export function CodenamesWordSourceCard({ roomId, isHost, settings, onUpdateSett
           onClick={() => handleSourceChange('CUSTOM')}
           className={`p-4 border rounded-xs text-left transition-all flex items-start justify-between ${
             currentSource === 'CUSTOM'
-              ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-2 ring-black dark:ring-white shadow-xs'
-              : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 bg-white dark:bg-zinc-950'
+              ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink shadow-xs'
+              : 'border-rule hover:border-ink/40 bg-canvas'
           }`}
         >
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-black text-sm uppercase text-black dark:text-white tracking-wider">
+              <span className="font-black text-sm uppercase text-ink tracking-wider">
                 My Word Files
               </span>
-              <span className="text-[9px] font-mono uppercase bg-zinc-200 dark:bg-zinc-800 px-1.5 py-0.5 rounded-xs font-bold">
+              <span className="text-[9px] font-mono uppercase bg-surface-hover px-1.5 py-0.5 rounded-xs font-bold">
                 Account Library
               </span>
             </div>
-            <p className="text-xs font-mono text-zinc-500 mt-1">
+            <p className="text-xs font-mono text-ink-muted mt-1">
               Play with your own saved custom word lists (.txt, .csv, .json).
             </p>
           </div>
@@ -243,11 +243,11 @@ export function CodenamesWordSourceCard({ roomId, isHost, settings, onUpdateSett
           <div
             className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
               currentSource === 'CUSTOM'
-                ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black'
-                : 'border-zinc-400'
+                ? 'border-rule-strong bg-ink text-canvas'
+                : 'border-ink/40'
             }`}
           >
-            {currentSource === 'CUSTOM' && <div className="w-1.5 h-1.5 rounded-full bg-white dark:bg-black" />}
+            {currentSource === 'CUSTOM' && <div className="w-1.5 h-1.5 rounded-full bg-canvas" />}
           </div>
         </button>
       </div>
@@ -255,8 +255,8 @@ export function CodenamesWordSourceCard({ roomId, isHost, settings, onUpdateSett
       {/* Custom Files Selection & Management Deck */}
       {currentSource === 'CUSTOM' && (
         <div className="space-y-4 pt-2">
-          <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-2">
-            <span className="text-xs font-mono uppercase font-bold text-zinc-500">
+          <div className="flex items-center justify-between border-b border-rule pb-2">
+            <span className="text-xs font-mono uppercase font-bold text-ink-muted">
               Select Saved Word File
             </span>
 
@@ -277,15 +277,15 @@ export function CodenamesWordSourceCard({ roomId, isHost, settings, onUpdateSett
           </div>
 
           {isLimitReached && (
-            <div className="p-3 border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 rounded-xs text-xs font-mono text-zinc-500">
+            <div className="p-3 border border-rule bg-canvas-sunk rounded-xs text-xs font-mono text-ink-muted">
               You can save up to 3 custom word files. Delete an existing file to upload a new one.
             </div>
           )}
 
           {files.length === 0 ? (
-            <div className="p-8 border border-dashed border-zinc-300 dark:border-zinc-700 text-center rounded-xs space-y-3">
-              <FileText size={32} className="mx-auto text-zinc-400" />
-              <p className="text-xs font-mono text-zinc-500">
+            <div className="p-8 border border-dashed border-rule text-center rounded-xs space-y-3">
+              <FileText size={32} className="mx-auto text-ink-faint" />
+              <p className="text-xs font-mono text-ink-muted">
                 You have not uploaded any custom word files yet.
               </p>
               {isHost && (
@@ -314,20 +314,20 @@ export function CodenamesWordSourceCard({ roomId, isHost, settings, onUpdateSett
                       isHost ? 'cursor-pointer' : ''
                     } ${
                       isSelected
-                        ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-2 ring-black dark:ring-white shadow-xs'
-                        : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:border-zinc-400'
+                        ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink shadow-xs'
+                        : 'border-rule bg-canvas hover:border-ink/40'
                     }`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-mono uppercase font-bold text-zinc-500">
+                        <span className="text-[10px] font-mono uppercase font-bold text-ink-muted">
                           {file.format}
                         </span>
                         {isHost && (
                           <button
                             type="button"
                             onClick={(e) => handleDeleteFile(file.id, e)}
-                            className="text-zinc-400 hover:text-red-600 transition-colors p-1"
+                            className="text-ink-faint hover:text-red-600 transition-colors p-1"
                             title="Delete File"
                           >
                             <Trash2 size={14} />
@@ -335,17 +335,17 @@ export function CodenamesWordSourceCard({ roomId, isHost, settings, onUpdateSett
                         )}
                       </div>
 
-                      <h4 className="text-sm font-black uppercase text-black dark:text-white truncate">
+                      <h4 className="text-sm font-black uppercase text-ink truncate">
                         {file.name}
                       </h4>
-                      <span className="text-xs font-mono font-bold text-zinc-500 block mt-0.5">
+                      <span className="text-xs font-mono font-bold text-ink-muted block mt-0.5">
                         {file.wordCount} words
                       </span>
                     </div>
 
-                    <div className="pt-3 mt-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                    <div className="pt-3 mt-3 border-t border-rule flex items-center justify-between">
                       <span className={`text-[10px] font-mono font-bold uppercase ${
-                        isSelected ? 'text-black dark:text-white' : 'text-zinc-400'
+                        isSelected ? 'text-ink' : 'text-ink-faint'
                       }`}>
                         {isSelected ? '✓ Active in Room' : 'Click to Use'}
                       </span>
@@ -365,12 +365,12 @@ export function CodenamesWordSourceCard({ roomId, isHost, settings, onUpdateSett
         title="Upload Custom Word File"
       >
         <div className="space-y-4">
-          <p className="text-xs font-mono text-zinc-500">
+          <p className="text-xs font-mono text-ink-muted">
             Upload a text file containing words for Codenames. Supports <strong>.txt</strong> (one word per line), <strong>.csv</strong>, or <strong>.json</strong>.
           </p>
 
           <div>
-            <label className="text-[10px] font-mono uppercase font-bold text-zinc-500 block mb-1">
+            <label className="text-[10px] font-mono uppercase font-bold text-ink-muted block mb-1">
               Select File (.txt, .csv, .json)
             </label>
             <input
@@ -383,7 +383,7 @@ export function CodenamesWordSourceCard({ roomId, isHost, settings, onUpdateSett
 
           {uploadFileName && (
             <div>
-              <label className="text-[10px] font-mono uppercase font-bold text-zinc-500 block mb-1">
+              <label className="text-[10px] font-mono uppercase font-bold text-ink-muted block mb-1">
                 Display Name in Library
               </label>
               <Input
@@ -427,7 +427,7 @@ export function CodenamesWordSourceCard({ roomId, isHost, settings, onUpdateSett
             <p className="text-xs font-mono text-red-600 dark:text-red-400 font-bold">{saveError}</p>
           )}
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="flex justify-end gap-3 pt-3 border-t border-rule">
             <Button variant="secondary" size="sm" onClick={() => setIsUploadModalOpen(false)}>
               Cancel
             </Button>

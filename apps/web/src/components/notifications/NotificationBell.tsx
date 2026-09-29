@@ -92,7 +92,7 @@ export function NotificationBell() {
     <div className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="relative p-2 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer rounded-xs hover:bg-zinc-100 dark:hover:bg-zinc-800"
+        className="relative p-2 text-ink-muted hover:text-ink transition-colors cursor-pointer rounded-xs hover:bg-surface"
         aria-label={`Notifications (${count})`}
       >
         <Bell size={17} />
@@ -106,11 +106,11 @@ export function NotificationBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xs shadow-xl z-50">
+          <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-canvas border border-rule rounded-xs shadow-xl z-50">
             {count === 0 ? (
-              <p className="p-4 text-xs font-mono text-zinc-500 text-center">Nothing new.</p>
+              <p className="p-4 text-xs font-mono text-ink-muted text-center">Nothing new.</p>
             ) : (
-              <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+              <div className="divide-y divide-rule">
                 {error && (
                   <p className="p-3 text-xs font-mono text-red-600 dark:text-red-400 font-bold">
                     {error}
@@ -120,13 +120,13 @@ export function NotificationBell() {
                 {invitations.map(inv => (
                   <div key={inv.id} className="p-3 space-y-2">
                     <div className="flex items-start gap-2">
-                      <Gamepad2 size={14} className="mt-0.5 shrink-0 text-zinc-500" />
+                      <Gamepad2 size={14} className="mt-0.5 shrink-0 text-ink-muted" />
                       <div className="text-xs">
-                        <span className="font-bold text-black dark:text-white">{inv.inviterName}</span>{' '}
-                        <span className="text-zinc-600 dark:text-zinc-400">
+                        <span className="font-bold text-ink">{inv.inviterName}</span>{' '}
+                        <span className="text-ink-muted">
                           invited you to {inv.roomName || inv.roomCode}
                         </span>
-                        <div className="text-[10px] font-mono text-zinc-400 uppercase mt-0.5">
+                        <div className="text-[10px] font-mono text-ink-faint uppercase mt-0.5">
                           {inv.gameType.replace(/_/g, ' ')}
                         </div>
                       </div>
@@ -162,9 +162,9 @@ export function NotificationBell() {
                     }}
                     className="w-full text-left p-3 flex items-start gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors cursor-pointer"
                   >
-                    <UserPlus size={14} className="mt-0.5 shrink-0 text-zinc-500" />
-                    <span className="text-xs text-zinc-600 dark:text-zinc-400">
-                      <span className="font-bold text-black dark:text-white">
+                    <UserPlus size={14} className="mt-0.5 shrink-0 text-ink-muted" />
+                    <span className="text-xs text-ink-muted">
+                      <span className="font-bold text-ink">
                         {req.requester?.displayName || req.requester?.name || 'Someone'}
                       </span>{' '}
                       sent you a friend request

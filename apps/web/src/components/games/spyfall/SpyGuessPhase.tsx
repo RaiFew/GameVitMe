@@ -7,22 +7,22 @@ export function SpyGuessPhase({ playerView, onAction }: any) {
 
   if (!playerView.isSpy) {
     return (
-      <Card className="p-8 text-center max-w-md mx-auto border border-zinc-300 dark:border-zinc-800">
-        <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block mb-1">
+      <Card className="p-8 text-center max-w-md mx-auto border border-rule">
+        <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block mb-1">
           Spy Revealed
         </span>
         <h2 className="text-xl font-black uppercase text-red-600 dark:text-red-400 mb-2">Spy is Guessing</h2>
-        <p className="text-xs text-zinc-500">The Spy has stepped forward and is choosing a location from the reference grid.</p>
+        <p className="text-xs text-ink-muted">The Spy has stepped forward and is choosing a location from the reference grid.</p>
       </Card>
     );
   }
 
   return (
-    <Card className="p-8 max-w-3xl w-full mx-auto border-2 border-black dark:border-white">
-      <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block mb-1 text-center">
+    <Card className="p-8 max-w-3xl w-full mx-auto border-2 border-rule-strong">
+      <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block mb-1 text-center">
         Final Chance
       </span>
-      <h2 className="text-2xl font-black uppercase text-black dark:text-white mb-6 text-center">
+      <h2 className="text-2xl font-black uppercase text-ink mb-6 text-center">
         Guess The Location
       </h2>
 
@@ -33,8 +33,8 @@ export function SpyGuessPhase({ playerView, onAction }: any) {
             onClick={() => setSelected(loc)}
             className={`p-3 rounded-xs text-xs font-mono font-bold transition-colors border text-left cursor-pointer ${
               selected === loc
-                ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white'
-                : 'bg-white dark:bg-zinc-950 text-black dark:text-white border-zinc-300 dark:border-zinc-700 hover:border-black dark:hover:border-white'
+                ? 'bg-ink text-canvas border-rule-strong'
+                : 'bg-canvas text-ink border-rule hover:border-rule-strong'
             }`}
           >
             {loc}

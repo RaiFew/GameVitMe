@@ -85,19 +85,19 @@ export function NumberGridSettingsCard({
   };
 
   return (
-    <Card className="p-5 border border-zinc-300 dark:border-zinc-800 space-y-4">
+    <Card className="p-5 border border-rule space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block">
+          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
             Game Rules
           </span>
-          <h3 className="text-sm font-black uppercase tracking-tight text-black dark:text-white mt-0.5">
+          <h3 className="text-sm font-black uppercase tracking-tight text-ink mt-0.5">
             Number Rush Settings
           </h3>
         </div>
 
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-xs border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300">
+          <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-xs border border-rule bg-canvas-sunk text-ink">
             {difficultyMode} Progression
           </span>
         </div>
@@ -105,7 +105,7 @@ export function NumberGridSettingsCard({
 
       {/* Difficulty Mode Selector */}
       <div className="space-y-2">
-        <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-bold block">
+        <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold block">
           Difficulty Progression
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -116,15 +116,15 @@ export function NumberGridSettingsCard({
             onClick={() => handleDifficultySelect('DEFAULT')}
             className={`p-3 border rounded-xs text-left transition-all flex flex-col justify-between ${
               difficultyMode === 'DEFAULT'
-                ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-2 ring-black dark:ring-white'
-                : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 bg-white dark:bg-zinc-950'
+                ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink'
+                : 'border-rule hover:border-ink/40 bg-canvas'
             } ${!isHost ? 'opacity-75 cursor-default' : 'cursor-pointer'}`}
           >
             <div className="flex items-center justify-between w-full mb-1">
-              <span className="text-xs font-black uppercase text-black dark:text-white">Default</span>
-              <span className="text-xs font-mono font-bold text-zinc-400">9 Rds</span>
+              <span className="text-xs font-black uppercase text-ink">Default</span>
+              <span className="text-xs font-mono font-bold text-ink-faint">9 Rds</span>
             </div>
-            <p className="text-[10px] font-mono text-zinc-500">
+            <p className="text-[10px] font-mono text-ink-muted">
               Starts at 2x2 and scales sequentially up to 10x10.
             </p>
           </button>
@@ -136,15 +136,15 @@ export function NumberGridSettingsCard({
             onClick={() => handleDifficultySelect('CUSTOM')}
             className={`p-3 border rounded-xs text-left transition-all flex flex-col justify-between ${
               difficultyMode === 'CUSTOM'
-                ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-2 ring-black dark:ring-white'
-                : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 bg-white dark:bg-zinc-950'
+                ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink'
+                : 'border-rule hover:border-ink/40 bg-canvas'
             } ${!isHost ? 'opacity-75 cursor-default' : 'cursor-pointer'}`}
           >
             <div className="flex items-center justify-between w-full mb-1">
-              <span className="text-xs font-black uppercase text-black dark:text-white">Custom</span>
-              <Settings size={13} className="text-zinc-500" />
+              <span className="text-xs font-black uppercase text-ink">Custom</span>
+              <Settings size={13} className="text-ink-muted" />
             </div>
-            <p className="text-[10px] font-mono text-zinc-500">
+            <p className="text-[10px] font-mono text-ink-muted">
               Choose your own sequence of rounds and grid sizes.
             </p>
           </button>
@@ -156,15 +156,15 @@ export function NumberGridSettingsCard({
             onClick={() => handleDifficultySelect('RANDOM')}
             className={`p-3 border rounded-xs text-left transition-all flex flex-col justify-between ${
               difficultyMode === 'RANDOM'
-                ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-2 ring-black dark:ring-white'
-                : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 bg-white dark:bg-zinc-950'
+                ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink'
+                : 'border-rule hover:border-ink/40 bg-canvas'
             } ${!isHost ? 'opacity-75 cursor-default' : 'cursor-pointer'}`}
           >
             <div className="flex items-center justify-between w-full mb-1">
-              <span className="text-xs font-black uppercase text-black dark:text-white">Random</span>
+              <span className="text-xs font-black uppercase text-ink">Random</span>
               <span className="text-sm">🎲</span>
             </div>
-            <p className="text-[10px] font-mono text-zinc-500">
+            <p className="text-[10px] font-mono text-ink-muted">
               Server randomly picks a grid size (2x2 to 10x10) per round.
             </p>
           </button>
@@ -173,16 +173,16 @@ export function NumberGridSettingsCard({
 
       {/* Custom Rounds Configurator */}
       {difficultyMode === 'CUSTOM' && (
-        <div className="space-y-3 p-3 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xs">
+        <div className="space-y-3 p-3 bg-canvas-sunk/50 border border-rule rounded-xs">
           <div className="flex items-center justify-between">
-            <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-bold">
+            <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold">
               Configured Rounds ({customGridSizes.length})
             </label>
             {isHost && customGridSizes.length < 12 && (
               <button
                 type="button"
                 onClick={handleAddCustomRound}
-                className="text-[10px] font-mono font-bold text-black dark:text-white flex items-center gap-1 hover:underline cursor-pointer"
+                className="text-[10px] font-mono font-bold text-ink flex items-center gap-1 hover:underline cursor-pointer"
               >
                 <Plus size={11} /> Add Round
               </button>
@@ -193,9 +193,9 @@ export function NumberGridSettingsCard({
             {customGridSizes.map((size, idx) => (
               <div
                 key={idx}
-                className="flex items-center gap-1.5 p-1.5 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 rounded-xs text-xs font-mono"
+                className="flex items-center gap-1.5 p-1.5 border border-rule bg-canvas rounded-xs text-xs font-mono"
               >
-                <span className="text-[10px] text-zinc-400 font-bold">R{idx + 1}:</span>
+                <span className="text-[10px] text-ink-faint font-bold">R{idx + 1}:</span>
                 <select
                   disabled={!isHost}
                   value={size}
@@ -205,7 +205,7 @@ export function NumberGridSettingsCard({
                   className="bg-transparent text-xs font-bold font-mono outline-none cursor-pointer"
                 >
                   {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((s) => (
-                    <option key={s} value={s} className="bg-white dark:bg-zinc-950 text-black dark:text-white">
+                    <option key={s} value={s} className="bg-canvas text-ink">
                       {s}x{s} ({s * s} nums)
                     </option>
                   ))}
@@ -228,8 +228,8 @@ export function NumberGridSettingsCard({
 
       {/* Random Mode Rounds Selector */}
       {difficultyMode === 'RANDOM' && (
-        <div className="space-y-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
-          <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-bold block">
+        <div className="space-y-2 pt-2 border-t border-rule">
+          <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold block">
             Number of Random Rounds
           </label>
           <div className="flex gap-2">
@@ -241,8 +241,8 @@ export function NumberGridSettingsCard({
                 onClick={() => handleRandomRoundsChange(rounds)}
                 className={`flex-1 py-1.5 px-3 text-xs font-mono font-bold rounded-xs border transition-all ${
                   totalRounds === rounds
-                    ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black'
-                    : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300'
+                    ? 'border-rule-strong bg-ink text-canvas'
+                    : 'border-rule hover:border-ink/40 bg-canvas-sunk text-ink'
                 } ${!isHost ? 'cursor-default opacity-80' : 'cursor-pointer'}`}
               >
                 {rounds} Rounds
@@ -253,12 +253,12 @@ export function NumberGridSettingsCard({
       )}
 
       {/* Player HP (Health Points) */}
-      <div className="space-y-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+      <div className="space-y-2 pt-2 border-t border-rule">
         <div className="flex items-center justify-between">
-          <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-bold">
+          <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold">
             Starting Player Health (HP)
           </label>
-          <span className="text-xs font-mono font-bold text-black dark:text-white">
+          <span className="text-xs font-mono font-bold text-ink">
             {maxHp} HP (Wrong click = -1 HP)
           </span>
         </div>
@@ -269,7 +269,7 @@ export function NumberGridSettingsCard({
               type="button"
               onClick={() => handleHpChange(maxHp - 1)}
               disabled={maxHp <= 1}
-              className="p-1.5 border border-zinc-300 dark:border-zinc-700 rounded-xs hover:border-black dark:hover:border-white disabled:opacity-40"
+              className="p-1.5 border border-rule rounded-xs hover:border-rule-strong disabled:opacity-40"
             >
               <Minus size={12} />
             </button>
@@ -287,7 +287,7 @@ export function NumberGridSettingsCard({
                     ? 'border-red-500 bg-red-500 text-white'
                     : hpVal <= maxHp
                     ? 'border-red-200 dark:border-red-950 bg-red-50/50 dark:bg-red-950/20 text-red-600 dark:text-red-400'
-                    : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-400'
+                    : 'border-rule bg-canvas-sunk text-ink-faint'
                 } ${!isHost ? 'cursor-default' : 'cursor-pointer'}`}
               >
                 {hpVal}
@@ -300,7 +300,7 @@ export function NumberGridSettingsCard({
               type="button"
               onClick={() => handleHpChange(maxHp + 1)}
               disabled={maxHp >= 10}
-              className="p-1.5 border border-zinc-300 dark:border-zinc-700 rounded-xs hover:border-black dark:hover:border-white disabled:opacity-40"
+              className="p-1.5 border border-rule rounded-xs hover:border-rule-strong disabled:opacity-40"
             >
               <Plus size={12} />
             </button>
@@ -310,12 +310,12 @@ export function NumberGridSettingsCard({
 
       {/* Multiplayer Damage Mode (only when 3+ players) */}
       {playerCount >= 3 && (
-        <div className="space-y-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="space-y-2 pt-2 border-t border-rule">
           <div className="flex items-center justify-between">
-            <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-bold">
+            <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold">
               Multiplayer Round Damage Mode
             </label>
-            <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded-xs bg-zinc-100 dark:bg-zinc-900 text-zinc-500">
+            <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded-xs bg-canvas-sunk text-ink-muted">
               3+ Players Active
             </span>
           </div>
@@ -327,14 +327,14 @@ export function NumberGridSettingsCard({
               onClick={() => handleDamageModeSelect('LAST_PLAYER')}
               className={`p-2.5 border rounded-xs text-left transition-all ${
                 damageMode === 'LAST_PLAYER'
-                  ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-2 ring-black dark:ring-white'
-                  : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 bg-white dark:bg-zinc-950'
+                  ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink'
+                  : 'border-rule hover:border-ink/40 bg-canvas'
               } ${!isHost ? 'opacity-75 cursor-default' : 'cursor-pointer'}`}
             >
-              <span className="text-xs font-bold text-black dark:text-white block">
+              <span className="text-xs font-bold text-ink block">
                 Last Player Only
               </span>
-              <span className="text-[10px] font-mono text-zinc-500 block mt-0.5">
+              <span className="text-[10px] font-mono text-ink-muted block mt-0.5">
                 Only the last player to finish takes 1 round damage.
               </span>
             </button>
@@ -345,14 +345,14 @@ export function NumberGridSettingsCard({
               onClick={() => handleDamageModeSelect('EVERYONE_EXCEPT_FIRST')}
               className={`p-2.5 border rounded-xs text-left transition-all ${
                 damageMode === 'EVERYONE_EXCEPT_FIRST'
-                  ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-2 ring-black dark:ring-white'
-                  : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 bg-white dark:bg-zinc-950'
+                  ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink'
+                  : 'border-rule hover:border-ink/40 bg-canvas'
               } ${!isHost ? 'opacity-75 cursor-default' : 'cursor-pointer'}`}
             >
-              <span className="text-xs font-bold text-black dark:text-white block">
+              <span className="text-xs font-bold text-ink block">
                 Everyone Except 1st
               </span>
-              <span className="text-[10px] font-mono text-zinc-500 block mt-0.5">
+              <span className="text-[10px] font-mono text-ink-muted block mt-0.5">
                 High stakes! Everyone except the 1st finisher takes 1 round damage.
               </span>
             </button>

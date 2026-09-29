@@ -25,22 +25,22 @@ export function QRCodeDisplay({ roomCode }: { roomCode: string }) {
   return (
     <div className="flex flex-col items-center w-full">
       {/* QR Code Container */}
-      <div className="bg-white p-3 border border-zinc-300 dark:border-zinc-700 rounded-xs mb-4 shadow-xs">
+      <div className="bg-white p-3 border border-rule rounded-xs mb-4 shadow-xs">
         {showCode ? (
           <QRCodeSVG value={joinUrl} size={180} />
         ) : (
-          <div className="w-[180px] h-[180px] flex flex-col items-center justify-center bg-zinc-100 text-zinc-400 font-mono text-xs uppercase text-center p-4">
-            <EyeOff size={28} className="mb-2 text-zinc-500" />
+          <div className="w-[180px] h-[180px] flex flex-col items-center justify-center bg-canvas-sunk text-ink-faint font-mono text-xs uppercase text-center p-4">
+            <EyeOff size={28} className="mb-2 text-ink-muted" />
             <span>QR Hidden</span>
           </div>
         )}
       </div>
 
       {/* Room Code Box */}
-      <div className="flex items-center justify-between w-full border border-black dark:border-white p-2.5 px-4 rounded-xs bg-zinc-50 dark:bg-zinc-900">
+      <div className="flex items-center justify-between w-full border border-rule-strong p-2.5 px-4 rounded-xs bg-canvas-sunk">
         <div className="flex flex-col text-left">
-          <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-500 font-bold">Room Code</span>
-          <span className="text-2xl font-mono tracking-widest font-black text-black dark:text-white uppercase select-all">
+          <span className="text-[9px] font-mono uppercase tracking-widest text-ink-muted font-bold">Room Code</span>
+          <span className="text-2xl font-mono tracking-widest font-black text-ink uppercase select-all">
             {showCode ? roomCode : '•••••'}
           </span>
         </div>

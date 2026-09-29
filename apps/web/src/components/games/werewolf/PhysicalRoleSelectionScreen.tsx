@@ -53,14 +53,14 @@ export function PhysicalRoleSelectionScreen({ playerView, onAction, isHost }: Pr
   if (isHost) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl space-y-8">
-        <div className="border-b border-zinc-200 dark:border-zinc-800 pb-6 text-center sm:text-left">
-          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block">
+        <div className="border-b border-rule pb-6 text-center sm:text-left">
+          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
             Moderator Monitor
           </span>
-          <h1 className="text-3xl font-black uppercase tracking-tight text-black dark:text-white mt-1">
+          <h1 className="text-3xl font-black uppercase tracking-tight text-ink mt-1">
             Physical Card Selection
           </h1>
-          <p className="text-xs text-zinc-500 font-mono mt-1">
+          <p className="text-xs text-ink-muted font-mono mt-1">
             Players are entering their physical board game cards into their phones.
           </p>
         </div>
@@ -72,24 +72,24 @@ export function PhysicalRoleSelectionScreen({ playerView, onAction, isHost }: Pr
           </div>
         )}
 
-        <Card className="p-8 border border-zinc-300 dark:border-zinc-800 text-center space-y-6">
-          <div className="w-12 h-12 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mx-auto text-zinc-600 dark:text-zinc-300">
+        <Card className="p-8 border border-rule text-center space-y-6">
+          <div className="w-12 h-12 rounded-full border border-rule bg-canvas-sunk flex items-center justify-center mx-auto text-ink-muted">
             <Smartphone size={24} />
           </div>
 
           <div className="space-y-2 max-w-md mx-auto">
-            <h3 className="font-black text-sm uppercase tracking-wider text-black dark:text-white">
+            <h3 className="font-black text-sm uppercase tracking-wider text-ink">
               Zero-Leak Confidentiality Active
             </h3>
-            <p className="text-xs text-zinc-500 font-mono leading-relaxed">
+            <p className="text-xs text-ink-muted font-mono leading-relaxed">
               Role assignments are strictly confidential. To prevent deduction or timing leaks, player confirmation progress is not visible.
             </p>
-            <p className="text-xs text-zinc-500 font-mono">
+            <p className="text-xs text-ink-muted font-mono">
               Once all players have entered their physical cards, press the button below to start the game.
             </p>
           </div>
 
-          <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="pt-4 border-t border-rule">
             <Button
               variant="primary"
               size="lg"
@@ -108,15 +108,15 @@ export function PhysicalRoleSelectionScreen({ playerView, onAction, isHost }: Pr
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800 pb-4 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="border-b border-rule pb-4 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-4">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block">
+          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
             Physical Card Verification
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black dark:text-white mt-1">
+          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-ink mt-1">
             Pick Your Physical Card
           </h1>
-          <p className="text-xs text-zinc-500 font-mono mt-1">
+          <p className="text-xs text-ink-muted font-mono mt-1">
             Look at the card dealt to you in real life and select it below.
           </p>
         </div>
@@ -147,10 +147,10 @@ export function PhysicalRoleSelectionScreen({ playerView, onAction, isHost }: Pr
           <div className="inline-flex p-2 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">
             <Check size={24} />
           </div>
-          <h3 className="font-bold text-sm uppercase text-black dark:text-white">
+          <h3 className="font-bold text-sm uppercase text-ink">
             Role confirmed. Please wait for the game to start.
           </h3>
-          <p className="text-xs text-zinc-500 font-mono">
+          <p className="text-xs text-ink-muted font-mono">
             Your card is locked in. The host will start the round once all players are confirmed.
           </p>
         </Card>
@@ -158,12 +158,12 @@ export function PhysicalRoleSelectionScreen({ playerView, onAction, isHost }: Pr
 
       {/* Selected State: "You selected: [Role Name] [CONFIRM] [CHANGE]" */}
       {!me.roleConfirmed && selectedRole && (
-        <div className="p-4 border-2 border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 rounded-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="p-4 border-2 border-rule-strong bg-canvas-sunk rounded-xs flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left">
-            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">
+            <span className="text-[10px] font-mono text-ink-muted uppercase tracking-wider block">
               Current Selection
             </span>
-            <span className="text-base font-black uppercase text-black dark:text-white">
+            <span className="text-base font-black uppercase text-ink">
               You selected: <span className="underline">{selectedRole.name}</span>
             </span>
           </div>
@@ -191,7 +191,7 @@ export function PhysicalRoleSelectionScreen({ playerView, onAction, isHost }: Pr
 
       {/* Category filter tabs */}
       {!me.roleConfirmed && (
-        <div className="flex flex-wrap gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-2">
+        <div className="flex flex-wrap gap-2 border-b border-rule pb-2">
           {(['ALL', 'VILLAGER', 'WEREWOLF', 'NEUTRAL', 'ADDITIONAL'] as const).map((cat) => (
             <button
               key={cat}
@@ -199,8 +199,8 @@ export function PhysicalRoleSelectionScreen({ playerView, onAction, isHost }: Pr
               onClick={() => setActiveCategory(cat)}
               className={`px-3 py-1 text-xs font-mono font-bold uppercase rounded-xs border transition-all ${
                 activeCategory === cat
-                  ? 'border-black dark:border-white bg-black text-white dark:bg-white dark:text-black'
-                  : 'border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:border-zinc-400'
+                  ? 'border-rule-strong bg-ink text-canvas'
+                  : 'border-rule text-ink-muted hover:border-ink/40'
               }`}
             >
               {cat === 'VILLAGER' ? 'Villagers' : cat}
@@ -220,26 +220,26 @@ export function PhysicalRoleSelectionScreen({ playerView, onAction, isHost }: Pr
               onClick={() => !me.roleConfirmed && handleSelectRole(role.id)}
               className={`p-4 border rounded-xs transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
                 isSelected
-                  ? 'border-black dark:border-white ring-2 ring-black dark:ring-white bg-zinc-50 dark:bg-zinc-900'
-                  : 'border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 bg-white dark:bg-black'
+                  ? 'border-rule-strong ring-2 ring-ink bg-canvas-sunk'
+                  : 'border-rule hover:border-ink/40 bg-canvas'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <h4 className="font-bold text-sm uppercase text-black dark:text-white">
+                  <h4 className="font-bold text-sm uppercase text-ink">
                     {role.name}
                   </h4>
                   <span
                     className={`text-[9px] font-mono font-bold px-1.5 py-0.5 uppercase tracking-wider rounded-xs border ${
                       role.alignment === 'EVIL'
                         ? 'border-red-600 text-red-600 dark:border-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/20'
-                        : 'border-zinc-400 text-zinc-700 dark:border-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800'
+                        : 'border-ink/40 text-ink bg-surface'
                     }`}
                   >
                     {role.alignment}
                   </span>
                 </div>
-                <p className="text-xs text-zinc-500 line-clamp-2">{role.description}</p>
+                <p className="text-xs text-ink-muted line-clamp-2">{role.description}</p>
               </div>
             </div>
           );

@@ -32,16 +32,16 @@ export function ProfilePage() {
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-xl space-y-6">
-      <div className="border-b border-zinc-200 dark:border-zinc-800 pb-4">
-        <span className="text-xs font-mono font-bold uppercase tracking-widest text-zinc-500">
+      <div className="border-b border-rule pb-4">
+        <span className="text-xs font-mono font-bold uppercase tracking-widest text-ink-muted">
           Account Settings
         </span>
-        <h1 className="text-3xl font-black uppercase tracking-tight text-black dark:text-white mt-1">
+        <h1 className="text-3xl font-black uppercase tracking-tight text-ink mt-1">
           Profile
         </h1>
       </div>
 
-      <Card className="flex flex-col items-center text-center p-8 border border-zinc-300 dark:border-zinc-800">
+      <Card className="flex flex-col items-center text-center p-8 border border-rule">
         <Avatar
           src={user.avatarUrl}
           fallback={user.displayName}
@@ -67,7 +67,7 @@ export function ProfilePage() {
           </div>
         ) : (
           <div className="mb-6 flex items-center gap-3">
-            <h2 className="text-2xl font-black uppercase tracking-tight text-black dark:text-white">
+            <h2 className="text-2xl font-black uppercase tracking-tight text-ink">
               {user.displayName}
             </h2>
             <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="text-xs py-1 px-3">
@@ -76,32 +76,32 @@ export function ProfilePage() {
           </div>
         )}
 
-        <div className="w-full text-left space-y-3 p-4 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 rounded-xs">
+        <div className="w-full text-left space-y-3 p-4 border border-rule bg-canvas-sunk/60 rounded-xs">
           <div>
-            <span className="text-zinc-500 text-[10px] font-mono uppercase tracking-wider block">Username</span>
-            <p className="text-black dark:text-white text-sm font-mono font-bold">@{(user as any).username || user.displayName}</p>
+            <span className="text-ink-muted text-[10px] font-mono uppercase tracking-wider block">Username</span>
+            <p className="text-ink text-sm font-mono font-bold">@{(user as any).username || user.displayName}</p>
           </div>
           <div>
-            <span className="text-zinc-500 text-[10px] font-mono uppercase tracking-wider block">Email</span>
-            <p className="text-black dark:text-white text-sm font-mono">{(user as any).email || 'Guest Player (No Email)'}</p>
+            <span className="text-ink-muted text-[10px] font-mono uppercase tracking-wider block">Email</span>
+            <p className="text-ink text-sm font-mono">{(user as any).email || 'Guest Player (No Email)'}</p>
           </div>
           <div>
-            <span className="text-zinc-500 text-[10px] font-mono uppercase tracking-wider block">Account Created</span>
-            <p className="text-black dark:text-white text-sm font-mono">{new Date((user as any).createdAt || Date.now()).toLocaleDateString()}</p>
+            <span className="text-ink-muted text-[10px] font-mono uppercase tracking-wider block">Account Created</span>
+            <p className="text-ink text-sm font-mono">{new Date((user as any).createdAt || Date.now()).toLocaleDateString()}</p>
           </div>
         </div>
 
         {/* Streamer Mode Privacy Setting */}
-        <div className="w-full text-left p-4 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 rounded-xs mt-4">
+        <div className="w-full text-left p-4 border border-rule bg-canvas-sunk/60 rounded-xs mt-4">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block">
+              <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
                 Privacy & Broadcast
               </span>
-              <h3 className="text-sm font-black uppercase tracking-tight text-black dark:text-white mt-0.5">
+              <h3 className="text-sm font-black uppercase tracking-tight text-ink mt-0.5">
                 Streamer Mode
               </h3>
-              <p className="text-xs text-zinc-500 font-mono mt-1 max-w-sm">
+              <p className="text-xs text-ink-muted font-mono mt-1 max-w-sm">
                 Always hides room join codes and QR codes across the site by default to prevent stream sniping.
               </p>
             </div>
@@ -110,7 +110,7 @@ export function ProfilePage() {
               type="button"
               onClick={toggleStreamerMode}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                streamerMode ? 'bg-black dark:bg-white' : 'bg-zinc-300 dark:bg-zinc-700'
+                streamerMode ? 'bg-ink' : 'bg-surface-hover'
               }`}
               role="switch"
               aria-checked={streamerMode}
@@ -125,7 +125,7 @@ export function ProfilePage() {
 
           <div className="mt-2 text-[10px] font-mono font-bold uppercase">
             Status:{' '}
-            <span className={streamerMode ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-500'}>
+            <span className={streamerMode ? 'text-emerald-600 dark:text-emerald-400' : 'text-ink-muted'}>
               {streamerMode ? 'ACTIVE (Codes & QR Hidden)' : 'OFF (Normal Display)'}
             </span>
           </div>

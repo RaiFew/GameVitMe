@@ -45,7 +45,7 @@ export function FriendRequests() {
   }
 
   return (
-    <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+    <div className="divide-y divide-rule">
       {error && (
         <p className="p-3 text-xs font-mono text-red-600 dark:text-red-400 font-bold">{error}</p>
       )}
@@ -55,10 +55,10 @@ export function FriendRequests() {
           <div className="flex items-center gap-3">
             <Avatar fallback={nameOf(req.requester)} src={req.requester?.avatarUrl ?? undefined} />
             <div>
-              <div className="text-black dark:text-white font-bold text-sm">
+              <div className="text-ink font-bold text-sm">
                 {nameOf(req.requester)}
               </div>
-              <div className="text-zinc-500 text-xs font-mono">Wants to connect</div>
+              <div className="text-ink-muted text-xs font-mono">Wants to connect</div>
             </div>
           </div>
           <div className="flex gap-2">
@@ -77,10 +77,10 @@ export function FriendRequests() {
           <div className="flex items-center gap-3">
             <Avatar fallback={nameOf(req.addressee)} src={req.addressee?.avatarUrl ?? undefined} />
             <div>
-              <div className="text-black dark:text-white font-bold text-sm">
+              <div className="text-ink font-bold text-sm">
                 {nameOf(req.addressee)}
               </div>
-              <div className="text-zinc-500 text-xs font-mono">Request sent · awaiting reply</div>
+              <div className="text-ink-muted text-xs font-mono">Request sent · awaiting reply</div>
             </div>
           </div>
           <Button size="sm" variant="outline" onClick={() => cancelSent(req.id)}>

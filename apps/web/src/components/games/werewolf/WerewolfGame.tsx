@@ -110,7 +110,7 @@ export function WerewolfGame({
 
     default:
       return (
-        <div className="p-8 text-center text-xs font-mono text-zinc-500">
+        <div className="p-8 text-center text-xs font-mono text-ink-muted">
           Unknown phase: {playerView.phase}
         </div>
       );

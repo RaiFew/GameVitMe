@@ -103,33 +103,33 @@ export function InviteFriends({ onClose }: { onClose: () => void }) {
   return (
     <Modal isOpen={true} onClose={onClose}>
       <div className="space-y-4">
-        <div className="border-b border-zinc-200 dark:border-zinc-800 pb-2">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-bold">
+        <div className="border-b border-rule pb-2">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-ink-muted font-bold">
             Lobby
           </span>
-          <h2 className="text-xl font-black uppercase tracking-tight text-black dark:text-white">
+          <h2 className="text-xl font-black uppercase tracking-tight text-ink">
             Invite Friends
           </h2>
-          <p className="text-[10px] font-mono text-zinc-500 mt-1">
+          <p className="text-[10px] font-mono text-ink-muted mt-1">
             Invitations expire after 30 minutes.
           </p>
         </div>
 
         <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
           {rows.length === 0 ? (
-            <p className="text-zinc-500 text-xs font-mono text-center py-6">
+            <p className="text-ink-muted text-xs font-mono text-center py-6">
               No friends available to invite.
             </p>
           ) : (
             rows.map(friend => (
               <div
                 key={friend.id}
-                className="flex items-center justify-between p-3 border border-zinc-200 dark:border-zinc-800 rounded-xs"
+                className="flex items-center justify-between p-3 border border-rule rounded-xs"
               >
                 <label className="flex items-center gap-3 flex-1 cursor-pointer">
                   <input
                     type="checkbox"
-                    className="accent-black dark:accent-white"
+                    className="accent-ink"
                     checked={selected.has(friend.id)}
                     disabled={friend.state !== 'idle'}
                     onChange={() => toggle(friend.id)}
@@ -140,10 +140,10 @@ export function InviteFriends({ onClose }: { onClose: () => void }) {
                     size="sm"
                   />
                   <div>
-                    <span className="text-black dark:text-white font-bold text-xs block">
+                    <span className="text-ink font-bold text-xs block">
                       {friend.displayName}
                     </span>
-                    <span className="text-[10px] font-mono text-zinc-400 uppercase">
+                    <span className="text-[10px] font-mono text-ink-faint uppercase">
                       {friend.isOnline ? 'Online' : 'Offline'}
                     </span>
                   </div>
@@ -154,7 +154,7 @@ export function InviteFriends({ onClose }: { onClose: () => void }) {
                     In Room
                   </span>
                 ) : friend.state === 'sent' ? (
-                  <span className="text-[10px] font-mono font-bold uppercase text-zinc-500">
+                  <span className="text-[10px] font-mono font-bold uppercase text-ink-muted">
                     Invitation Sent
                   </span>
                 ) : (
@@ -177,7 +177,7 @@ export function InviteFriends({ onClose }: { onClose: () => void }) {
           <p className="text-xs font-mono text-red-600 dark:text-red-400 font-bold">{error}</p>
         )}
 
-        <div className="flex justify-end gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="flex justify-end gap-3 pt-3 border-t border-rule">
           <Button variant="secondary" size="sm" onClick={onClose}>
             Close
           </Button>

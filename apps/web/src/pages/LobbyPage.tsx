@@ -53,8 +53,8 @@ export function LobbyPage() {
   if (!room || !user) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-black dark:border-white border-t-transparent mb-4" />
-        <p className="text-zinc-500 font-mono text-xs uppercase tracking-wider">Synchronizing room state...</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-rule-strong border-t-transparent mb-4" />
+        <p className="text-ink-muted font-mono text-xs uppercase tracking-wider">Synchronizing room state...</p>
       </div>
     );
   }
@@ -152,10 +152,10 @@ export function LobbyPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="border border-black dark:border-white text-black dark:text-white text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
+            <span className="border border-rule-strong text-ink text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
               {room.gameType.toUpperCase()}
             </span>
-            <span className="border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
+            <span className="border border-rule bg-canvas-sunk text-ink-muted text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
               {isHostForced
                 ? 'Host Moderator Mode (1 Host)'
                 : isCodenames
@@ -182,10 +182,10 @@ export function LobbyPage() {
               </span>
             )}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-ink">
             {room.name || 'Game Lobby'}
           </h1>
-          <p className="text-zinc-500 text-xs font-mono mt-1">
+          <p className="text-ink-muted text-xs font-mono mt-1">
             {isHostForced
               ? `${room.gameType === 'salem' ? 'Salem 1692' : 'Werewolf'} requires 1 Host Moderator + 4 to 12 players (5+ users in room)`
               : isCodenames
@@ -237,7 +237,7 @@ export function LobbyPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Player Count Alert */}
           {players.length < minPlayers && (
-            <div className="border border-zinc-400 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 p-4 rounded-xs text-xs font-mono flex items-center justify-between">
+            <div className="border border-ink/40 bg-canvas-sunk text-ink p-4 rounded-xs text-xs font-mono flex items-center justify-between">
               <span>Waiting for {minPlayers - players.length} more player(s) to join.</span>
               <span className="font-bold">{players.length} / {minPlayers} MIN</span>
             </div>
@@ -245,14 +245,14 @@ export function LobbyPage() {
 
           {/* Host Tab Switcher for Werewolf / Salem (Shows members first by default) */}
           {isHost && isRoleGame && (
-            <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-2">
+            <div className="flex items-center gap-2 border-b border-rule pb-2">
               <button
                 type="button"
                 onClick={() => setHostTab('members')}
                 className={`px-3 py-1.5 text-xs font-mono font-bold uppercase rounded-xs border transition-all flex items-center gap-2 ${
                   hostTab === 'members'
-                    ? 'border-black dark:border-white bg-black text-white dark:bg-white dark:text-black'
-                    : 'border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-500'
+                    ? 'border-rule-strong bg-ink text-canvas'
+                    : 'border-rule text-ink-muted hover:border-ink/40'
                 }`}
               >
                 <Users size={14} />
@@ -264,8 +264,8 @@ export function LobbyPage() {
                 onClick={() => setHostTab('roles')}
                 className={`px-3 py-1.5 text-xs font-mono font-bold uppercase rounded-xs border transition-all flex items-center gap-2 ${
                   hostTab === 'roles'
-                    ? 'border-black dark:border-white bg-black text-white dark:bg-white dark:text-black'
-                    : 'border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-500'
+                    ? 'border-rule-strong bg-ink text-canvas'
+                    : 'border-rule text-ink-muted hover:border-ink/40'
                 }`}
               >
                 <Shield size={14} />
@@ -279,12 +279,12 @@ export function LobbyPage() {
 
           {/* Members View (Default for host, only view for players) */}
           {(!isHost || !isRoleGame || hostTab === 'members') && (
-            <Card className="p-6 border border-zinc-300 dark:border-zinc-800">
-              <div className="flex items-center justify-between mb-4 border-b border-zinc-200 dark:border-zinc-800 pb-3">
-                <h2 className="text-sm font-black uppercase tracking-wider text-black dark:text-white flex items-center gap-2">
+            <Card className="p-6 border border-rule">
+              <div className="flex items-center justify-between mb-4 border-b border-rule pb-3">
+                <h2 className="text-sm font-black uppercase tracking-wider text-ink flex items-center gap-2">
                   Connected Players ({players.length} / {room.maxPlayers})
                 </h2>
-                <span className="text-[10px] font-mono text-zinc-500">
+                <span className="text-[10px] font-mono text-ink-muted">
                   Ready: {readyCount} / {playingPlayers.length}
                 </span>
               </div>
@@ -313,18 +313,18 @@ export function LobbyPage() {
 
           {/* Codenames Mode Selector (Visible when 2 players in room or currently in TWO_PLAYER mode) */}
           {isCodenames && (players.length === 2 || isCodenamesTwoPlayer) && (
-            <Card className="p-5 border border-zinc-300 dark:border-zinc-800 space-y-3">
+            <Card className="p-5 border border-rule space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block">
+                  <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
                     Codenames Ruleset
                   </span>
-                  <h3 className="text-sm font-black uppercase tracking-tight text-black dark:text-white mt-0.5">
+                  <h3 className="text-sm font-black uppercase tracking-tight text-ink mt-0.5">
                     Select Game Mode
                   </h3>
                 </div>
 
-                <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-xs border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300">
+                <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-xs border border-rule bg-canvas-sunk text-ink">
                   {isCodenamesTwoPlayer ? '2-Player Co-op' : 'Classic Mode'}
                 </span>
               </div>
@@ -336,24 +336,24 @@ export function LobbyPage() {
                   onClick={() => updateSettings({ codenamesGameMode: 'CLASSIC' })}
                   className={`p-3 border rounded-xs text-left transition-all flex items-start justify-between ${
                     !isCodenamesTwoPlayer
-                      ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-2 ring-black dark:ring-white'
-                      : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 bg-white dark:bg-zinc-950'
+                      ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink'
+                      : 'border-rule hover:border-ink/40 bg-canvas'
                   } ${!isHost ? 'opacity-75 cursor-default' : 'cursor-pointer'}`}
                 >
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-black uppercase text-black dark:text-white">Classic Codenames</span>
+                      <span className="text-xs font-black uppercase text-ink">Classic Codenames</span>
                     </div>
-                    <p className="text-[10px] font-mono text-zinc-500 mt-1">
+                    <p className="text-[10px] font-mono text-ink-muted mt-1">
                       2 opposing teams: Red vs Blue (4 to 20 players).
                     </p>
                   </div>
                   <div
                     className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
-                      !isCodenamesTwoPlayer ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-zinc-400'
+                      !isCodenamesTwoPlayer ? 'border-rule-strong bg-ink' : 'border-ink/40'
                     }`}
                   >
-                    {!isCodenamesTwoPlayer && <div className="w-1.5 h-1.5 rounded-full bg-white dark:bg-black" />}
+                    {!isCodenamesTwoPlayer && <div className="w-1.5 h-1.5 rounded-full bg-canvas" />}
                   </div>
                 </button>
 
@@ -363,27 +363,27 @@ export function LobbyPage() {
                   onClick={() => updateSettings({ codenamesGameMode: 'TWO_PLAYER' })}
                   className={`p-3 border rounded-xs text-left transition-all flex items-start justify-between ${
                     isCodenamesTwoPlayer
-                      ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-2 ring-black dark:ring-white'
-                      : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 bg-white dark:bg-zinc-950'
+                      ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink'
+                      : 'border-rule hover:border-ink/40 bg-canvas'
                   } ${!isHost ? 'opacity-75 cursor-default' : 'cursor-pointer'}`}
                 >
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-black uppercase text-black dark:text-white">2-Player Cooperative</span>
+                      <span className="text-xs font-black uppercase text-ink">2-Player Cooperative</span>
                       <span className="text-[9px] font-mono uppercase bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 px-1 py-0.2 rounded-xs font-bold">
                         Co-op
                       </span>
                     </div>
-                    <p className="text-[10px] font-mono text-zinc-500 mt-1">
+                    <p className="text-[10px] font-mono text-ink-muted mt-1">
                       Play together on the same team (Requires exactly 2 players).
                     </p>
                   </div>
                   <div
                     className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
-                      isCodenamesTwoPlayer ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-zinc-400'
+                      isCodenamesTwoPlayer ? 'border-rule-strong bg-ink' : 'border-ink/40'
                     }`}
                   >
-                    {isCodenamesTwoPlayer && <div className="w-1.5 h-1.5 rounded-full bg-white dark:bg-black" />}
+                    {isCodenamesTwoPlayer && <div className="w-1.5 h-1.5 rounded-full bg-canvas" />}
                   </div>
                 </button>
               </div>
@@ -475,7 +475,7 @@ export function LobbyPage() {
                   : 'Start Round'}
               </Button>
             ) : (
-              <div className="flex-1 flex items-center justify-center text-xs font-mono text-zinc-500 bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 px-4 text-center rounded-xs">
+              <div className="flex-1 flex items-center justify-center text-xs font-mono text-ink-muted bg-canvas-sunk border border-rule px-4 text-center rounded-xs">
                 {!enoughPlayers
                   ? `Need ${minPlayers - players.length} more player(s)...`
                   : !currentPlayer?.isReady
@@ -490,8 +490,8 @@ export function LobbyPage() {
 
         {/* Right Column: QR Code & Settings */}
         <div className="space-y-6">
-          <Card className="flex flex-col items-center p-6 border border-zinc-300 dark:border-zinc-800">
-            <h3 className="text-xs font-mono uppercase tracking-widest font-bold text-zinc-500 mb-4">
+          <Card className="flex flex-col items-center p-6 border border-rule">
+            <h3 className="text-xs font-mono uppercase tracking-widest font-bold text-ink-muted mb-4">
               Scan / Join Code
             </h3>
             <QRCodeDisplay roomCode={roomCode || room.code || ''} />
@@ -499,34 +499,34 @@ export function LobbyPage() {
 
           {/* Timer Settings in Host Mode */}
           {isHostMode && isHost && (
-            <Card className="p-6 border border-zinc-300 dark:border-zinc-800">
-              <h3 className="text-xs font-mono uppercase tracking-widest font-bold text-zinc-500 mb-1">
+            <Card className="p-6 border border-rule">
+              <h3 className="text-xs font-mono uppercase tracking-widest font-bold text-ink-muted mb-1">
                 Round Duration
               </h3>
-              <p className="text-xs text-zinc-500 mb-4">Configure questioning countdown timer (00:30 to 99:59)</p>
+              <p className="text-xs text-ink-muted mb-4">Configure questioning countdown timer (00:30 to 99:59)</p>
 
               <div className="flex items-center gap-2 mb-3">
                 <div className="flex-1">
-                  <label className="text-[10px] font-mono text-zinc-500 uppercase block mb-1">Minutes (0–99)</label>
+                  <label className="text-[10px] font-mono text-ink-muted uppercase block mb-1">Minutes (0–99)</label>
                   <input
                     type="number"
                     min={0}
                     max={99}
                     value={minutes}
                     onChange={(e) => handleTimerChange(e.target.value, seconds)}
-                    className="w-full bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-black dark:text-white rounded-xs p-2 text-center text-base font-mono font-bold focus:border-black dark:focus:border-white outline-none"
+                    className="w-full bg-canvas border border-rule text-ink rounded-xs p-2 text-center text-base font-mono font-bold focus:border-rule-strong outline-none"
                   />
                 </div>
-                <span className="text-xl font-mono font-bold text-zinc-400 mt-4">:</span>
+                <span className="text-xl font-mono font-bold text-ink-faint mt-4">:</span>
                 <div className="flex-1">
-                  <label className="text-[10px] font-mono text-zinc-500 uppercase block mb-1">Seconds (0–59)</label>
+                  <label className="text-[10px] font-mono text-ink-muted uppercase block mb-1">Seconds (0–59)</label>
                   <input
                     type="number"
                     min={0}
                     max={59}
                     value={seconds}
                     onChange={(e) => handleTimerChange(minutes, e.target.value)}
-                    className="w-full bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-black dark:text-white rounded-xs p-2 text-center text-base font-mono font-bold focus:border-black dark:focus:border-white outline-none"
+                    className="w-full bg-canvas border border-rule text-ink rounded-xs p-2 text-center text-base font-mono font-bold focus:border-rule-strong outline-none"
                   />
                 </div>
               </div>
@@ -534,7 +534,7 @@ export function LobbyPage() {
               {timerError ? (
                 <p className="text-[10px] font-mono text-red-600 dark:text-red-400">{timerError}</p>
               ) : (
-                <p className="text-[10px] font-mono text-zinc-500">
+                <p className="text-[10px] font-mono text-ink-muted">
                   Current duration: {minutes.padStart(2, '0')}:{seconds.padStart(2, '0')}
                 </p>
               )}
@@ -542,8 +542,8 @@ export function LobbyPage() {
           )}
 
           {/* Quick Rules Card */}
-          <Card className="p-6 border border-zinc-300 dark:border-zinc-800">
-            <h3 className="text-xs font-mono uppercase tracking-widest font-bold text-zinc-500 mb-3">
+          <Card className="p-6 border border-rule">
+            <h3 className="text-xs font-mono uppercase tracking-widest font-bold text-ink-muted mb-3">
               {isRPS
                 ? 'Rock Paper Scissors Overview'
                 : isCodenames
@@ -553,7 +553,7 @@ export function LobbyPage() {
                 : 'Spyfall Overview'}
             </h3>
             {isRPS ? (
-              <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-2 list-disc list-inside">
+              <ul className="text-xs text-ink-muted space-y-2 list-disc list-inside">
                 <li>Secretly lock in 🪨 <strong>Rock</strong>, 📄 <strong>Paper</strong>, or ✂️ <strong>Scissors</strong> before the countdown expires!</li>
                 <li><strong>Rules</strong>: Rock crushes Scissors, Scissors cuts Paper, Paper covers Rock.</li>
                 <li><strong>Battle Royale Mode</strong>: If 2 weapons are thrown, the losing weapon players are eliminated! If all 3 weapons or all identical weapons are thrown, it's a standoff!</li>
@@ -561,7 +561,7 @@ export function LobbyPage() {
               </ul>
             ) : isCodenames ? (
               isCodenamesTwoPlayer ? (
-                <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-2 list-disc list-inside">
+                <ul className="text-xs text-ink-muted space-y-2 list-disc list-inside">
                   <li><strong>Cooperative</strong>: 2 players work together on the same team!</li>
                   <li>1 <strong>Spymaster</strong> gives 1-word clues + number of matching agents.</li>
                   <li>1 <strong>Operative</strong> deduces and uncovers the 9 friendly cards.</li>
@@ -569,7 +569,7 @@ export function LobbyPage() {
                   <li>Uncovering the <strong>Assassin</strong> immediately ends the game in defeat!</li>
                 </ul>
               ) : (
-                <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-2 list-disc list-inside">
+                <ul className="text-xs text-ink-muted space-y-2 list-disc list-inside">
                   <li>2 Teams: <strong>RED</strong> vs <strong>BLUE</strong> (min 4 players).</li>
                   <li>Each team has 1 Spymaster and 1+ Operatives.</li>
                   <li>Spymasters give 1-word clues + number indicating matching words.</li>
@@ -577,13 +577,13 @@ export function LobbyPage() {
                 </ul>
               )
             ) : isRoleGame ? (
-              <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-2 list-disc list-inside">
+              <ul className="text-xs text-ink-muted space-y-2 list-disc list-inside">
                 <li>Social deduction between Town/Village and hidden evils.</li>
                 <li>Follow the Host Moderator instructions during Day and Night phases.</li>
                 <li>Accuse, deliberate, and vote out suspects.</li>
               </ul>
             ) : (
-              <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-2 list-disc list-inside">
+              <ul className="text-xs text-ink-muted space-y-2 list-disc list-inside">
                 <li>1 player is the secret Spy; others know the secret location.</li>
                 <li>Ask clever questions out loud to identify the Spy.</li>
                 <li>The Spy attempts to deduce the secret location.</li>

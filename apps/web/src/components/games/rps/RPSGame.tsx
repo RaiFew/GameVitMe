@@ -90,21 +90,21 @@ export function RPSGame({
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl space-y-6">
       {/* Top Match HUD */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-200 dark:border-zinc-800 pb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-rule pb-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="border border-black dark:border-white bg-black text-white dark:bg-white dark:text-black text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
+            <span className="border border-rule-strong bg-ink text-canvas text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
               {gameMode === 'DUEL'
                 ? '1v1 Duel'
                 : gameMode === 'BATTLE_ROYALE'
                 ? 'Battle Royale'
                 : 'Points Race'}
             </span>
-            <span className="text-xs font-mono font-bold text-zinc-500">
+            <span className="text-xs font-mono font-bold text-ink-muted">
               Round {roundNumber}
             </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black dark:text-white">
+          <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-ink">
             Rock Paper Scissors
           </h2>
         </div>
@@ -112,7 +112,7 @@ export function RPSGame({
         {/* Right HUD Stats */}
         <div className="flex items-center gap-3">
           {gameMode !== 'BATTLE_ROYALE' && (
-            <div className="px-3 py-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xs text-xs font-mono font-bold text-zinc-700 dark:text-zinc-300">
+            <div className="px-3 py-1 bg-canvas-sunk border border-rule rounded-xs text-xs font-mono font-bold text-ink">
               First to {targetScore} pts
             </div>
           )}
@@ -122,7 +122,7 @@ export function RPSGame({
               className={`flex items-center gap-1.5 px-3 py-1 rounded-xs border font-mono text-xs font-black ${
                 secondsRemaining <= 3
                   ? 'border-red-500 bg-red-500/10 text-red-600 dark:text-red-400 animate-pulse'
-                  : 'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 text-black dark:text-white'
+                  : 'border-rule bg-canvas-sunk text-ink'
               }`}
             >
               <Clock className="w-3.5 h-3.5" />
@@ -156,12 +156,12 @@ export function RPSGame({
       {phase === 'CHOOSING' && (
         <div className="pt-2">
           {isEliminated ? (
-            <div className="p-6 bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-xs text-center space-y-1">
+            <div className="p-6 bg-canvas-sunk border border-rule rounded-xs text-center space-y-1">
               <span className="text-2xl">👻</span>
-              <h3 className="text-sm font-black uppercase text-zinc-500">
+              <h3 className="text-sm font-black uppercase text-ink-muted">
                 You have been eliminated
               </h3>
-              <p className="text-xs font-mono text-zinc-400">
+              <p className="text-xs font-mono text-ink-faint">
                 Spectating remaining players in this Battle Royale showdown...
               </p>
             </div>

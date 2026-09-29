@@ -60,12 +60,12 @@ export function NumberGridGame({
   return (
     <div className="flex-1 flex flex-col items-center justify-between p-3 sm:p-5 max-w-4xl mx-auto w-full font-mono select-none">
       {/* Game Header Bar */}
-      <div className="w-full max-w-[min(92vw,560px)] flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3 mb-3">
+      <div className="w-full max-w-[min(92vw,560px)] flex flex-wrap items-center justify-between gap-2 border-b border-rule pb-3 mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-xs border border-black dark:border-white bg-black dark:bg-white text-white dark:text-black">
+          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-xs border border-rule-strong bg-ink text-canvas">
             R{currentRoundNumber}/{totalRounds}
           </span>
-          <span className="text-xs font-bold text-zinc-600 dark:text-zinc-300">
+          <span className="text-xs font-bold text-ink-muted">
             {gridSize}x{gridSize} Grid ({totalNumbers} total)
           </span>
         </div>
@@ -92,16 +92,16 @@ export function NumberGridGame({
             <span>Finished Round #{me?.finishOrder}! Waiting for others...</span>
           </div>
         ) : (
-          <div className="p-2 rounded-xs border border-black dark:border-white bg-white dark:bg-zinc-950 flex items-center justify-between shadow-xs">
-            <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase">
-              <Target size={15} className="text-black dark:text-white" />
+          <div className="p-2 rounded-xs border border-rule-strong bg-canvas flex items-center justify-between shadow-xs">
+            <div className="flex items-center gap-2 text-xs font-bold text-ink-muted uppercase">
+              <Target size={15} className="text-ink" />
               <span>Next Number</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xl sm:text-2xl font-black text-black dark:text-white">
+              <span className="text-xl sm:text-2xl font-black text-ink">
                 {me ? me.expectedNumber : 1}
               </span>
-              <span className="text-xs text-zinc-400 font-normal">
+              <span className="text-xs text-ink-faint font-normal">
                 / {totalNumbers}
               </span>
             </div>

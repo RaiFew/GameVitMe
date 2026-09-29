@@ -71,16 +71,16 @@ export function RoleConfigurationCard({
       : roles.filter((r) => r.category === activeCategory);
 
   return (
-    <Card className="p-6 border border-zinc-300 dark:border-zinc-800 space-y-6">
+    <Card className="p-6 border border-rule space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-rule">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500">
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted">
               Pre-Game Role Setup
             </span>
             {isCustomized ? (
-              <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-xs border border-zinc-400 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 font-bold">
+              <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-xs border border-ink/40 text-ink-muted bg-surface font-bold">
                 Customized
               </span>
             ) : (
@@ -89,10 +89,10 @@ export function RoleConfigurationCard({
               </span>
             )}
           </div>
-          <h3 className="text-xl font-black uppercase tracking-tight text-black dark:text-white">
+          <h3 className="text-xl font-black uppercase tracking-tight text-ink">
             Role Roster & Assignment
           </h3>
-          <p className="text-xs text-zinc-500 font-mono mt-0.5">
+          <p className="text-xs text-ink-muted font-mono mt-0.5">
             {isHost
               ? 'Configure player roles and distribution mode before launching the round.'
               : 'View host-configured role roster and game settings.'}
@@ -134,7 +134,7 @@ export function RoleConfigurationCard({
 
       {/* Mode Switcher: Physical vs Random */}
       <div className="space-y-2">
-        <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest font-bold block">
+        <label className="text-[10px] font-mono text-ink-muted uppercase tracking-widest font-bold block">
           Assignment Mode
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -145,8 +145,8 @@ export function RoleConfigurationCard({
             onClick={() => handleModeChange('PHYSICAL')}
             className={`p-3.5 rounded-xs border text-left transition-all ${
               roleAssignmentMode === 'PHYSICAL'
-                ? 'border-black dark:border-white bg-black text-white dark:bg-white dark:text-black ring-1 ring-black dark:ring-white'
-                : 'border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-950'
+                ? 'border-rule-strong bg-ink text-canvas ring-1 ring-ink'
+                : 'border-rule hover:border-ink/40 text-ink bg-canvas'
             } ${!isHost ? 'cursor-default' : 'cursor-pointer'}`}
           >
             <div className="flex items-center justify-between mb-1">
@@ -157,7 +157,7 @@ export function RoleConfigurationCard({
             </div>
             <p
               className={`text-[11px] font-mono leading-relaxed ${
-                roleAssignmentMode === 'PHYSICAL' ? 'opacity-80' : 'text-zinc-500'
+                roleAssignmentMode === 'PHYSICAL' ? 'opacity-80' : 'text-ink-muted'
               }`}
             >
               Players deal physical cards in real life and input their card secretly on mobile.
@@ -171,8 +171,8 @@ export function RoleConfigurationCard({
             onClick={() => handleModeChange('RANDOM')}
             className={`p-3.5 rounded-xs border text-left transition-all ${
               roleAssignmentMode === 'RANDOM'
-                ? 'border-black dark:border-white bg-black text-white dark:bg-white dark:text-black ring-1 ring-black dark:ring-white'
-                : 'border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-950'
+                ? 'border-rule-strong bg-ink text-canvas ring-1 ring-ink'
+                : 'border-rule hover:border-ink/40 text-ink bg-canvas'
             } ${!isHost ? 'cursor-default' : 'cursor-pointer'}`}
           >
             <div className="flex items-center justify-between mb-1">
@@ -183,7 +183,7 @@ export function RoleConfigurationCard({
             </div>
             <p
               className={`text-[11px] font-mono leading-relaxed ${
-                roleAssignmentMode === 'RANDOM' ? 'opacity-80' : 'text-zinc-500'
+                roleAssignmentMode === 'RANDOM' ? 'opacity-80' : 'text-ink-muted'
               }`}
             >
               The system automatically shuffles and assigns roles in secret to each player.
@@ -194,12 +194,12 @@ export function RoleConfigurationCard({
 
       {/* Tie rule selector for Werewolf */}
       {gameType === 'werewolf' && (
-        <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="space-y-2 pt-2 border-t border-rule">
           <div className="flex items-center justify-between">
-            <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest font-bold block">
+            <label className="text-[10px] font-mono text-ink-muted uppercase tracking-widest font-bold block">
               Werewolf Pack Tie Resolution
             </label>
-            <span className="text-[10px] font-mono text-zinc-400">Night Attack Policy</span>
+            <span className="text-[10px] font-mono text-ink-faint">Night Attack Policy</span>
           </div>
 
           <div className="grid grid-cols-3 gap-2">
@@ -211,8 +211,8 @@ export function RoleConfigurationCard({
                 onClick={() => handleTieRuleChange(rule)}
                 className={`py-2 px-3 text-center border rounded-xs font-mono text-xs uppercase tracking-wider font-bold transition-all ${
                   tieRule === rule
-                    ? 'border-black dark:border-white bg-black text-white dark:bg-white dark:text-black'
-                    : 'border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 text-zinc-600 dark:text-zinc-400'
+                    ? 'border-rule-strong bg-ink text-canvas'
+                    : 'border-rule hover:border-ink/40 text-ink-muted'
                 } ${!isHost ? 'cursor-default' : 'cursor-pointer'}`}
               >
                 {rule === 'NO_KILL' ? 'No Kill' : rule === 'RANDOM' ? 'Random' : 'Host Decides'}
@@ -223,15 +223,15 @@ export function RoleConfigurationCard({
       )}
 
       {/* Category Tabs & Reset Action */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-2 border-t border-rule">
         <div className="flex flex-wrap gap-1.5">
           <button
             type="button"
             onClick={() => setActiveCategory('ALL')}
             className={`px-2.5 py-1 text-[11px] font-mono uppercase font-bold rounded-xs border transition-all ${
               activeCategory === 'ALL'
-                ? 'border-black dark:border-white bg-black text-white dark:bg-white dark:text-black'
-                : 'border-zinc-300 dark:border-zinc-800 text-zinc-500 hover:border-zinc-400'
+                ? 'border-rule-strong bg-ink text-canvas'
+                : 'border-rule text-ink-muted hover:border-ink/40'
             }`}
           >
             All
@@ -243,8 +243,8 @@ export function RoleConfigurationCard({
               onClick={() => setActiveCategory(cat)}
               className={`px-2.5 py-1 text-[11px] font-mono uppercase font-bold rounded-xs border transition-all ${
                 activeCategory === cat
-                  ? 'border-black dark:border-white bg-black text-white dark:bg-white dark:text-black'
-                  : 'border-zinc-300 dark:border-zinc-800 text-zinc-500 hover:border-zinc-400'
+                  ? 'border-rule-strong bg-ink text-canvas'
+                  : 'border-rule text-ink-muted hover:border-ink/40'
               }`}
             >
               {cat}
@@ -275,32 +275,32 @@ export function RoleConfigurationCard({
               key={role.id}
               className={`p-3.5 border rounded-xs flex flex-col justify-between transition-all ${
                 count > 0
-                  ? 'border-zinc-400 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900/60'
-                  : 'border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 opacity-70'
+                  ? 'border-ink/40 bg-canvas-sunk/60'
+                  : 'border-rule/80 bg-canvas opacity-70'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-xs uppercase text-black dark:text-white">
+                  <span className="font-bold text-xs uppercase text-ink">
                     {role.name}
                   </span>
                   <span
                     className={`text-[9px] font-mono font-bold px-1.5 py-0.2 uppercase tracking-wider rounded-xs border ${
                       role.alignment === 'EVIL'
                         ? 'border-red-500/50 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20'
-                        : 'border-zinc-400 text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800'
+                        : 'border-ink/40 text-ink-muted bg-surface'
                     }`}
                   >
                     {role.alignment}
                   </span>
                 </div>
-                <p className="text-[11px] text-zinc-500 line-clamp-2 leading-relaxed">
+                <p className="text-[11px] text-ink-muted line-clamp-2 leading-relaxed">
                   {role.description}
                 </p>
               </div>
 
-              <div className="pt-3 mt-2 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-bold">
+              <div className="pt-3 mt-2 border-t border-rule flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-ink-faint font-bold">
                   Slots
                 </span>
 
@@ -310,23 +310,23 @@ export function RoleConfigurationCard({
                       type="button"
                       onClick={() => handleCountChange(role.id, -1)}
                       disabled={count <= 0}
-                      className="w-7 h-7 rounded-xs border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-black dark:text-white font-mono font-bold flex items-center justify-center hover:border-zinc-500 disabled:opacity-30 disabled:cursor-not-allowed text-xs"
+                      className="w-7 h-7 rounded-xs border border-rule bg-canvas text-ink font-mono font-bold flex items-center justify-center hover:border-ink/40 disabled:opacity-30 disabled:cursor-not-allowed text-xs"
                     >
                       -
                     </button>
-                    <span className="font-mono text-sm font-black w-6 text-center text-black dark:text-white">
+                    <span className="font-mono text-sm font-black w-6 text-center text-ink">
                       {count}
                     </span>
                     <button
                       type="button"
                       onClick={() => handleCountChange(role.id, 1)}
-                      className="w-7 h-7 rounded-xs border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-black dark:text-white font-mono font-bold flex items-center justify-center hover:border-zinc-500 text-xs"
+                      className="w-7 h-7 rounded-xs border border-rule bg-canvas text-ink font-mono font-bold flex items-center justify-center hover:border-ink/40 text-xs"
                     >
                       +
                     </button>
                   </div>
                 ) : (
-                  <span className="font-mono text-xs font-black px-2 py-0.5 border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 rounded-xs text-black dark:text-white">
+                  <span className="font-mono text-xs font-black px-2 py-0.5 border border-rule bg-canvas-sunk rounded-xs text-ink">
                     {count} slot{count !== 1 ? 's' : ''}
                   </span>
                 )}

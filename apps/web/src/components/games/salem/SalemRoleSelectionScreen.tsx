@@ -18,27 +18,27 @@ export function SalemRoleSelectionScreen({ playerView, onAction, isHost }: Props
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl space-y-8">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800 pb-6 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="border-b border-rule pb-6 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-4">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block">
+          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
             Salem 1692 • Town Inquest
           </span>
-          <h1 className="text-3xl font-black uppercase tracking-tight text-black dark:text-white mt-1">
+          <h1 className="text-3xl font-black uppercase tracking-tight text-ink mt-1">
             Choose Your Identity
           </h1>
-          <p className="text-xs text-zinc-500 font-mono mt-1">
+          <p className="text-xs text-ink-muted font-mono mt-1">
             Citizens of Salem must adopt an identity before the witch trials begin. Roles remain secret.
           </p>
         </div>
 
         <div>
           {isHost ? (
-            <div className="border border-black dark:border-white bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-xs text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 shadow-xs">
+            <div className="border border-rule-strong bg-ink text-canvas px-4 py-2 rounded-xs text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 shadow-xs">
               <Shield size={15} />
               <span>Salem Magistrate (Host)</span>
             </div>
           ) : me.roleId ? (
-            <div className="border border-black dark:border-white bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-xs text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 shadow-xs">
+            <div className="border border-rule-strong bg-ink text-canvas px-4 py-2 rounded-xs text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 shadow-xs">
               <Check size={15} />
               <span>Identity: {me.roleName}</span>
             </div>
@@ -61,26 +61,26 @@ export function SalemRoleSelectionScreen({ playerView, onAction, isHost }: Props
               key={role.id}
               className={`p-6 flex flex-col justify-between border-2 transition-all ${
                 isSelected
-                  ? 'border-black dark:border-white ring-2 ring-black dark:ring-white ring-offset-2'
-                  : 'border-zinc-200 dark:border-zinc-800'
+                  ? 'border-rule-strong ring-2 ring-ink ring-offset-2'
+                  : 'border-rule'
               }`}
             >
               <div>
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-[10px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300">
+                  <span className="text-[10px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 border border-rule bg-canvas-sunk text-ink">
                     {role.alignment === 'EVIL' ? 'Witchcraft' : 'Salem Citizen'}
                   </span>
-                  <span className="text-xs font-mono font-bold text-zinc-500">
+                  <span className="text-xs font-mono font-bold text-ink-muted">
                     {role.takenSlots} / {role.totalSlots} Slots
                   </span>
                 </div>
 
-                <h3 className="text-2xl font-black uppercase tracking-tight text-black dark:text-white mb-2 flex items-center gap-2">
+                <h3 className="text-2xl font-black uppercase tracking-tight text-ink mb-2 flex items-center gap-2">
                   {role.alignment === 'EVIL' ? <Flame size={20} className="text-red-500" /> : <Scroll size={20} />}
                   {role.name}
                 </h3>
 
-                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
+                <p className="text-xs text-ink-muted leading-relaxed mb-6">
                   {role.description}
                 </p>
               </div>
@@ -99,8 +99,8 @@ export function SalemRoleSelectionScreen({ playerView, onAction, isHost }: Props
       </div>
 
       {/* Citizens Roster */}
-      <Card className="p-6 border border-zinc-300 dark:border-zinc-800">
-        <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-black dark:text-white flex items-center gap-2 mb-4 border-b border-zinc-200 dark:border-zinc-800 pb-3">
+      <Card className="p-6 border border-rule">
+        <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-ink flex items-center gap-2 mb-4 border-b border-rule pb-3">
           <Users size={15} />
           Salem Citizens in Attendance ({players.length})
         </h3>
@@ -109,9 +109,9 @@ export function SalemRoleSelectionScreen({ playerView, onAction, isHost }: Props
           {players.map((p) => (
             <div
               key={p.id}
-              className="p-3 border border-zinc-200 dark:border-zinc-800 rounded-xs flex items-center justify-between"
+              className="p-3 border border-rule rounded-xs flex items-center justify-between"
             >
-              <span className="text-xs font-bold text-black dark:text-white truncate">
+              <span className="text-xs font-bold text-ink truncate">
                 {p.displayName} {p.id === me.id && '(You)'}
               </span>
               <span className={`text-[9px] font-mono uppercase font-bold ${p.hasSelectedRole ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400'}`}>
@@ -123,12 +123,12 @@ export function SalemRoleSelectionScreen({ playerView, onAction, isHost }: Props
       </Card>
 
       {/* Start Button Bar */}
-      <div className="border border-black dark:border-white p-6 rounded-xs bg-white dark:bg-zinc-950 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+      <div className="border border-rule-strong p-6 rounded-xs bg-canvas flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
         <div>
-          <h4 className="text-sm font-black uppercase text-black dark:text-white">
+          <h4 className="text-sm font-black uppercase text-ink">
             {allReady ? 'All Citizens Prepared' : 'Awaiting Selections'}
           </h4>
-          <p className="text-xs text-zinc-500 font-mono mt-0.5">
+          <p className="text-xs text-ink-muted font-mono mt-0.5">
             {allReady
               ? isHost
                 ? 'All citizens have claimed their identity. You may commence Night 1.'

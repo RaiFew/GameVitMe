@@ -28,24 +28,24 @@ export function SalemDayVotingScreen({ playerView, onAction, isHost }: Props) {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl space-y-8">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="border-b border-rule pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500">
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted">
               Round {roundNumber}
             </span>
-            <span className="border border-black dark:border-white bg-black text-white dark:bg-white dark:text-black text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
+            <span className="border border-rule-strong bg-ink text-canvas text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
               Salem Court of Oyer and Terminer
             </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black dark:text-white flex items-center gap-3">
+          <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-ink flex items-center gap-3">
             <Vote size={32} />
             Vote on Suspected Witchcraft
           </h1>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="text-xs font-mono font-bold border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 px-3 py-1.5 rounded-xs">
+          <div className="text-xs font-mono font-bold border border-rule bg-canvas-sunk px-3 py-1.5 rounded-xs">
             {votedCount} / {livingCitizens.length} Voted
           </div>
 
@@ -59,11 +59,11 @@ export function SalemDayVotingScreen({ playerView, onAction, isHost }: Props) {
 
       {/* Host Moderator Overview */}
       {isHost && (
-        <Card className="p-6 border-2 border-black dark:border-white bg-zinc-50 dark:bg-zinc-900/50">
-          <h3 className="text-sm font-black uppercase text-black dark:text-white">
+        <Card className="p-6 border-2 border-rule-strong bg-canvas-sunk/50">
+          <h3 className="text-sm font-black uppercase text-ink">
             Magistrate Bench • Tribunal Tracking
           </h3>
-          <p className="text-xs text-zinc-600 dark:text-zinc-400 font-mono mt-1">
+          <p className="text-xs text-ink-muted font-mono mt-1">
             Citizens are voting. When all votes are in or you choose to conclude early, the plurality target will be condemned.
           </p>
         </Card>
@@ -71,8 +71,8 @@ export function SalemDayVotingScreen({ playerView, onAction, isHost }: Props) {
 
       {/* Voting Cards Grid */}
       {!isHost && me.isAlive && !hasVoted && (
-        <Card className="p-6 border border-zinc-300 dark:border-zinc-800 space-y-6">
-          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-black dark:text-white">
+        <Card className="p-6 border border-rule space-y-6">
+          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-ink">
             Cast Accusation Against a Citizen
           </h3>
 
@@ -87,8 +87,8 @@ export function SalemDayVotingScreen({ playerView, onAction, isHost }: Props) {
                     onClick={() => setSelectedTargetId(target.id)}
                     className={`p-4 border text-left rounded-xs transition-all ${
                       isSelected
-                        ? 'border-black dark:border-white bg-black text-white dark:bg-white dark:text-black font-black'
-                        : 'border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-black dark:text-white hover:border-black'
+                        ? 'border-rule-strong bg-ink text-canvas font-black'
+                        : 'border-rule bg-canvas text-ink hover:border-black'
                     }`}
                   >
                     <span className="text-sm block truncate">{target.displayName}</span>
@@ -98,7 +98,7 @@ export function SalemDayVotingScreen({ playerView, onAction, isHost }: Props) {
               })}
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="flex justify-end gap-3 pt-4 border-t border-rule">
             <Button
               variant="secondary"
               onClick={() => onAction('DAY_VOTE', { targetPlayerId: 'SKIP' })}
@@ -118,12 +118,12 @@ export function SalemDayVotingScreen({ playerView, onAction, isHost }: Props) {
       )}
 
       {!isHost && hasVoted && (
-        <Card className="p-8 text-center border border-zinc-300 dark:border-zinc-800">
+        <Card className="p-8 text-center border border-rule">
           <Vote size={32} className="mx-auto text-emerald-500 mb-3" />
-          <h3 className="text-lg font-black uppercase text-black dark:text-white">
+          <h3 className="text-lg font-black uppercase text-ink">
             Your Accusation Has Been Cast
           </h3>
-          <p className="text-xs font-mono text-zinc-500 mt-1">
+          <p className="text-xs font-mono text-ink-muted mt-1">
             Waiting for remaining citizens to submit their votes to the Salem Court.
           </p>
         </Card>

@@ -79,25 +79,25 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
   if (isHost) {
     return (
       <div className="container mx-auto px-4 py-16 max-w-2xl text-center space-y-8">
-        <div className="w-16 h-16 rounded-full border-2 border-zinc-700 bg-zinc-900/60 text-zinc-300 flex items-center justify-center mx-auto mb-2">
+        <div className="w-16 h-16 rounded-full border-2 border-ink/40 bg-zinc-900/60 text-ink-faint flex items-center justify-center mx-auto mb-2">
           <Moon size={32} />
         </div>
 
         <div>
-          <span className="text-xs font-mono uppercase tracking-widest text-zinc-500 font-bold block mb-2">
+          <span className="text-xs font-mono uppercase tracking-widest text-ink-muted font-bold block mb-2">
             Night {roundNumber} • Moderator Command
           </span>
           <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-white">
             {night?.currentRoleName ? `${night.currentRoleName} Stage` : 'Night Phase In Progress'}
           </h1>
-          <p className="text-zinc-400 text-xs font-mono mt-3 max-w-md mx-auto leading-relaxed">
+          <p className="text-ink-faint text-xs font-mono mt-3 max-w-md mx-auto leading-relaxed">
             Players are executing their secret night actions on mobile. Keep room silence until dawn.
           </p>
         </div>
 
         <div className="flex justify-center">
-          <div className="border border-zinc-700 bg-zinc-900/90 px-6 py-3 rounded-xs text-center inline-block">
-            <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-400 block font-bold">
+          <div className="border border-ink/40 bg-zinc-900/90 px-6 py-3 rounded-xs text-center inline-block">
+            <span className="text-[9px] font-mono uppercase tracking-widest text-ink-faint block font-bold">
               Stage Countdown
             </span>
             <span className="text-3xl font-mono font-black text-white tracking-widest">
@@ -106,15 +106,15 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
           </div>
         </div>
 
-        <Card className="p-6 border border-zinc-800 bg-zinc-950/80 text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 border border-zinc-800 bg-zinc-900 text-xs font-mono uppercase tracking-wider text-zinc-400 rounded-xs">
+        <Card className="p-6 border border-ink/40 bg-zinc-950/80 text-center space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 border border-ink/40 bg-zinc-900 text-xs font-mono uppercase tracking-wider text-ink-faint rounded-xs">
             <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
             Active Role Turn: <strong className="text-white">{night?.currentRoleName || 'Processing'}</strong>
           </div>
-          <p className="text-xs text-zinc-500 font-mono">
+          <p className="text-xs text-ink-muted font-mono">
             Moderator view active. As room monitor, you cannot choose actions or influence night outcomes.
           </p>
-          <div className="pt-3 border-t border-zinc-900 flex justify-center">
+          <div className="pt-3 border-t border-ink/40 flex justify-center">
             <Button
               variant="outline"
               size="sm"
@@ -133,33 +133,33 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
   if (!night?.isMyTurn || !me.isAlive) {
     return (
       <div className="container mx-auto px-4 py-16 max-w-2xl text-center space-y-8">
-        <div className="w-16 h-16 rounded-full border-2 border-zinc-700 bg-zinc-900/60 text-zinc-400 flex items-center justify-center mx-auto mb-2 animate-pulse">
+        <div className="w-16 h-16 rounded-full border-2 border-ink/40 bg-zinc-900/60 text-ink-faint flex items-center justify-center mx-auto mb-2 animate-pulse">
           <Moon size={32} />
         </div>
 
         <div>
-          <span className="text-xs font-mono uppercase tracking-widest text-zinc-500 font-bold block mb-2">
+          <span className="text-xs font-mono uppercase tracking-widest text-ink-muted font-bold block mb-2">
             Night {roundNumber}
           </span>
           <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-white">
             The Village Sleeps
           </h1>
-          <p className="text-zinc-400 text-sm mt-3 max-w-md mx-auto leading-relaxed">
+          <p className="text-ink-faint text-sm mt-3 max-w-md mx-auto leading-relaxed">
             Shadows move through the mist. Close your eyes and wait for dawn.
           </p>
         </div>
 
-        <Card className="p-8 border border-zinc-800 bg-zinc-950/80 text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 border border-zinc-800 bg-zinc-900 text-xs font-mono uppercase tracking-wider text-zinc-400 rounded-xs">
+        <Card className="p-8 border border-ink/40 bg-zinc-950/80 text-center space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 border border-ink/40 bg-zinc-900 text-xs font-mono uppercase tracking-wider text-ink-faint rounded-xs">
             <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
             Night Actions In Progress
           </div>
-          <p className="text-xs text-zinc-500 font-mono">
+          <p className="text-xs text-ink-muted font-mono">
             {me.isAlive
               ? 'You have no action at this time. Keep quiet until the sun rises.'
               : 'You have passed away. You watch over the village in silence.'}
           </p>
-          <div className="pt-2 border-t border-zinc-900 text-[10px] font-mono text-zinc-600 uppercase tracking-widest">
+          <div className="pt-2 border-t border-ink/40 text-[10px] font-mono text-ink-muted uppercase tracking-widest">
             Next Phase: Dawn Discussion
           </div>
         </Card>
@@ -173,10 +173,10 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
       {/* Night Header & Role Wakeup */}
-      <div className="border-b border-zinc-800 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="border-b border-ink/40 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500">
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted">
               Night {roundNumber}
             </span>
             <span className="border border-red-500/30 bg-red-950/20 text-red-400 text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
@@ -186,7 +186,7 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
           <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-white flex items-center gap-3">
             {night.currentRoleName}
           </h1>
-          <p className="text-xs text-zinc-400 font-mono mt-1">
+          <p className="text-xs text-ink-faint font-mono mt-1">
             {me.roleId === 'werewolf' && 'Choose your pack attack target.'}
             {me.roleId === 'seer' && 'Select one player to uncover their true alignment.'}
             {me.roleId === 'defender' && 'Select one player to shield from death tonight.'}
@@ -196,8 +196,8 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
         </div>
 
         {/* Big Touch-Friendly Countdown Timer */}
-        <div className="border border-zinc-700 bg-zinc-900/90 px-5 py-3 rounded-xs text-right shrink-0">
-          <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-400 block font-bold">
+        <div className="border border-ink/40 bg-zinc-900/90 px-5 py-3 rounded-xs text-right shrink-0">
+          <span className="text-[9px] font-mono uppercase tracking-widest text-ink-faint block font-bold">
             Time Left
           </span>
           <span className="text-3xl font-mono font-black text-white tracking-widest">
@@ -212,7 +212,7 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
           <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-red-400 block mb-1">
             Werewolf Pack
           </span>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-ink-faint">
             Fellow Wolves: <strong className="text-white">{me.teammates.map((t) => t.displayName).join(', ')}</strong>
           </p>
         </Card>
@@ -226,7 +226,7 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
           </div>
 
           <div className="space-y-1">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-ink-faint block">
               Suspect Divined
             </span>
             <h2 className="text-3xl font-black uppercase text-white tracking-wide">
@@ -234,7 +234,7 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
             </h2>
           </div>
 
-          <div className="inline-block px-5 py-2.5 rounded-xs border border-zinc-800 font-mono font-black text-sm uppercase tracking-wider bg-black">
+          <div className="inline-block px-5 py-2.5 rounded-xs border border-ink/40 font-mono font-black text-sm uppercase tracking-wider bg-black">
             {night.latestInvestigation.revealedAlignment === 'EVIL' ? (
               <span className="text-red-400 font-black flex items-center justify-center gap-2">
                 <Skull size={16} /> ALIGNMENT: EVIL (Werewolf)
@@ -246,7 +246,7 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
             )}
           </div>
 
-          <p className="text-xs text-zinc-400 font-mono max-w-md mx-auto">
+          <p className="text-xs text-ink-faint font-mono max-w-md mx-auto">
             You have uncovered their true nature. When you have committed this truth to memory, close your eyes.
           </p>
 
@@ -265,8 +265,8 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
 
       {/* Seer Past Investigations Panel */}
       {me.roleId === 'seer' && me.investigations && me.investigations.length > 0 && !night.latestInvestigation && (
-        <Card className="p-4 border border-zinc-800 bg-zinc-950/60">
-          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-400 block mb-2">
+        <Card className="p-4 border border-ink/40 bg-zinc-950/60">
+          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-faint block mb-2">
             Your Past Divinations
           </span>
           <div className="flex flex-wrap gap-2">
@@ -276,7 +276,7 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
                 className={`text-xs font-mono px-2.5 py-1 rounded-xs border font-bold ${
                   inv.revealedAlignment === 'EVIL'
                     ? 'border-red-600 bg-red-950/30 text-red-400'
-                    : 'border-zinc-700 bg-zinc-900 text-zinc-200'
+                    : 'border-ink/40 bg-zinc-900 text-ink-faint'
                 }`}
               >
                 {inv.targetDisplayName}: {inv.revealedAlignment}
@@ -295,13 +295,13 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
               <span className="text-xs font-bold uppercase text-white flex items-center gap-1.5">
                 <Heart size={15} className="text-emerald-400" /> Life Potion (Heal)
               </span>
-              <span className="text-[10px] font-mono text-zinc-500">
+              <span className="text-[10px] font-mono text-ink-muted">
                 {me.witchUsedHeal ? 'USED' : '1 Available'}
               </span>
             </div>
             {night.victimToHealId ? (
               <div className="space-y-3">
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-ink-faint">
                   Werewolves attacked: <strong className="text-white">
                     {players.find((p) => p.id === night.victimToHealId)?.displayName || 'A villager'}
                   </strong>
@@ -317,7 +317,7 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
                 </Button>
               </div>
             ) : (
-              <p className="text-xs text-zinc-500 font-mono">No attacked victim to heal tonight.</p>
+              <p className="text-xs text-ink-muted font-mono">No attacked victim to heal tonight.</p>
             )}
           </Card>
 
@@ -327,11 +327,11 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
               <span className="text-xs font-bold uppercase text-white flex items-center gap-1.5">
                 <Skull size={15} className="text-red-400" /> Death Potion (Poison)
               </span>
-              <span className="text-[10px] font-mono text-zinc-500">
+              <span className="text-[10px] font-mono text-ink-muted">
                 {me.witchUsedPoison ? 'USED' : '1 Available'}
               </span>
             </div>
-            <p className="text-xs text-zinc-400 mb-3">
+            <p className="text-xs text-ink-faint mb-3">
               {me.witchUsedPoison ? 'You have already used your Death Potion.' : 'Choose a player below to poison tonight.'}
             </p>
             {selectedPoisonId && (
@@ -346,7 +346,7 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
 
       {/* Target Selection Grid (Mobile First Large Touch Buttons) */}
       <div>
-        <h3 className="text-xs font-mono uppercase tracking-widest font-bold text-zinc-400 mb-3">
+        <h3 className="text-xs font-mono uppercase tracking-widest font-bold text-ink-faint mb-3">
           {me.roleId === 'witch' ? 'Select Target For Death Potion' : 'Select Target'}
         </h3>
 
@@ -385,8 +385,8 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
                 }}
                 className={`w-full p-4 rounded-xs border text-left transition-all cursor-pointer flex items-center justify-between ${
                   isSelected
-                    ? 'border-white bg-white text-black ring-2 ring-white shadow-lg'
-                    : 'border-zinc-800 bg-zinc-900 text-white hover:border-zinc-600 hover:bg-zinc-800/80'
+                    ? 'border-white bg-white text-black ring-2 ring-ink shadow-lg'
+                    : 'border-ink/40 bg-zinc-900 text-white hover:border-ink/40 hover:bg-zinc-800/80'
                 }`}
               >
                 <div className="min-w-0 pr-2 flex-1">
@@ -416,7 +416,7 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
                     <Check size={14} />
                   </div>
                 ) : (
-                  <div className="w-6 h-6 rounded-full border border-zinc-700 shrink-0" />
+                  <div className="w-6 h-6 rounded-full border border-ink/40 shrink-0" />
                 )}
               </button>
             );
@@ -425,14 +425,14 @@ export function NightPhaseScreen({ playerView, onAction, isHost }: NightPhaseScr
       </div>
 
       {/* Action Confirmation & Skip Row */}
-      <div className="pt-4 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="pt-4 border-t border-ink/40 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
           {submitted ? (
             <p className="text-xs font-mono text-emerald-400 flex items-center gap-1.5">
               <Check size={15} /> Action recorded. Waiting for others or timer...
             </p>
           ) : (
-            <p className="text-xs font-mono text-zinc-500">
+            <p className="text-xs font-mono text-ink-muted">
               {selectedTargetId || useHeal || selectedPoisonId
                 ? 'Ready to submit your decision.'
                 : 'Choose a target or press Skip.'}

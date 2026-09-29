@@ -51,33 +51,33 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
   if (playerView.gameMode === 'TWO_PLAYER') {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl space-y-8">
-        <div className="border-b border-zinc-200 dark:border-zinc-800 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="border-b border-rule pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="border border-emerald-600 bg-emerald-600 text-white text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
                 2-Player Cooperative
               </span>
-              <span className="border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
+              <span className="border border-rule bg-canvas-sunk text-ink text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
                 Word Source: {wordSource === 'CUSTOM' ? 'Custom Word File' : 'Default Words'}
               </span>
             </div>
-            <h1 className="text-3xl font-black uppercase tracking-tight text-black dark:text-white flex items-center gap-3">
+            <h1 className="text-3xl font-black uppercase tracking-tight text-ink flex items-center gap-3">
               <Users size={28} />
               2 Player Codenames
             </h1>
-            <p className="text-xs text-zinc-500 font-mono mt-1">
+            <p className="text-xs text-ink-muted font-mono mt-1">
               You are playing together on the same team to uncover all friendly agents.
             </p>
           </div>
         </div>
 
         {/* Players Card */}
-        <Card className="p-6 border border-zinc-300 dark:border-zinc-800 space-y-6">
-          <div className="border-b border-zinc-200 dark:border-zinc-800 pb-3 flex items-center justify-between">
-            <h2 className="text-sm font-black uppercase tracking-wider text-black dark:text-white">
+        <Card className="p-6 border border-rule space-y-6">
+          <div className="border-b border-rule pb-3 flex items-center justify-between">
+            <h2 className="text-sm font-black uppercase tracking-wider text-ink">
               Players
             </h2>
-            <span className="text-xs font-mono font-bold text-zinc-500">
+            <span className="text-xs font-mono font-bold text-ink-muted">
               Cooperative Team
             </span>
           </div>
@@ -90,25 +90,25 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
               return (
                 <div
                   key={player.id}
-                  className="p-4 border border-zinc-200 dark:border-zinc-800 rounded-xs bg-white dark:bg-zinc-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  className="p-4 border border-rule rounded-xs bg-canvas flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="w-2.5 h-2.5 rounded-full bg-black dark:bg-white inline-block" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-ink inline-block" />
                     <div>
-                      <span className="font-bold text-sm text-black dark:text-white flex items-center gap-2">
+                      <span className="font-bold text-sm text-ink flex items-center gap-2">
                         {player.displayName}
                         {isMe && (
-                          <span className="text-[10px] font-mono uppercase bg-zinc-200 dark:bg-zinc-800 px-1.5 py-0.2 rounded-xs">
+                          <span className="text-[10px] font-mono uppercase bg-surface-hover px-1.5 py-0.2 rounded-xs">
                             You
                           </span>
                         )}
                         {player.isHost && (
-                          <span className="text-[10px] font-mono uppercase text-zinc-400">
+                          <span className="text-[10px] font-mono uppercase text-ink-faint">
                             Host
                           </span>
                         )}
                       </span>
-                      <span className="text-xs font-mono text-zinc-500 block mt-0.5">
+                      <span className="text-xs font-mono text-ink-muted block mt-0.5">
                         {isPlayerSpymaster
                           ? 'Gives one-word clues and numbers based on secret card colors.'
                           : 'Dedicates guesses to uncovering friendly cards based on clues.'}
@@ -118,8 +118,8 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
 
                   <span className={`text-xs font-mono font-bold uppercase px-3 py-1 rounded-xs border text-center shrink-0 ${
                     isPlayerSpymaster
-                      ? 'border-black dark:border-white bg-black text-white dark:bg-white dark:text-black'
-                      : 'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200'
+                      ? 'border-rule-strong bg-ink text-canvas'
+                      : 'border-rule bg-canvas-sunk text-ink'
                   }`}>
                     [{player.role || 'Unassigned'}]
                   </span>
@@ -143,9 +143,9 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
         </Card>
 
         {/* Start Game Row */}
-        <div className="p-4 border border-zinc-300 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 rounded-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="p-4 border border-rule bg-canvas-sunk rounded-xs flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left">
-            <span className="text-xs font-mono text-zinc-500 block">
+            <span className="text-xs font-mono text-ink-muted block">
               {canStartMatch
                 ? 'Both roles assigned. Ready to start!'
                 : '1 Spymaster and 1 Operative required.'}
@@ -163,7 +163,7 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
               Start Game <Play size={15} className="ml-2" />
             </Button>
           ) : (
-            <span className="text-xs font-mono text-zinc-500">
+            <span className="text-xs font-mono text-ink-muted">
               Waiting for Host to start game...
             </span>
           )}
@@ -175,21 +175,21 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl space-y-8">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="border-b border-rule pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="border border-black dark:border-white bg-black text-white dark:bg-white dark:text-black text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
+            <span className="border border-rule-strong bg-ink text-canvas text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
               Pre-Game Setup
             </span>
-            <span className="border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
+            <span className="border border-rule bg-canvas-sunk text-ink text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
               Word Source: {wordSource === 'CUSTOM' ? 'Custom Word File' : 'Default Words'}
             </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black dark:text-white flex items-center gap-3">
+          <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-ink flex items-center gap-3">
             <Users size={32} />
             Codenames Team Selection
           </h1>
-          <p className="text-xs text-zinc-500 font-mono mt-1">
+          <p className="text-xs text-ink-muted font-mono mt-1">
             Each team must assign exactly 1 Spymaster and at least 1 Operative to begin the match.
           </p>
         </div>
@@ -229,13 +229,13 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
           {/* Red Spymaster Slot */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase font-bold tracking-wider text-zinc-500 flex items-center gap-1.5">
+              <span className="text-[10px] font-mono uppercase font-bold tracking-wider text-ink-muted flex items-center gap-1.5">
                 <Eye size={13} /> Spymaster (1 Player)
               </span>
               {me.team === 'RED' && me.role === 'SPYMASTER' && (
                 <button
                   onClick={handleLeaveRole}
-                  className="text-[10px] font-mono text-zinc-500 hover:text-red-600 underline"
+                  className="text-[10px] font-mono text-ink-muted hover:text-red-600 underline"
                 >
                   Leave Role
                 </button>
@@ -243,13 +243,13 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
             </div>
 
             {redSpymaster ? (
-              <div className="p-3 border-2 border-red-600 dark:border-red-500 bg-white dark:bg-zinc-900 rounded-xs flex items-center justify-between shadow-xs">
+              <div className="p-3 border-2 border-red-600 dark:border-red-500 bg-canvas rounded-xs flex items-center justify-between shadow-xs">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase text-black dark:text-white">
+                  <span className="text-xs font-black uppercase text-ink">
                     {redSpymaster.displayName} {redSpymaster.id === me.id && '(You)'}
                   </span>
                   {redSpymaster.isHost && (
-                    <span className="text-[9px] font-mono border border-zinc-400 dark:border-zinc-600 px-1 rounded-xs">
+                    <span className="text-[9px] font-mono border border-ink/40 px-1 rounded-xs">
                       Host
                     </span>
                   )}
@@ -273,13 +273,13 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
           {/* Red Operatives List */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase font-bold tracking-wider text-zinc-500 flex items-center gap-1.5">
+              <span className="text-[10px] font-mono uppercase font-bold tracking-wider text-ink-muted flex items-center gap-1.5">
                 <Crosshair size={13} /> Operatives (1+ Players)
               </span>
               {me.team === 'RED' && me.role === 'OPERATIVE' && (
                 <button
                   onClick={handleLeaveRole}
-                  className="text-[10px] font-mono text-zinc-500 hover:text-red-600 underline"
+                  className="text-[10px] font-mono text-ink-muted hover:text-red-600 underline"
                 >
                   Leave Role
                 </button>
@@ -290,12 +290,12 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
               {redOperatives.map((p) => (
                 <div
                   key={p.id}
-                  className="p-3 border border-red-300 dark:border-red-900 bg-white dark:bg-zinc-900 rounded-xs flex items-center justify-between"
+                  className="p-3 border border-red-300 dark:border-red-900 bg-canvas rounded-xs flex items-center justify-between"
                 >
-                  <span className="text-xs font-bold text-black dark:text-white">
+                  <span className="text-xs font-bold text-ink">
                     {p.displayName} {p.id === me.id && '(You)'}
                   </span>
-                  <span className="text-[10px] font-mono text-zinc-500 uppercase">
+                  <span className="text-[10px] font-mono text-ink-muted uppercase">
                     Operative
                   </span>
                 </div>
@@ -332,13 +332,13 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
           {/* Blue Spymaster Slot */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase font-bold tracking-wider text-zinc-500 flex items-center gap-1.5">
+              <span className="text-[10px] font-mono uppercase font-bold tracking-wider text-ink-muted flex items-center gap-1.5">
                 <Eye size={13} /> Spymaster (1 Player)
               </span>
               {me.team === 'BLUE' && me.role === 'SPYMASTER' && (
                 <button
                   onClick={handleLeaveRole}
-                  className="text-[10px] font-mono text-zinc-500 hover:text-blue-600 underline"
+                  className="text-[10px] font-mono text-ink-muted hover:text-blue-600 underline"
                 >
                   Leave Role
                 </button>
@@ -346,13 +346,13 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
             </div>
 
             {blueSpymaster ? (
-              <div className="p-3 border-2 border-blue-600 dark:border-blue-500 bg-white dark:bg-zinc-900 rounded-xs flex items-center justify-between shadow-xs">
+              <div className="p-3 border-2 border-blue-600 dark:border-blue-500 bg-canvas rounded-xs flex items-center justify-between shadow-xs">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase text-black dark:text-white">
+                  <span className="text-xs font-black uppercase text-ink">
                     {blueSpymaster.displayName} {blueSpymaster.id === me.id && '(You)'}
                   </span>
                   {blueSpymaster.isHost && (
-                    <span className="text-[9px] font-mono border border-zinc-400 dark:border-zinc-600 px-1 rounded-xs">
+                    <span className="text-[9px] font-mono border border-ink/40 px-1 rounded-xs">
                       Host
                     </span>
                   )}
@@ -376,13 +376,13 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
           {/* Blue Operatives List */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase font-bold tracking-wider text-zinc-500 flex items-center gap-1.5">
+              <span className="text-[10px] font-mono uppercase font-bold tracking-wider text-ink-muted flex items-center gap-1.5">
                 <Crosshair size={13} /> Operatives (1+ Players)
               </span>
               {me.team === 'BLUE' && me.role === 'OPERATIVE' && (
                 <button
                   onClick={handleLeaveRole}
-                  className="text-[10px] font-mono text-zinc-500 hover:text-blue-600 underline"
+                  className="text-[10px] font-mono text-ink-muted hover:text-blue-600 underline"
                 >
                   Leave Role
                 </button>
@@ -393,12 +393,12 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
               {blueOperatives.map((p) => (
                 <div
                   key={p.id}
-                  className="p-3 border border-blue-300 dark:border-blue-900 bg-white dark:bg-zinc-900 rounded-xs flex items-center justify-between"
+                  className="p-3 border border-blue-300 dark:border-blue-900 bg-canvas rounded-xs flex items-center justify-between"
                 >
-                  <span className="text-xs font-bold text-black dark:text-white">
+                  <span className="text-xs font-bold text-ink">
                     {p.displayName} {p.id === me.id && '(You)'}
                   </span>
-                  <span className="text-[10px] font-mono text-zinc-500 uppercase">
+                  <span className="text-[10px] font-mono text-ink-muted uppercase">
                     Operative
                   </span>
                 </div>
@@ -421,15 +421,15 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
 
       {/* Unassigned Players List */}
       {unassignedPlayers.length > 0 && (
-        <Card className="p-4 border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">
-          <span className="text-[10px] font-mono uppercase font-bold tracking-wider text-zinc-500 block mb-2">
+        <Card className="p-4 border border-rule bg-canvas-sunk/30">
+          <span className="text-[10px] font-mono uppercase font-bold tracking-wider text-ink-muted block mb-2">
             Unassigned Players ({unassignedPlayers.length})
           </span>
           <div className="flex flex-wrap gap-2">
             {unassignedPlayers.map((p) => (
               <span
                 key={p.id}
-                className="px-2.5 py-1 text-xs font-mono border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 rounded-xs text-zinc-700 dark:text-zinc-300"
+                className="px-2.5 py-1 text-xs font-mono border border-rule bg-canvas rounded-xs text-ink"
               >
                 {p.displayName} {p.id === me.id && '(You)'}
               </span>
@@ -439,9 +439,9 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
       )}
 
       {/* Match Start Footer Bar */}
-      <div className="border border-black dark:border-white p-6 rounded-xs bg-white dark:bg-zinc-950 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+      <div className="border border-rule-strong p-6 rounded-xs bg-canvas flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
         <div>
-          <h3 className="text-sm font-black uppercase text-black dark:text-white flex items-center gap-2">
+          <h3 className="text-sm font-black uppercase text-ink flex items-center gap-2">
             {canStartMatch ? (
               <>
                 <CheckCircle2 size={16} className="text-emerald-500" />
@@ -454,7 +454,7 @@ export function TeamSetupScreen({ playerView, onAction, isHost }: Props) {
               </>
             )}
           </h3>
-          <p className="text-xs text-zinc-500 font-mono mt-0.5">
+          <p className="text-xs text-ink-muted font-mono mt-0.5">
             {!redSpymaster
               ? 'Red team requires 1 Spymaster.'
               : redOperatives.length === 0

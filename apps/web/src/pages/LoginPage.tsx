@@ -35,15 +35,15 @@ export default function LoginPage() {
 
   return (
     <div className="flex-1 flex justify-center items-center p-4">
-      <Card className="w-full max-w-md p-8 border border-zinc-300 dark:border-zinc-800 text-center">
-        <div className="w-10 h-10 bg-black text-white dark:bg-white dark:text-black flex items-center justify-center font-mono font-bold text-sm mx-auto mb-6 rounded-xs">
+      <Card className="w-full max-w-md p-8 border border-rule text-center">
+        <div className="w-10 h-10 bg-ink text-canvas flex items-center justify-center font-mono font-bold text-sm mx-auto mb-6 rounded-xs">
           PG
         </div>
 
-        <h1 className="text-2xl font-black uppercase tracking-tight text-black dark:text-white mb-2">
+        <h1 className="text-2xl font-black uppercase tracking-tight text-ink mb-2">
           Sign In
         </h1>
-        <p className="text-zinc-500 dark:text-zinc-400 text-xs mb-8">
+        <p className="text-ink-faint text-xs mb-8">
           Enter a nickname to play as guest or sign in with Google.
         </p>
 
@@ -63,10 +63,10 @@ export default function LoginPage() {
 
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+            <div className="w-full border-t border-rule" />
           </div>
           <div className="relative flex justify-center text-[10px] uppercase font-mono tracking-wider">
-            <span className="px-2 bg-white dark:bg-zinc-950 text-zinc-400">Or Continue With</span>
+            <span className="px-2 bg-canvas text-ink-faint">Or Continue With</span>
           </div>
         </div>
 

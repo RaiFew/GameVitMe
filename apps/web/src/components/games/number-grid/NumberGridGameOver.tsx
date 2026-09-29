@@ -39,7 +39,7 @@ export function NumberGridGameOver({
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4 max-w-xl mx-auto w-full font-mono">
-      <Card className="w-full p-6 sm:p-8 border border-zinc-300 dark:border-zinc-800 text-center space-y-6">
+      <Card className="w-full p-6 sm:p-8 border border-rule text-center space-y-6">
         {/* Trophy / Result Icon */}
         <div className="flex justify-center">
           <div
@@ -48,7 +48,7 @@ export function NumberGridGameOver({
                 ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/40 text-amber-500 shadow-lg shadow-amber-500/20'
                 : me?.eliminated
                 ? 'border-red-500 bg-red-50 dark:bg-red-950/40 text-red-500'
-                : 'border-zinc-400 bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300'
+                : 'border-ink/40 bg-canvas-sunk text-ink-muted'
             }`}
           >
             {isWinner ? (
@@ -62,10 +62,10 @@ export function NumberGridGameOver({
         </div>
 
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 block">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-ink-muted block">
             Match Concluded • {currentRoundNumber}/{totalRounds} Rounds
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black dark:text-white mt-1">
+          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-ink mt-1">
             {isWinner
               ? 'Victory Achieved!'
               : me?.eliminated
@@ -81,7 +81,7 @@ export function NumberGridGameOver({
 
         {/* Final Standings */}
         <div className="space-y-2 text-left">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted block">
             Final Standings
           </span>
           <div className="space-y-1.5 max-h-56 overflow-y-auto">
@@ -96,8 +96,8 @@ export function NumberGridGameOver({
                     isWin
                       ? 'border-amber-400 dark:border-amber-600/80 bg-amber-50/50 dark:bg-amber-950/30'
                       : p.eliminated
-                      ? 'border-zinc-200 dark:border-zinc-800 bg-zinc-100/40 dark:bg-zinc-900/30 opacity-60'
-                      : 'border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950'
+                      ? 'border-rule bg-canvas-sunk/30 opacity-60'
+                      : 'border-rule bg-canvas'
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -106,15 +106,15 @@ export function NumberGridGameOver({
                     ) : p.eliminated ? (
                       <Skull size={13} className="text-red-500" />
                     ) : (
-                      <span className="text-zinc-400 font-bold">•</span>
+                      <span className="text-ink-faint font-bold">•</span>
                     )}
-                    <span className="font-bold text-black dark:text-white">
+                    <span className="font-bold text-ink">
                       {p.displayName} {isSelf && '(You)'}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-3 text-right">
-                    <span className="text-[11px] text-zinc-500">
+                    <span className="text-[11px] text-ink-muted">
                       {p.eliminated ? (
                         <span className="text-red-500 font-bold">Eliminated</span>
                       ) : (
@@ -134,7 +134,7 @@ export function NumberGridGameOver({
         </div>
 
         {/* Host controls & actions */}
-        <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
+        <div className="pt-4 border-t border-rule space-y-2">
           {isHost ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <Button
@@ -156,7 +156,7 @@ export function NumberGridGameOver({
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-xs text-zinc-500">Waiting for room host to start a new game...</p>
+              <p className="text-xs text-ink-muted">Waiting for room host to start a new game...</p>
               <Button
                 variant="secondary"
                 onClick={onReturnLobby}

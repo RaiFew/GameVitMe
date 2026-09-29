@@ -19,7 +19,7 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
 
     return (
       <div ref={ref} className={cn("relative inline-block shrink-0", className)}>
-        <div className={cn("overflow-hidden rounded-xs border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center font-bold text-zinc-900 dark:text-zinc-100 uppercase select-none", sizes[size])}>
+        <div className={cn("overflow-hidden rounded-xs border border-rule bg-canvas-sunk flex items-center justify-center font-bold text-ink uppercase select-none", sizes[size])}>
           {src ? (
             <img src={src} alt="Avatar" className="h-full w-full object-cover" />
           ) : (
@@ -29,7 +29,7 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
         {status && (
           <span
             className={cn(
-              "absolute -bottom-0.5 -right-0.5 block rounded-full ring-2 ring-white dark:ring-zinc-950",
+              "absolute -bottom-0.5 -right-0.5 block rounded-full ring-2 ring-ink",
               status === 'online' ? 'bg-emerald-500' : status === 'offline' ? 'bg-zinc-400' : 'bg-amber-500',
               size === 'sm' ? 'h-2 w-2' : size === 'md' ? 'h-2.5 w-2.5' : 'h-3 w-3'
             )}

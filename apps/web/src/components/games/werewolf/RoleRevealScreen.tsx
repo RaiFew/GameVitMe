@@ -32,21 +32,21 @@ export function RoleRevealScreen({ playerView, onAction, isHost }: Props) {
   if (isHost) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl space-y-8">
-        <div className="border-b border-zinc-200 dark:border-zinc-800 pb-6 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="border-b border-rule pb-6 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block">
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
               Moderator Command Deck
             </span>
-            <h1 className="text-3xl font-black uppercase tracking-tight text-black dark:text-white mt-1">
+            <h1 className="text-3xl font-black uppercase tracking-tight text-ink mt-1">
               Role Cards Distributed
             </h1>
-            <p className="text-xs text-zinc-500 font-mono mt-1">
+            <p className="text-xs text-ink-muted font-mono mt-1">
               Players are privately reviewing their secret identities on mobile.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 rounded-xs text-xs font-mono font-bold">
+            <div className="border border-rule px-3 py-1.5 rounded-xs text-xs font-mono font-bold">
               Ready: {readyCount} / {totalPlaying}
             </div>
 
@@ -62,12 +62,12 @@ export function RoleRevealScreen({ playerView, onAction, isHost }: Props) {
         </div>
 
         {/* Players Readiness Grid */}
-        <Card className="p-6 border border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-800 mb-4">
-            <span className="text-xs font-mono font-bold uppercase text-zinc-500">
+        <Card className="p-6 border border-rule">
+          <div className="flex items-center justify-between pb-4 border-b border-rule mb-4">
+            <span className="text-xs font-mono font-bold uppercase text-ink-muted">
               Player Acknowledgment Status
             </span>
-            <span className="text-xs font-mono text-zinc-500">
+            <span className="text-xs font-mono text-ink-muted">
               {allReady ? 'All citizens are ready' : 'Waiting for citizens to review cards...'}
             </span>
           </div>
@@ -80,8 +80,8 @@ export function RoleRevealScreen({ playerView, onAction, isHost }: Props) {
                   key={p.id}
                   className={`p-3 border rounded-xs flex items-center justify-between font-mono text-xs transition-all ${
                     isReady
-                      ? 'border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/20 text-black dark:text-white'
-                      : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-500'
+                      ? 'border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/20 text-ink'
+                      : 'border-rule bg-canvas-sunk text-ink-muted'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
@@ -122,13 +122,13 @@ export function RoleRevealScreen({ playerView, onAction, isHost }: Props) {
     <div className="container mx-auto px-4 py-8 max-w-lg space-y-6">
       {/* Header */}
       <div className="text-center space-y-1">
-        <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block">
+        <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
           Secret Identity
         </span>
-        <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black dark:text-white">
+        <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-ink">
           Your Secret Role Card
         </h1>
-        <p className="text-xs text-zinc-500 font-mono">
+        <p className="text-xs text-ink-muted font-mono">
           Keep this hidden from other players at your table.
         </p>
       </div>
@@ -138,7 +138,7 @@ export function RoleRevealScreen({ playerView, onAction, isHost }: Props) {
         className={`p-6 border-2 transition-all text-center space-y-6 shadow-lg ${
           isEvil
             ? 'border-red-600/80 bg-red-950/10 dark:bg-red-950/20'
-            : 'border-black dark:border-white bg-white dark:bg-black'
+            : 'border-rule-strong bg-canvas'
         }`}
       >
         {/* Alignment & Category Badges */}
@@ -154,7 +154,7 @@ export function RoleRevealScreen({ playerView, onAction, isHost }: Props) {
           </span>
 
           {me.category && (
-            <span className="text-[10px] font-mono font-bold px-2.5 py-1 uppercase tracking-wider rounded-xs border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400">
+            <span className="text-[10px] font-mono font-bold px-2.5 py-1 uppercase tracking-wider rounded-xs border border-rule text-ink-muted">
               {me.category}
             </span>
           )}
@@ -162,10 +162,10 @@ export function RoleRevealScreen({ playerView, onAction, isHost }: Props) {
 
         {/* Role Name */}
         <div>
-          <h2 className="text-4xl font-black uppercase tracking-tight text-black dark:text-white">
+          <h2 className="text-4xl font-black uppercase tracking-tight text-ink">
             {me.roleName || 'Villager'}
           </h2>
-          <span className="text-xs font-mono text-zinc-400 uppercase tracking-widest mt-1 block">
+          <span className="text-xs font-mono text-ink-faint uppercase tracking-widest mt-1 block">
             Team: {me.team}
           </span>
         </div>

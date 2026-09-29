@@ -113,20 +113,20 @@ export function CodenamesLibraryCard() {
   const isLimitReached = files.length >= 3;
 
   return (
-    <div className="w-full text-left p-4 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 rounded-xs mt-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3 mb-4">
+    <div className="w-full text-left p-4 border border-rule bg-canvas-sunk/60 rounded-xs mt-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-rule pb-3 mb-4">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block">
+          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
             Codenames Word Library
           </span>
-          <h3 className="text-sm font-black uppercase tracking-tight text-black dark:text-white flex items-center gap-2 mt-0.5">
+          <h3 className="text-sm font-black uppercase tracking-tight text-ink flex items-center gap-2 mt-0.5">
             <BookOpen size={16} />
             My Custom Word Files
           </h3>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono font-bold text-zinc-500 border border-zinc-300 dark:border-zinc-700 px-2 py-0.5 rounded-xs">
+          <span className="text-xs font-mono font-bold text-ink-muted border border-rule px-2 py-0.5 rounded-xs">
             {files.length} / 3 Files Used
           </span>
 
@@ -144,14 +144,14 @@ export function CodenamesLibraryCard() {
         </div>
       </div>
 
-      <p className="text-xs text-zinc-500 font-mono mb-4">
+      <p className="text-xs text-ink-muted font-mono mb-4">
         Save up to 3 custom word lists (.txt, .csv, .json) to use when hosting Codenames games. Minimum 25 words per list.
       </p>
 
       {files.length === 0 ? (
-        <div className="p-6 border border-dashed border-zinc-300 dark:border-zinc-700 text-center rounded-xs space-y-2">
-          <FileText size={28} className="mx-auto text-zinc-400" />
-          <p className="text-xs font-mono text-zinc-500">
+        <div className="p-6 border border-dashed border-rule text-center rounded-xs space-y-2">
+          <FileText size={28} className="mx-auto text-ink-faint" />
+          <p className="text-xs font-mono text-ink-muted">
             You don't have any custom word files saved yet.
           </p>
         </div>
@@ -160,18 +160,18 @@ export function CodenamesLibraryCard() {
           {files.map((file) => (
             <div
               key={file.id}
-              className="p-3 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 rounded-xs flex items-center justify-between"
+              className="p-3 border border-rule bg-canvas rounded-xs flex items-center justify-between"
             >
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-mono uppercase font-bold bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-xs text-zinc-600 dark:text-zinc-400">
+                  <span className="text-[9px] font-mono uppercase font-bold bg-surface px-1.5 py-0.5 rounded-xs text-ink-muted">
                     {file.format}
                   </span>
-                  <span className="text-sm font-bold text-black dark:text-white font-mono">
+                  <span className="text-sm font-bold text-ink font-mono">
                     {file.name}
                   </span>
                 </div>
-                <div className="text-[11px] font-mono text-zinc-500 mt-1 flex items-center gap-3">
+                <div className="text-[11px] font-mono text-ink-muted mt-1 flex items-center gap-3">
                   <span>{file.wordCount} words</span>
                   <span>•</span>
                   <span>{new Date(file.createdAt).toLocaleDateString()}</span>
@@ -181,7 +181,7 @@ export function CodenamesLibraryCard() {
               <button
                 type="button"
                 onClick={() => handleDeleteFile(file.id)}
-                className="text-zinc-400 hover:text-red-600 transition-colors p-2"
+                className="text-ink-faint hover:text-red-600 transition-colors p-2"
                 title="Delete File"
               >
                 <Trash2 size={16} />
@@ -198,12 +198,12 @@ export function CodenamesLibraryCard() {
         title="Upload Custom Word File"
       >
         <div className="space-y-4">
-          <p className="text-xs font-mono text-zinc-500">
+          <p className="text-xs font-mono text-ink-muted">
             Upload a text file containing words for Codenames. Supports <strong>.txt</strong> (one word per line), <strong>.csv</strong>, or <strong>.json</strong>.
           </p>
 
           <div>
-            <label className="text-[10px] font-mono uppercase font-bold text-zinc-500 block mb-1">
+            <label className="text-[10px] font-mono uppercase font-bold text-ink-muted block mb-1">
               Select File (.txt, .csv, .json)
             </label>
             <input
@@ -216,7 +216,7 @@ export function CodenamesLibraryCard() {
 
           {uploadFileName && (
             <div>
-              <label className="text-[10px] font-mono uppercase font-bold text-zinc-500 block mb-1">
+              <label className="text-[10px] font-mono uppercase font-bold text-ink-muted block mb-1">
                 Display Name in Library
               </label>
               <Input
@@ -260,7 +260,7 @@ export function CodenamesLibraryCard() {
             <p className="text-xs font-mono text-red-600 dark:text-red-400 font-bold">{saveError}</p>
           )}
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="flex justify-end gap-3 pt-3 border-t border-rule">
             <Button variant="secondary" size="sm" onClick={() => setIsUploadModalOpen(false)}>
               Cancel
             </Button>

@@ -148,16 +148,16 @@ export function CreateRoomPage() {
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-2xl space-y-6">
-      <div className="border-b border-zinc-200 dark:border-zinc-800 pb-4">
-        <span className="text-xs font-mono font-bold uppercase tracking-widest text-zinc-500">
+      <div className="border-b border-rule pb-4">
+        <span className="text-xs font-mono font-bold uppercase tracking-widest text-ink-muted">
           Game Configuration
         </span>
-        <h1 className="text-3xl font-black uppercase tracking-tight text-black dark:text-white mt-1">
+        <h1 className="text-3xl font-black uppercase tracking-tight text-ink mt-1">
           Create Room
         </h1>
       </div>
 
-      <Card className="p-8 border border-zinc-300 dark:border-zinc-800">
+      <Card className="p-8 border border-rule">
         {error && (
           <div className="border border-red-600 dark:border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 p-3 rounded-xs mb-6 text-xs">
             {error}
@@ -166,13 +166,13 @@ export function CreateRoomPage() {
 
         <form onSubmit={handleCreate} className="space-y-6">
           <div>
-            <label className="block text-xs uppercase tracking-wider font-semibold text-zinc-600 dark:text-zinc-400 mb-2">
+            <label className="block text-xs uppercase tracking-wider font-semibold text-ink-muted mb-2">
               Select Game
             </label>
             <select
               value={selectedGame}
               onChange={(e) => setSelectedGame(e.target.value)}
-              className="w-full bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-black dark:text-white rounded-xs p-3 text-sm font-medium focus:border-black dark:focus:border-white outline-none"
+              className="w-full bg-canvas border border-rule text-ink rounded-xs p-3 text-sm font-medium focus:border-rule-strong outline-none"
             >
               {games.map((game) => (
                 <option key={game.id} value={game.id}>
@@ -191,7 +191,7 @@ export function CreateRoomPage() {
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs uppercase tracking-wider font-semibold text-zinc-600 dark:text-zinc-400">
+              <label className="block text-xs uppercase tracking-wider font-semibold text-ink-muted">
                 Game Mode
               </label>
               {isHostForced && (
@@ -200,17 +200,17 @@ export function CreateRoomPage() {
                 </span>
               )}
               {isCodenames && (
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-500">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-ink-muted">
                   Team Play Mode (2 Teams: Red vs Blue)
                 </span>
               )}
               {isRPS && (
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-500">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-ink-muted">
                   Party Battle (Duel 1v1 / Battle Royale Survival)
                 </span>
               )}
               {isNumberGrid && (
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-500">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-ink-muted">
                   Speedrun & Elimination (1–20 Players)
                 </span>
               )}
@@ -220,10 +220,10 @@ export function CreateRoomPage() {
                 onClick={() => !isCodenames && !isNumberGrid && setHostMode('HOST')}
                 className={`p-4 rounded-xs border transition-all ${
                   isCodenames || isNumberGrid
-                    ? 'opacity-40 cursor-not-allowed border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900/30'
+                    ? 'opacity-40 cursor-not-allowed border-rule bg-canvas-sunk/30'
                     : hostMode === 'HOST'
-                    ? 'border-2 border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 cursor-pointer'
-                    : 'border-zinc-300 dark:border-zinc-700 hover:border-black dark:hover:border-white cursor-pointer'
+                    ? 'border-2 border-rule-strong bg-canvas-sunk cursor-pointer'
+                    : 'border-rule hover:border-rule-strong cursor-pointer'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
@@ -233,13 +233,13 @@ export function CreateRoomPage() {
                     disabled={isCodenames || isNumberGrid}
                     checked={!isCodenames && !isNumberGrid && hostMode === 'HOST'}
                     onChange={() => !isCodenames && !isNumberGrid && setHostMode('HOST')}
-                    className="accent-black dark:accent-white"
+                    className="accent-ink"
                   />
-                  <span className="font-bold text-sm text-black dark:text-white uppercase">
+                  <span className="font-bold text-sm text-ink uppercase">
                     Host / TV Mode {isHostForced && '(Required)'}
                   </span>
                 </div>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-ink-muted">
                   {isCodenames
                     ? 'Disabled: In Codenames, the room host is an active player on a team.'
                     : isNumberGrid
@@ -254,10 +254,10 @@ export function CreateRoomPage() {
                 onClick={() => !isHostForced && setHostMode('NO_HOST')}
                 className={`p-4 rounded-xs border transition-all ${
                   isHostForced
-                    ? 'opacity-40 cursor-not-allowed border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900/30'
+                    ? 'opacity-40 cursor-not-allowed border-rule bg-canvas-sunk/30'
                     : hostMode === 'NO_HOST' || isCodenames || isNumberGrid
-                    ? 'border-2 border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 cursor-pointer'
-                    : 'border-zinc-300 dark:border-zinc-700 hover:border-black dark:hover:border-white cursor-pointer'
+                    ? 'border-2 border-rule-strong bg-canvas-sunk cursor-pointer'
+                    : 'border-rule hover:border-rule-strong cursor-pointer'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
@@ -267,13 +267,13 @@ export function CreateRoomPage() {
                     disabled={isHostForced}
                     checked={isCodenames || isNumberGrid || (!isHostForced && hostMode === 'NO_HOST')}
                     onChange={() => !isHostForced && setHostMode('NO_HOST')}
-                    className="accent-black dark:accent-white"
+                    className="accent-ink"
                   />
-                  <span className="font-bold text-sm text-black dark:text-white uppercase">
+                  <span className="font-bold text-sm text-ink uppercase">
                     {isCodenames ? 'Team Play Mode' : isNumberGrid ? 'All Players Compete' : 'No Host Mode'}
                   </span>
                 </div>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-ink-muted">
                   {isHostForced
                     ? 'Disabled: This social deduction game requires 1 dedicated Host Moderator.'
                     : isCodenames
@@ -288,7 +288,7 @@ export function CreateRoomPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs uppercase tracking-wider font-semibold text-zinc-600 dark:text-zinc-400 mb-2">
+              <label className="block text-xs uppercase tracking-wider font-semibold text-ink-muted mb-2">
                 Max Players ({isNumberGrid ? '1–20' : isCodenames || isRPS ? '2–20' : '4–12'})
               </label>
               <input
@@ -301,19 +301,19 @@ export function CreateRoomPage() {
                   const maxP = isNumberGrid || isCodenames || isRPS ? 20 : 12;
                   setMaxPlayers(Math.min(Math.max(parseInt(e.target.value) || minP, minP), maxP));
                 }}
-                className="w-full bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-black dark:text-white rounded-xs p-3 text-sm font-mono focus:border-black dark:focus:border-white outline-none"
+                className="w-full bg-canvas border border-rule text-ink rounded-xs p-3 text-sm font-mono focus:border-rule-strong outline-none"
               />
             </div>
 
             <div className="flex flex-col justify-end">
-              <label className="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-zinc-900/60 rounded-xs cursor-pointer border border-zinc-300 dark:border-zinc-700">
+              <label className="flex items-center gap-3 p-3 bg-canvas-sunk/60 rounded-xs cursor-pointer border border-rule">
                 <input
                   type="checkbox"
                   checked={isPrivate}
                   onChange={(e) => setIsPrivate(e.target.checked)}
-                  className="w-4 h-4 accent-black dark:accent-white"
+                  className="w-4 h-4 accent-ink"
                 />
-                <span className="text-xs uppercase tracking-wider font-semibold text-zinc-800 dark:text-zinc-200">
+                <span className="text-xs uppercase tracking-wider font-semibold text-ink">
                   Private Room (Code Only)
                 </span>
               </label>

@@ -23,12 +23,12 @@ export function RoundResultModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 font-mono">
-      <Card className="w-full max-w-md p-6 border-2 border-black dark:border-white bg-white dark:bg-zinc-950 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+      <Card className="w-full max-w-md p-6 border-2 border-rule-strong bg-canvas shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
         <div className="text-center">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 block">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-ink-muted block">
             Round {roundResults.roundNumber} of {totalRounds} Complete
           </span>
-          <h2 className="text-xl font-black uppercase tracking-tight text-black dark:text-white mt-1">
+          <h2 className="text-xl font-black uppercase tracking-tight text-ink mt-1">
             Round Results
           </h2>
         </div>
@@ -54,7 +54,7 @@ export function RoundResultModal({
 
         {/* Finish Order */}
         <div className="space-y-2">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted block">
             Completion Order
           </span>
           <div className="space-y-1.5 max-h-48 overflow-y-auto">
@@ -65,13 +65,13 @@ export function RoundResultModal({
               return (
                 <div
                   key={entry.playerId}
-                  className="p-2 rounded-xs border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-between text-xs"
+                  className="p-2 rounded-xs border border-rule bg-canvas-sunk flex items-center justify-between text-xs"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-black dark:bg-white text-white dark:text-black font-black text-[10px] flex items-center justify-center">
+                    <span className="w-5 h-5 rounded-full bg-ink text-canvas font-black text-[10px] flex items-center justify-center">
                       #{entry.finishOrder}
                     </span>
-                    <span className="font-bold text-black dark:text-white">
+                    <span className="font-bold text-ink">
                       {entry.displayName} {entry.playerId === me?.playerId && '(You)'}
                     </span>
                   </div>
@@ -96,7 +96,7 @@ export function RoundResultModal({
         </div>
 
         {/* Damage Mode Note */}
-        <p className="text-[10px] text-zinc-400 text-center">
+        <p className="text-[10px] text-ink-faint text-center">
           Damage Rule:{' '}
           {playerView.damageMode === 'EVERYONE_EXCEPT_FIRST'
             ? 'Everyone except 1st finisher takes round damage'
@@ -104,7 +104,7 @@ export function RoundResultModal({
         </p>
 
         {/* Advance button — only the host may start the next round */}
-        <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="pt-2 border-t border-rule">
           {isHost ? (
             <Button
               variant="primary"
@@ -115,7 +115,7 @@ export function RoundResultModal({
               <ArrowRight size={14} />
             </Button>
           ) : (
-            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 text-center">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-ink-muted text-center">
               Waiting for host to start the next round...
             </p>
           )}

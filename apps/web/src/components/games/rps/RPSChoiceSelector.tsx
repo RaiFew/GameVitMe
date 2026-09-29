@@ -79,10 +79,10 @@ export function RPSChoiceSelector({ selectedChoice, onSelect, disabled = false }
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 font-bold">
+        <span className="text-xs font-mono uppercase tracking-wider text-ink-muted font-bold">
           Choose Your Hand
         </span>
-        <span className="text-[10px] font-mono text-zinc-400">
+        <span className="text-[10px] font-mono text-ink-faint">
           Keyboard: 1, 2, 3 or R, P, S
         </span>
       </div>
@@ -99,10 +99,10 @@ export function RPSChoiceSelector({ selectedChoice, onSelect, disabled = false }
               onClick={() => onSelect(choice.type)}
               className={`relative group p-4 sm:p-6 rounded-xs border-2 transition-all flex flex-col items-center text-center select-none active:scale-95 ${
                 disabled
-                  ? 'opacity-40 cursor-not-allowed border-zinc-300 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900/30'
+                  ? 'opacity-40 cursor-not-allowed border-rule bg-canvas-sunk/30'
                   : isSelected
-                  ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black shadow-lg ring-4 ring-black/10 dark:ring-white/10 scale-102'
-                  : `border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-black dark:text-white ${choice.bgClass} hover:border-black dark:hover:border-white cursor-pointer`
+                  ? 'border-rule-strong bg-ink text-canvas shadow-lg ring-4 ring-ink/10 scale-102'
+                  : `border-rule bg-canvas text-ink ${choice.bgClass} hover:border-rule-strong cursor-pointer`
               }`}
             >
               {isSelected && (
@@ -124,7 +124,7 @@ export function RPSChoiceSelector({ selectedChoice, onSelect, disabled = false }
                 </div>
                 <p
                   className={`text-[10px] font-mono mt-0.5 ${
-                    isSelected ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500'
+                    isSelected ? 'text-ink-faint' : 'text-ink-muted'
                   }`}
                 >
                   {choice.beatsTh}
@@ -134,8 +134,8 @@ export function RPSChoiceSelector({ selectedChoice, onSelect, disabled = false }
               <span
                 className={`mt-2 text-[9px] font-mono px-1.5 py-0.5 rounded-xs border ${
                   isSelected
-                    ? 'border-white/30 dark:border-black/30 text-white/80 dark:text-black/80'
-                    : 'border-zinc-200 dark:border-zinc-800 text-zinc-400'
+                    ? 'border-rule-strong/30 text-canvas/80'
+                    : 'border-rule text-ink-faint'
                 }`}
               >
                 [{choice.shortcut}]

@@ -18,10 +18,10 @@ export function CodenamesBoard({ cards, isSpymaster, canGuess, onSelectCard }: P
         return 'bg-blue-600 dark:bg-blue-700 text-white border-blue-700 shadow-inner font-black';
       }
       if (card.color === 'ASSASSIN') {
-        return 'bg-black text-white dark:bg-white dark:text-black border-2 border-red-600 font-black';
+        return 'bg-ink text-canvas border-2 border-red-600 font-black';
       }
       // NEUTRAL
-      return 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 border-zinc-300 dark:border-zinc-700 line-through';
+      return 'bg-surface-hover text-ink-faint border-rule line-through';
     }
 
     // Unrevealed Card
@@ -34,14 +34,14 @@ export function CodenamesBoard({ cards, isSpymaster, canGuess, onSelectCard }: P
         return 'border-2 border-blue-600/80 bg-blue-50/70 dark:bg-blue-950/30 text-blue-950 dark:text-blue-200 font-black shadow-xs';
       }
       if (card.color === 'ASSASSIN') {
-        return 'border-2 border-black dark:border-white bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black font-black';
+        return 'border-2 border-rule-strong bg-canvas-sunk text-canvas font-black';
       }
       // NEUTRAL
-      return 'border border-zinc-300 dark:border-zinc-700 bg-zinc-100/60 dark:bg-zinc-900/40 text-zinc-600 dark:text-zinc-400';
+      return 'border border-rule bg-canvas-sunk/40 text-ink-muted';
     }
 
     // Operative View (hidden card)
-    return 'border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-black dark:text-white font-bold hover:border-black dark:hover:border-white hover:shadow-md transition-all';
+    return 'border border-rule bg-canvas text-ink font-bold hover:border-rule-strong hover:shadow-md transition-all';
   };
 
   const getCardTag = (card: CodenamesPublicCard) => {
@@ -89,7 +89,7 @@ export function CodenamesBoard({ cards, isSpymaster, canGuess, onSelectCard }: P
                       ? 'text-blue-700 dark:text-blue-300'
                       : card.color === 'ASSASSIN'
                       ? 'text-red-400 dark:text-red-600'
-                      : 'text-zinc-500'
+                      : 'text-ink-muted'
                   }`}
                 >
                   {tag}

@@ -214,14 +214,14 @@ export function DashboardPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl space-y-10">
       {/* Header Profile Summary */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-rule pb-6">
         <div className="flex items-center gap-4">
           <Avatar fallback={user?.displayName || 'Player'} src={user?.avatarUrl} size="lg" />
           <div>
-            <span className="text-[10px] uppercase tracking-widest font-mono text-zinc-500 font-bold">
+            <span className="text-[10px] uppercase tracking-widest font-mono text-ink-muted font-bold">
               Player Hub
             </span>
-            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black dark:text-white">
+            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-ink">
               {user?.displayName || 'Player'}
             </h1>
           </div>
@@ -261,17 +261,17 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Create Room Card */}
         <Card
-          className="flex flex-col justify-between p-8 border-2 border-black dark:border-white hover:bg-zinc-50 dark:hover:bg-zinc-900/60 transition-colors cursor-pointer"
+          className="flex flex-col justify-between p-8 border-2 border-rule-strong hover:bg-canvas-sunk/60 transition-colors cursor-pointer"
           onClick={() => navigate('/room/create')}
         >
           <div>
-            <div className="w-10 h-10 border border-black dark:border-white flex items-center justify-center font-mono font-bold text-sm mb-6 rounded-xs">
+            <div className="w-10 h-10 border border-rule-strong flex items-center justify-center font-mono font-bold text-sm mb-6 rounded-xs">
               <Plus size={20} />
             </div>
-            <h2 className="text-xl font-black uppercase tracking-tight text-black dark:text-white mb-2">
+            <h2 className="text-xl font-black uppercase tracking-tight text-ink mb-2">
               Create New Room
             </h2>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
+            <p className="text-xs text-ink-muted leading-relaxed mb-6">
               Start an official room as Host (TV / Screen Mode) or join together with 4–12 players.
             </p>
           </div>
@@ -281,15 +281,15 @@ export function DashboardPage() {
         </Card>
 
         {/* Join Room Card */}
-        <Card className="flex flex-col justify-between p-8 border border-zinc-300 dark:border-zinc-800">
+        <Card className="flex flex-col justify-between p-8 border border-rule">
           <div>
-            <div className="w-10 h-10 border border-zinc-400 dark:border-zinc-600 flex items-center justify-center font-mono font-bold text-sm mb-6 rounded-xs">
+            <div className="w-10 h-10 border border-ink/40 flex items-center justify-center font-mono font-bold text-sm mb-6 rounded-xs">
               <LogIn size={20} />
             </div>
-            <h2 className="text-xl font-black uppercase tracking-tight text-black dark:text-white mb-2">
+            <h2 className="text-xl font-black uppercase tracking-tight text-ink mb-2">
               Join Existing Room
             </h2>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
+            <p className="text-xs text-ink-muted leading-relaxed mb-6">
               Enter a 5-character room code or scan your host screen QR code.
             </p>
 
@@ -336,11 +336,11 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Available Games */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-2">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500">
+          <div className="flex items-center justify-between border-b border-rule pb-2">
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-ink-muted">
               Featured Games
             </span>
-            <Link to="/games" className="text-xs font-mono text-zinc-500 hover:text-black dark:hover:text-white">
+            <Link to="/games" className="text-xs font-mono text-ink-muted hover:text-ink">
               View All →
             </Link>
           </div>
@@ -349,21 +349,21 @@ export function DashboardPage() {
             {FEATURED_GAMES.map((game) => (
               <Card
                 key={game.id}
-                className="p-5 border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                className="p-5 border border-rule hover:border-rule-strong transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
               >
                 <div>
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <h3 className="text-base font-black uppercase text-black dark:text-white">
+                    <h3 className="text-base font-black uppercase text-ink">
                       {game.name}
                     </h3>
-                    <span className="text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300">
+                    <span className="text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 border border-rule bg-canvas-sunk text-ink">
                       {game.category}
                     </span>
-                    <span className="text-[10px] font-mono text-zinc-400">
+                    <span className="text-[10px] font-mono text-ink-faint">
                       {game.players}
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                  <p className="text-xs text-ink-muted">
                     {game.description}
                   </p>
                 </div>
@@ -379,31 +379,31 @@ export function DashboardPage() {
 
         {/* Friends Status Bar */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-2">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500">
+          <div className="flex items-center justify-between border-b border-rule pb-2">
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-ink-muted">
               Friends Online ({friends.filter((f) => f.status === 'online').length})
             </span>
-            <Link to="/friends" className="text-xs font-mono text-zinc-500 hover:text-black dark:hover:text-white">
+            <Link to="/friends" className="text-xs font-mono text-ink-muted hover:text-ink">
               Manage →
             </Link>
           </div>
 
-          <Card className="p-4 border border-zinc-200 dark:border-zinc-800">
+          <Card className="p-4 border border-rule">
             {friends.length === 0 ? (
-              <div className="text-center py-6 text-xs text-zinc-500 font-mono">
+              <div className="text-center py-6 text-xs text-ink-muted font-mono">
                 No friends added yet.
               </div>
             ) : (
-              <div className="divide-y divide-zinc-100 dark:divide-zinc-900">
+              <div className="divide-y divide-rule">
                 {friends.slice(0, 5).map((f) => (
                   <div key={f.id} className="flex items-center justify-between py-2 text-xs">
                     <div className="flex items-center gap-2.5">
                       <Avatar fallback={f.displayName} src={f.avatarUrl} status={f.status} size="sm" />
-                      <span className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                      <span className="font-semibold text-ink truncate">
                         {f.displayName}
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono text-zinc-400 uppercase">
+                    <span className="text-[10px] font-mono text-ink-faint uppercase">
                       {f.status}
                     </span>
                   </div>
@@ -418,10 +418,10 @@ export function DashboardPage() {
       {showScanner && (
         <Modal isOpen={showScanner} onClose={() => setShowScanner(false)}>
           <div className="text-center space-y-4">
-            <h3 className="text-lg font-black uppercase text-black dark:text-white">
+            <h3 className="text-lg font-black uppercase text-ink">
               Scan Room QR Code
             </h3>
-            <div id="dashboard-reader" className="w-full overflow-hidden border border-zinc-300 dark:border-zinc-700 rounded-xs" />
+            <div id="dashboard-reader" className="w-full overflow-hidden border border-rule rounded-xs" />
             <Button variant="secondary" size="sm" onClick={() => setShowScanner(false)}>
               Cancel
             </Button>

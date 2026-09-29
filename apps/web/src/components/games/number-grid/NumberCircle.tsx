@@ -41,9 +41,9 @@ export const NumberCircle = memo(function NumberCircle({
       return 'border-2 border-emerald-500 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 scale-105 shadow-xs shadow-emerald-500/40';
     }
     if (isCompleted) {
-      return 'border border-zinc-300 dark:border-zinc-800 bg-zinc-100/60 dark:bg-zinc-900/40 text-zinc-400 dark:text-zinc-600 opacity-40 cursor-default';
+      return 'border border-rule bg-canvas-sunk/40 text-ink-muted opacity-40 cursor-default';
     }
-    return 'border-2 border-black dark:border-white bg-white dark:bg-zinc-950 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 active:scale-95 shadow-xs cursor-pointer';
+    return 'border-2 border-rule-strong bg-canvas text-ink hover:bg-canvas-sunk active:scale-95 shadow-xs cursor-pointer';
   };
 
   return (

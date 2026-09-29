@@ -39,13 +39,13 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
   };
 
   return (
-    <Card className="p-5 border border-zinc-300 dark:border-zinc-800 space-y-4">
+    <Card className="p-5 border border-rule space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block">
+          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
             Battle Settings
           </span>
-          <h3 className="text-sm font-black uppercase tracking-tight text-black dark:text-white mt-0.5">
+          <h3 className="text-sm font-black uppercase tracking-tight text-ink mt-0.5">
             Rock Paper Scissors
           </h3>
         </div>
@@ -56,7 +56,7 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
               TV Host Active
             </span>
           )}
-          <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-xs border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300">
+          <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-xs border border-rule bg-canvas-sunk text-ink">
             {currentMode === 'DUEL' ? '1v1 Duel' : currentMode === 'BATTLE_ROYALE' ? 'Battle Royale' : 'Points Race'}
           </span>
         </div>
@@ -64,7 +64,7 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
 
       {/* Screen Mode Selector (Host / TV vs Direct Player) */}
       <div className="space-y-2">
-        <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-bold block">
+        <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold block">
           Screen & Display Role
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -74,25 +74,25 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
             onClick={() => handleHostModeToggle(true)}
             className={`p-3 border rounded-xs text-left transition-all flex items-start justify-between ${
               isHostMode
-                ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-2 ring-black dark:ring-white'
-                : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 bg-white dark:bg-zinc-950'
+                ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink'
+                : 'border-rule hover:border-ink/40 bg-canvas'
             } ${!isHost ? 'opacity-75 cursor-default' : 'cursor-pointer'}`}
           >
             <div>
               <div className="flex items-center gap-1.5">
                 <Tv className="w-3.5 h-3.5 text-amber-500" />
-                <span className="text-xs font-black uppercase text-black dark:text-white">Host / TV Screen Mode</span>
+                <span className="text-xs font-black uppercase text-ink">Host / TV Screen Mode</span>
               </div>
-              <p className="text-[10px] font-mono text-zinc-500 mt-1">
+              <p className="text-[10px] font-mono text-ink-muted mt-1">
                 Your screen acts as a TV fighting game arena & scoreboard. Fighters play from their phones!
               </p>
             </div>
             <div
               className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
-                isHostMode ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-zinc-400'
+                isHostMode ? 'border-rule-strong bg-ink' : 'border-ink/40'
               }`}
             >
-              {isHostMode && <div className="w-1.5 h-1.5 rounded-full bg-white dark:bg-black" />}
+              {isHostMode && <div className="w-1.5 h-1.5 rounded-full bg-canvas" />}
             </div>
           </button>
 
@@ -102,25 +102,25 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
             onClick={() => handleHostModeToggle(false)}
             className={`p-3 border rounded-xs text-left transition-all flex items-start justify-between ${
               !isHostMode
-                ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-2 ring-black dark:ring-white'
-                : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 bg-white dark:bg-zinc-950'
+                ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink'
+                : 'border-rule hover:border-ink/40 bg-canvas'
             } ${!isHost ? 'opacity-75 cursor-default' : 'cursor-pointer'}`}
           >
             <div>
               <div className="flex items-center gap-1.5">
                 <Gamepad2 className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-black uppercase text-black dark:text-white">Direct Play Mode</span>
+                <span className="text-xs font-black uppercase text-ink">Direct Play Mode</span>
               </div>
-              <p className="text-[10px] font-mono text-zinc-500 mt-1">
+              <p className="text-[10px] font-mono text-ink-muted mt-1">
                 Everyone (including you as host) plays hands directly on their own device.
               </p>
             </div>
             <div
               className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
-                !isHostMode ? 'border-black dark:border-white bg-black dark:bg-white' : 'border-zinc-400'
+                !isHostMode ? 'border-rule-strong bg-ink' : 'border-ink/40'
               }`}
             >
-              {!isHostMode && <div className="w-1.5 h-1.5 rounded-full bg-white dark:bg-black" />}
+              {!isHostMode && <div className="w-1.5 h-1.5 rounded-full bg-canvas" />}
             </div>
           </button>
         </div>
@@ -147,7 +147,7 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
 
       {/* Mode Selection */}
       <div className="space-y-2">
-        <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-bold block">
+        <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold block">
           Game Mode
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -158,15 +158,15 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
             onClick={() => handleModeSelect('DUEL')}
             className={`p-3 border rounded-xs text-left transition-all flex flex-col justify-between ${
               currentMode === 'DUEL'
-                ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-2 ring-black dark:ring-white'
-                : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 bg-white dark:bg-zinc-950'
+                ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink'
+                : 'border-rule hover:border-ink/40 bg-canvas'
             } ${!isHost ? 'opacity-75 cursor-default' : 'cursor-pointer'}`}
           >
             <div className="flex items-center justify-between w-full mb-1">
-              <span className="text-xs font-black uppercase text-black dark:text-white">1v1 Duel</span>
+              <span className="text-xs font-black uppercase text-ink">1v1 Duel</span>
               <span className="text-sm">⚔️</span>
             </div>
-            <p className="text-[10px] font-mono text-zinc-500">
+            <p className="text-[10px] font-mono text-ink-muted">
               {isHostMode ? 'Arcade Fighting Game HUD on your screen!' : 'Classic head-to-head match (2 players).'}
             </p>
           </button>
@@ -178,15 +178,15 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
             onClick={() => handleModeSelect('BATTLE_ROYALE')}
             className={`p-3 border rounded-xs text-left transition-all flex flex-col justify-between ${
               currentMode === 'BATTLE_ROYALE'
-                ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-2 ring-black dark:ring-white'
-                : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 bg-white dark:bg-zinc-950'
+                ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink'
+                : 'border-rule hover:border-ink/40 bg-canvas'
             } ${!isHost ? 'opacity-75 cursor-default' : 'cursor-pointer'}`}
           >
             <div className="flex items-center justify-between w-full mb-1">
-              <span className="text-xs font-black uppercase text-black dark:text-white">Battle Royale</span>
+              <span className="text-xs font-black uppercase text-ink">Battle Royale</span>
               <span className="text-sm">👑</span>
             </div>
-            <p className="text-[10px] font-mono text-zinc-500">
+            <p className="text-[10px] font-mono text-ink-muted">
               Survival showdown! Losers eliminated until 1 champion survives.
             </p>
           </button>
@@ -198,15 +198,15 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
             onClick={() => handleModeSelect('POINTS_RACE')}
             className={`p-3 border rounded-xs text-left transition-all flex flex-col justify-between ${
               currentMode === 'POINTS_RACE'
-                ? 'border-black dark:border-white bg-zinc-50 dark:bg-zinc-900 ring-2 ring-black dark:ring-white'
-                : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 bg-white dark:bg-zinc-950'
+                ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink'
+                : 'border-rule hover:border-ink/40 bg-canvas'
             } ${!isHost ? 'opacity-75 cursor-default' : 'cursor-pointer'}`}
           >
             <div className="flex items-center justify-between w-full mb-1">
-              <span className="text-xs font-black uppercase text-black dark:text-white">Points Race</span>
+              <span className="text-xs font-black uppercase text-ink">Points Race</span>
               <span className="text-sm">🏁</span>
             </div>
-            <p className="text-[10px] font-mono text-zinc-500">
+            <p className="text-[10px] font-mono text-ink-muted">
               Every round win grants +1 point. First to target wins!
             </p>
           </button>
@@ -215,8 +215,8 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
 
       {/* Target Score (for Duel or Points Race) */}
       {currentMode !== 'BATTLE_ROYALE' && (
-        <div className="space-y-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
-          <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-bold block">
+        <div className="space-y-2 pt-2 border-t border-rule">
+          <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold block">
             Target Points to Win
           </label>
           <div className="flex gap-2">
@@ -228,8 +228,8 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
                 onClick={() => handleScoreSelect(score)}
                 className={`flex-1 py-1.5 px-3 text-xs font-mono font-bold rounded-xs border transition-all ${
                   targetScore === score
-                    ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black'
-                    : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300'
+                    ? 'border-rule-strong bg-ink text-canvas'
+                    : 'border-rule hover:border-ink/40 bg-canvas-sunk text-ink'
                 } ${!isHost ? 'cursor-default opacity-80' : 'cursor-pointer'}`}
               >
                 {score} pts
@@ -240,8 +240,8 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
       )}
 
       {/* Turn Timer */}
-      <div className="space-y-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
-        <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-bold block">
+      <div className="space-y-2 pt-2 border-t border-rule">
+        <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold block">
           Round Timer (Seconds to Pick)
         </label>
         <div className="flex gap-2">
@@ -258,8 +258,8 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
               onClick={() => handleTimerSelect(t.value)}
               className={`flex-1 py-1.5 px-2 text-[11px] font-mono font-bold rounded-xs border transition-all ${
                 timerSeconds === t.value
-                  ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black'
-                  : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300'
+                  ? 'border-rule-strong bg-ink text-canvas'
+                  : 'border-rule hover:border-ink/40 bg-canvas-sunk text-ink'
               } ${!isHost ? 'cursor-default opacity-80' : 'cursor-pointer'}`}
             >
               {t.label}

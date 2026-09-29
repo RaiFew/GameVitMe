@@ -31,7 +31,7 @@ export function FriendList({ onInvite }: { onInvite?: (id: string) => void }) {
   }
 
   return (
-    <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+    <div className="divide-y divide-rule">
       {friends.map((f) => (
         <div
           key={f.id}
@@ -40,14 +40,14 @@ export function FriendList({ onInvite }: { onInvite?: (id: string) => void }) {
           <div className="flex items-center gap-3">
             <Avatar fallback={f.displayName ?? '?'} src={f.avatarUrl ?? undefined} size="sm" />
             <div>
-              <span className="font-bold text-sm text-black dark:text-white flex items-center gap-2">
+              <span className="font-bold text-sm text-ink flex items-center gap-2">
                 {f.displayName}
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${f.isOnline ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
                   title={f.isOnline ? 'Online' : 'Offline'}
                 />
               </span>
-              <span className="text-[10px] font-mono text-zinc-400 uppercase">
+              <span className="text-[10px] font-mono text-ink-faint uppercase">
                 @{f.username || f.displayName} · {f.isOnline ? 'Online' : 'Offline'}
               </span>
             </div>
@@ -56,7 +56,7 @@ export function FriendList({ onInvite }: { onInvite?: (id: string) => void }) {
             <button
               type="button"
               onClick={() => onInvite(f.id)}
-              className="text-[10px] font-mono font-bold uppercase px-2.5 py-1 border border-zinc-300 dark:border-zinc-700 rounded-xs hover:border-black dark:hover:border-white transition-colors"
+              className="text-[10px] font-mono font-bold uppercase px-2.5 py-1 border border-rule rounded-xs hover:border-rule-strong transition-colors"
             >
               Invite
             </button>

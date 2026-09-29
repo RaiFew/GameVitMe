@@ -61,17 +61,17 @@ export function RPSHostScreen({
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl space-y-6 select-none font-sans">
       {/* TV Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-200 dark:border-zinc-800 pb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-rule pb-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2 py-0.5 bg-amber-500 text-black font-black font-mono text-[10px] uppercase tracking-widest rounded-xs shadow-xs">
               TV HOST SCREEN
             </span>
-            <span className="text-xs font-mono font-bold text-zinc-500 uppercase">
+            <span className="text-xs font-mono font-bold text-ink-muted uppercase">
               {gameMode === 'BATTLE_ROYALE' ? 'Battle Royale Survival' : 'Points Race'} • Round {roundNumber}
             </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black dark:text-white">
+          <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-ink">
             Rock Paper Scissors Tournament Arena
           </h2>
         </div>
@@ -83,7 +83,7 @@ export function RPSHostScreen({
               <span>{alivePlayers.length} / {players.length} Survivors</span>
             </div>
           ) : (
-            <div className="px-3 py-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xs text-xs font-mono font-bold text-zinc-700 dark:text-zinc-300">
+            <div className="px-3 py-1 bg-canvas-sunk border border-rule rounded-xs text-xs font-mono font-bold text-ink">
               First to {targetScore} pts
             </div>
           )}
@@ -122,11 +122,11 @@ export function RPSHostScreen({
           <div className="inline-flex p-3 rounded-full bg-amber-500/20 text-amber-500 mb-2">
             <Trophy className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black dark:text-white">
+          <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-ink">
             🏆 TOURNAMENT WINNER CROWNED! 🏆
           </h2>
           {winReason && (
-            <p className="text-sm font-mono font-bold text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm font-mono font-bold text-ink-muted">
               {winReason}
             </p>
           )}
@@ -134,12 +134,12 @@ export function RPSHostScreen({
       )}
 
       {/* Combatant Arena Grid: Who faces whom & what everyone threw */}
-      <Card className="p-5 border border-zinc-300 dark:border-zinc-800 space-y-4">
-        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-2">
-          <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 font-bold">
+      <Card className="p-5 border border-rule space-y-4">
+        <div className="flex items-center justify-between border-b border-rule pb-2">
+          <span className="text-xs font-mono uppercase tracking-wider text-ink-muted font-bold">
             Live Combatants & Weapons Thrown ({players.length} Competitors)
           </span>
-          <span className="text-[10px] font-mono text-zinc-400">
+          <span className="text-[10px] font-mono text-ink-faint">
             {isChoosing ? 'Awaiting all choices...' : 'Simultaneous Reveal'}
           </span>
         </div>
@@ -154,10 +154,10 @@ export function RPSHostScreen({
                 key={player.id}
                 className={`p-3 rounded-xs border-2 transition-all flex flex-col items-center text-center relative ${
                   isEliminated
-                    ? 'opacity-35 border-zinc-300 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900/30'
+                    ? 'opacity-35 border-rule bg-canvas-sunk/30'
                     : isWinner
                     ? 'border-emerald-500 bg-emerald-500/10 shadow-lg ring-2 ring-emerald-500/30'
-                    : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950'
+                    : 'border-rule bg-canvas'
                 }`}
               >
                 {/* Status Badges */}
@@ -172,7 +172,7 @@ export function RPSHostScreen({
                 ) : null}
 
                 {/* Hand Display */}
-                <div className="w-14 h-14 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center my-2 shadow-inner">
+                <div className="w-14 h-14 rounded-full border border-rule bg-canvas-sunk flex items-center justify-center my-2 shadow-inner">
                   {isChoosing ? (
                     player.hasChosen ? (
                       <div className="flex flex-col items-center">
@@ -183,8 +183,8 @@ export function RPSHostScreen({
                       </div>
                     ) : (
                       <div className="flex flex-col items-center animate-pulse">
-                        <span className="text-zinc-400 text-base">⚡</span>
-                        <span className="text-[8px] font-mono text-zinc-400 uppercase">
+                        <span className="text-ink-faint text-base">⚡</span>
+                        <span className="text-[8px] font-mono text-ink-faint uppercase">
                           PICKING
                         </span>
                       </div>
@@ -197,25 +197,25 @@ export function RPSHostScreen({
                 </div>
 
                 {/* Player Name */}
-                <span className="font-black text-xs truncate max-w-full text-black dark:text-white uppercase tracking-tight">
+                <span className="font-black text-xs truncate max-w-full text-ink uppercase tracking-tight">
                   {player.displayName}
                 </span>
 
                 {/* Revealed Hand Label / Score */}
                 {!isChoosing && player.choice && (
-                  <span className="text-[10px] font-mono font-bold text-zinc-500 mt-0.5">
+                  <span className="text-[10px] font-mono font-bold text-ink-muted mt-0.5">
                     {player.choice}
                   </span>
                 )}
 
                 {/* Score or Status */}
-                <div className="mt-2 pt-1 border-t border-zinc-200 dark:border-zinc-800 w-full flex items-center justify-center gap-1 font-mono text-[10px] font-bold">
+                <div className="mt-2 pt-1 border-t border-rule w-full flex items-center justify-center gap-1 font-mono text-[10px] font-bold">
                   {gameMode !== 'BATTLE_ROYALE' ? (
-                    <span className="text-zinc-700 dark:text-zinc-300">
-                      Score: <strong className="text-black dark:text-white">{player.score}</strong>
+                    <span className="text-ink">
+                      Score: <strong className="text-ink">{player.score}</strong>
                     </span>
                   ) : (
-                    <span className={player.isAlive ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400'}>
+                    <span className={player.isAlive ? 'text-emerald-600 dark:text-emerald-400' : 'text-ink-faint'}>
                       {player.isAlive ? 'Active Survivor' : 'Eliminated'}
                     </span>
                   )}
@@ -227,10 +227,10 @@ export function RPSHostScreen({
       </Card>
 
       {/* Host TV Bottom Action Row */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-zinc-200 dark:border-zinc-800 pt-4">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-rule pt-4">
         <div className="flex items-center gap-2">
           <Tv className="w-4 h-4 text-amber-500" />
-          <span className="text-xs font-mono text-zinc-500">
+          <span className="text-xs font-mono text-ink-muted">
             TV Big-Screen Mode • All player actions synchronized from mobile devices
           </span>
         </div>

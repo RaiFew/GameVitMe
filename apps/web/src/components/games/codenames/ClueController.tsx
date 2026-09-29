@@ -43,15 +43,15 @@ export function ClueController({ playerView, onSubmitClue, onEndGuessing }: Prop
   if (phase === 'CLUE') {
     if (me.canGiveClue) {
       return (
-        <Card className="p-6 border-2 border-black dark:border-white bg-white dark:bg-zinc-950 shadow-md">
-          <div className="border-b border-zinc-200 dark:border-zinc-800 pb-3 mb-4 flex items-center justify-between">
+        <Card className="p-6 border-2 border-rule-strong bg-canvas shadow-md">
+          <div className="border-b border-rule pb-3 mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Eye size={18} className={isRed ? 'text-red-600' : 'text-blue-600'} />
-              <h3 className="text-sm font-black uppercase tracking-wider text-black dark:text-white">
+              <h3 className="text-sm font-black uppercase tracking-wider text-ink">
                 Your Turn as {currentTeam} Spymaster
               </h3>
             </div>
-            <span className="text-[10px] font-mono uppercase font-bold text-zinc-500">
+            <span className="text-[10px] font-mono uppercase font-bold text-ink-muted">
               Submit Clue & Count
             </span>
           </div>
@@ -59,7 +59,7 @@ export function ClueController({ playerView, onSubmitClue, onEndGuessing }: Prop
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="sm:col-span-2">
-                <label className="text-[10px] font-mono uppercase font-bold text-zinc-500 block mb-1">
+                <label className="text-[10px] font-mono uppercase font-bold text-ink-muted block mb-1">
                   Clue Word (One Word Only)
                 </label>
                 <Input
@@ -75,14 +75,14 @@ export function ClueController({ playerView, onSubmitClue, onEndGuessing }: Prop
               </div>
 
               <div>
-                <label className="text-[10px] font-mono uppercase font-bold text-zinc-500 block mb-1">
+                <label className="text-[10px] font-mono uppercase font-bold text-ink-muted block mb-1">
                   Related Cards
                 </label>
                 <div className="flex items-center gap-1.5">
                   <select
                     value={number}
                     onChange={(e) => setNumber(parseInt(e.target.value, 10))}
-                    className="w-full h-10 px-3 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 rounded-xs text-sm font-mono font-bold text-black dark:text-white"
+                    className="w-full h-10 px-3 border border-rule bg-canvas rounded-xs text-sm font-mono font-bold text-ink"
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((n) => (
                       <option key={n} value={n}>
@@ -110,8 +110,8 @@ export function ClueController({ playerView, onSubmitClue, onEndGuessing }: Prop
 
     // Not Spymaster's turn
     return (
-      <Card className="p-6 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 text-center">
-        <div className="flex items-center justify-center gap-2 text-zinc-600 dark:text-zinc-300 font-mono text-xs uppercase font-bold">
+      <Card className="p-6 border border-rule bg-canvas-sunk/40 text-center">
+        <div className="flex items-center justify-center gap-2 text-ink-muted font-mono text-xs uppercase font-bold">
           <span className={`w-2.5 h-2.5 rounded-full ${isRed ? 'bg-red-600' : 'bg-blue-600'} animate-pulse`} />
           Waiting for {currentTeam} Spymaster to give a clue...
         </div>
@@ -122,14 +122,14 @@ export function ClueController({ playerView, onSubmitClue, onEndGuessing }: Prop
   // ─── Phase: GUESSING ───────────────────────────────────────────
   if (phase === 'GUESSING') {
     return (
-      <Card className={`p-6 border-2 ${isRed ? 'border-red-600 dark:border-red-500' : 'border-blue-600 dark:border-blue-500'} bg-white dark:bg-zinc-950 shadow-md`}>
+      <Card className={`p-6 border-2 ${isRed ? 'border-red-600 dark:border-red-500' : 'border-blue-600 dark:border-blue-500'} bg-canvas shadow-md`}>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block">
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
               Active Clue • {currentTeam} Team Guessing
             </span>
             <div className="flex items-center gap-3 mt-1">
-              <span className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black dark:text-white">
+              <span className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-ink">
                 {currentClue?.word}
               </span>
               <span className={`text-xl sm:text-2xl font-mono font-black px-3 py-0.5 rounded-xs border ${
@@ -142,12 +142,12 @@ export function ClueController({ playerView, onSubmitClue, onEndGuessing }: Prop
             </div>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-rule">
             <div className="text-right">
-              <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-500 block font-bold">
+              <span className="text-[9px] font-mono uppercase tracking-wider text-ink-muted block font-bold">
                 Guesses Left
               </span>
-              <span className="text-base font-mono font-black text-black dark:text-white">
+              <span className="text-base font-mono font-black text-ink">
                 {guessesRemaining > 50 ? 'Unlimited' : `${guessesRemaining} remaining`}
               </span>
             </div>
@@ -157,7 +157,7 @@ export function ClueController({ playerView, onSubmitClue, onEndGuessing }: Prop
                 variant="outline"
                 size="sm"
                 onClick={onEndGuessing}
-                className="text-xs font-mono uppercase font-bold border-zinc-400 hover:border-black dark:hover:border-white"
+                className="text-xs font-mono uppercase font-bold border-ink/40 hover:border-rule-strong"
               >
                 <SkipForward size={14} className="mr-1.5" /> End Turn / Pass
               </Button>

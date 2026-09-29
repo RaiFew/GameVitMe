@@ -26,8 +26,8 @@ export function RoundLeaderboard({ opponents, totalNumbers }: RoundLeaderboardPr
   });
 
   return (
-    <div className="w-full max-w-[min(92vw,560px)] border border-zinc-200 dark:border-zinc-800 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xs rounded-sm p-3 font-mono">
-      <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-zinc-500 border-b border-zinc-200 dark:border-zinc-800 pb-2 mb-2">
+    <div className="w-full max-w-[min(92vw,560px)] border border-rule bg-canvas/70 backdrop-blur-xs rounded-sm p-3 font-mono">
+      <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-ink-muted border-b border-rule pb-2 mb-2">
         <span>Opponents ({opponents.length})</span>
         <span>Progress</span>
       </div>
@@ -44,7 +44,7 @@ export function RoundLeaderboard({ opponents, totalNumbers }: RoundLeaderboardPr
                   ? 'border-red-200 dark:border-red-900/40 bg-red-50/30 dark:bg-red-950/20 opacity-60'
                   : opp.completed
                   ? 'border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-950/20'
-                  : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40'
+                  : 'border-rule bg-canvas-sunk/40'
               }`}
             >
               <div className="flex items-center gap-2 min-w-0">
@@ -54,7 +54,7 @@ export function RoundLeaderboard({ opponents, totalNumbers }: RoundLeaderboardPr
                       ? 'bg-red-100 dark:bg-red-900/60 text-red-600'
                       : opp.completed
                       ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600'
-                      : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
+                      : 'bg-surface-hover text-ink'
                   }`}
                 >
                   {opp.eliminated ? (
@@ -70,13 +70,13 @@ export function RoundLeaderboard({ opponents, totalNumbers }: RoundLeaderboardPr
                   <span
                     className={`font-bold block truncate text-xs ${
                       opp.eliminated
-                        ? 'text-zinc-400 line-through'
-                        : 'text-black dark:text-white'
+                        ? 'text-ink-faint line-through'
+                        : 'text-ink'
                     }`}
                   >
                     {opp.displayName}
                   </span>
-                  <span className="text-[10px] text-zinc-500 font-normal">
+                  <span className="text-[10px] text-ink-muted font-normal">
                     HP: {Math.max(0, opp.hp)}/{opp.maxHp}
                   </span>
                 </div>
@@ -93,12 +93,12 @@ export function RoundLeaderboard({ opponents, totalNumbers }: RoundLeaderboardPr
                   </span>
                 ) : (
                   <div className="text-right">
-                    <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                    <span className="text-xs font-bold text-ink">
                       {currentCleared}/{totalNumbers}
                     </span>
-                    <div className="w-16 h-1 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden mt-0.5">
+                    <div className="w-16 h-1 bg-surface-hover rounded-full overflow-hidden mt-0.5">
                       <div
-                        className="h-full bg-black dark:bg-white rounded-full transition-all duration-300"
+                        className="h-full bg-ink rounded-full transition-all duration-300"
                         style={{ width: `${opp.progressPercent}%` }}
                       />
                     </div>

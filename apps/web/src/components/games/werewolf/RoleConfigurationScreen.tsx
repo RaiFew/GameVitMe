@@ -62,22 +62,22 @@ export function RoleConfigurationScreen({ playerView, onAction, isHost }: Props)
   if (!isHost) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-2xl text-center space-y-6">
-        <div className="inline-flex p-4 rounded-xs border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 mb-2">
-          <Shield className="w-8 h-8 text-black dark:text-white" />
+        <div className="inline-flex p-4 rounded-xs border border-rule bg-canvas-sunk mb-2">
+          <Shield className="w-8 h-8 text-ink" />
         </div>
-        <h1 className="text-2xl font-black uppercase tracking-tight text-black dark:text-white">
+        <h1 className="text-2xl font-black uppercase tracking-tight text-ink">
           Moderator is Configuring Roles
         </h1>
-        <p className="text-sm text-zinc-500 font-mono">
+        <p className="text-sm text-ink-muted font-mono">
           The Host is setting up the role distribution and assignment mode for this game.
         </p>
 
-        <Card className="p-6 border border-zinc-200 dark:border-zinc-800 text-left">
-          <div className="flex items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-800 mb-4">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500">
+        <Card className="p-6 border border-rule text-left">
+          <div className="flex items-center justify-between pb-4 border-b border-rule mb-4">
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-ink-muted">
               Citizens in Village ({totalPlaying})
             </span>
-            <span className="text-xs font-mono px-2 py-0.5 border border-black dark:border-white rounded-xs font-bold uppercase">
+            <span className="text-xs font-mono px-2 py-0.5 border border-rule-strong rounded-xs font-bold uppercase">
               Mode: {roleAssignmentMode}
             </span>
           </div>
@@ -85,7 +85,7 @@ export function RoleConfigurationScreen({ playerView, onAction, isHost }: Props)
             {playingPlayers.map((p) => (
               <div
                 key={p.id}
-                className="p-2 border border-zinc-200 dark:border-zinc-800 rounded-xs text-xs font-mono flex items-center gap-2"
+                className="p-2 border border-rule rounded-xs text-xs font-mono flex items-center gap-2"
               >
                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
                 <span className="font-bold truncate">{p.displayName}</span>
@@ -100,28 +100,28 @@ export function RoleConfigurationScreen({ playerView, onAction, isHost }: Props)
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl space-y-8">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800 pb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="border-b border-rule pb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block">
+          <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
             Moderator Control Panel
           </span>
-          <h1 className="text-3xl font-black uppercase tracking-tight text-black dark:text-white mt-1">
+          <h1 className="text-3xl font-black uppercase tracking-tight text-ink mt-1">
             Game Role Setup
           </h1>
-          <p className="text-xs text-zinc-500 font-mono mt-1">
+          <p className="text-xs text-ink-muted font-mono mt-1">
             Choose assignment mode and allocate role quotas to match {totalPlaying} playing citizens.
           </p>
         </div>
 
         {/* Mode Selector Tabs */}
-        <div className="flex border border-black dark:border-white p-1 rounded-xs bg-zinc-50 dark:bg-zinc-900">
+        <div className="flex border border-rule-strong p-1 rounded-xs bg-canvas-sunk">
           <button
             type="button"
             onClick={() => handleModeChange('PHYSICAL')}
             className={`px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider rounded-xs transition-all flex items-center gap-2 ${
               mode === 'PHYSICAL'
-                ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
-                : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
+                ? 'bg-ink text-canvas shadow-xs'
+                : 'text-ink-muted hover:text-ink'
             }`}
           >
             <Layers size={14} />
@@ -132,8 +132,8 @@ export function RoleConfigurationScreen({ playerView, onAction, isHost }: Props)
             onClick={() => handleModeChange('RANDOM')}
             className={`px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider rounded-xs transition-all flex items-center gap-2 ${
               mode === 'RANDOM'
-                ? 'bg-black text-white dark:bg-white dark:text-black shadow-xs'
-                : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
+                ? 'bg-ink text-canvas shadow-xs'
+                : 'text-ink-muted hover:text-ink'
             }`}
           >
             <Shuffle size={14} />
@@ -143,15 +143,15 @@ export function RoleConfigurationScreen({ playerView, onAction, isHost }: Props)
       </div>
 
       {/* Quota Overview Card */}
-      <Card className="p-6 border border-zinc-200 dark:border-zinc-800">
+      <Card className="p-6 border border-rule">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="space-y-1 text-center sm:text-left">
-            <span className="text-xs font-mono uppercase text-zinc-500 font-bold">Quota Status</span>
+            <span className="text-xs font-mono uppercase text-ink-muted font-bold">Quota Status</span>
             <div className="flex items-center gap-3">
               <span className="text-2xl font-black font-mono">
                 {totalConfigured} / {totalPlaying}
               </span>
-              <span className="text-xs font-mono text-zinc-500">Slots Configured</span>
+              <span className="text-xs font-mono text-ink-muted">Slots Configured</span>
             </div>
           </div>
 
@@ -185,7 +185,7 @@ export function RoleConfigurationScreen({ playerView, onAction, isHost }: Props)
       </Card>
 
       {/* Category Filter Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3">
+      <div className="flex flex-wrap gap-2 border-b border-rule pb-3">
         {(['ALL', 'VILLAGER', 'WEREWOLF', 'NEUTRAL', 'ADDITIONAL'] as const).map((cat) => (
           <button
             key={cat}
@@ -193,8 +193,8 @@ export function RoleConfigurationScreen({ playerView, onAction, isHost }: Props)
             onClick={() => setActiveCategory(cat)}
             className={`px-3 py-1.5 text-xs font-mono font-bold uppercase rounded-xs border transition-all ${
               activeCategory === cat
-                ? 'border-black dark:border-white bg-black text-white dark:bg-white dark:text-black'
-                : 'border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:border-zinc-400'
+                ? 'border-rule-strong bg-ink text-canvas'
+                : 'border-rule text-ink-muted hover:border-ink/40'
             }`}
           >
             {cat === 'VILLAGER' ? 'Good / Villager' : cat}
@@ -209,11 +209,11 @@ export function RoleConfigurationScreen({ playerView, onAction, isHost }: Props)
           return (
             <Card
               key={role.id}
-              className="p-4 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between space-y-4 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all"
+              className="p-4 border border-rule flex flex-col justify-between space-y-4 hover:border-rule transition-all"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <h3 className="font-bold text-sm uppercase text-black dark:text-white">
+                  <h3 className="font-bold text-sm uppercase text-ink">
                     {role.name}
                   </h3>
                   <span
@@ -222,18 +222,18 @@ export function RoleConfigurationScreen({ playerView, onAction, isHost }: Props)
                         ? 'border-red-600 text-red-600 dark:border-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/20'
                         : role.alignment === 'NEUTRAL'
                         ? 'border-amber-600 text-amber-600 dark:border-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20'
-                        : 'border-zinc-400 text-zinc-700 dark:border-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800'
+                        : 'border-ink/40 text-ink bg-surface'
                     }`}
                   >
                     {role.alignment}
                   </span>
                 </div>
-                <p className="text-xs text-zinc-500 line-clamp-2">{role.description}</p>
+                <p className="text-xs text-ink-muted line-clamp-2">{role.description}</p>
               </div>
 
               {/* Counter Controls */}
-              <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-800/80">
-                <span className="text-[10px] font-mono uppercase text-zinc-400 font-bold">
+              <div className="flex items-center justify-between pt-3 border-t border-rule/80">
+                <span className="text-[10px] font-mono uppercase text-ink-faint font-bold">
                   Slots:
                 </span>
                 <div className="flex items-center gap-3">
@@ -241,7 +241,7 @@ export function RoleConfigurationScreen({ playerView, onAction, isHost }: Props)
                     type="button"
                     onClick={() => updateCount(role.id, -1)}
                     disabled={count <= 0}
-                    className="w-7 h-7 flex items-center justify-center border border-zinc-300 dark:border-zinc-700 rounded-xs disabled:opacity-30 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+                    className="w-7 h-7 flex items-center justify-center border border-rule rounded-xs disabled:opacity-30 hover:bg-surface transition-all"
                   >
                     <Minus size={14} />
                   </button>
@@ -250,7 +250,7 @@ export function RoleConfigurationScreen({ playerView, onAction, isHost }: Props)
                     type="button"
                     onClick={() => updateCount(role.id, 1)}
                     disabled={count >= role.totalSlots + 10}
-                    className="w-7 h-7 flex items-center justify-center border border-zinc-300 dark:border-zinc-700 rounded-xs disabled:opacity-30 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+                    className="w-7 h-7 flex items-center justify-center border border-rule rounded-xs disabled:opacity-30 hover:bg-surface transition-all"
                   >
                     <Plus size={14} />
                   </button>

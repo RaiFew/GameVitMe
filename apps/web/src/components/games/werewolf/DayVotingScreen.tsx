@@ -30,31 +30,31 @@ export function DayVotingScreen({ playerView, onAction, isHost }: DayVotingScree
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl space-y-8">
       {/* Voting Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="border-b border-rule pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500">
+            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted">
               Round {roundNumber}
             </span>
-            <span className="border border-black dark:border-white bg-black text-white dark:bg-white dark:text-black text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
+            <span className="border border-rule-strong bg-ink text-canvas text-[10px] font-mono font-bold px-2 py-0.5 uppercase tracking-wider rounded-xs">
               Town Tribunal
             </span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black dark:text-white flex items-center gap-3">
+          <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-ink flex items-center gap-3">
             <Vote size={32} />
             Vote For Execution
           </h1>
-          <p className="text-xs text-zinc-500 font-mono mt-1">
+          <p className="text-xs text-ink-muted font-mono mt-1">
             Cast your ballot. The player with the strict plurality of votes will be executed.
           </p>
         </div>
 
         {/* Voting Progress Counter */}
-        <div className="border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-5 py-3 rounded-xs text-right">
-          <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-500 font-bold block">
+        <div className="border border-rule bg-canvas-sunk px-5 py-3 rounded-xs text-right">
+          <span className="text-[9px] font-mono uppercase tracking-widest text-ink-muted font-bold block">
             Ballots Cast
           </span>
-          <span className="text-2xl font-mono font-black text-black dark:text-white">
+          <span className="text-2xl font-mono font-black text-ink">
             {votedCount} / {livingPlayers.length}
           </span>
         </div>
@@ -62,14 +62,14 @@ export function DayVotingScreen({ playerView, onAction, isHost }: DayVotingScree
 
       {/* Voting Instructions Card */}
       {isHost ? (
-        <Card className="p-4 border-2 border-black dark:border-white bg-zinc-50 dark:bg-zinc-900/60 text-center">
-          <p className="text-xs font-mono text-zinc-700 dark:text-zinc-300 font-bold uppercase tracking-wider">
+        <Card className="p-4 border-2 border-rule-strong bg-canvas-sunk/60 text-center">
+          <p className="text-xs font-mono text-ink font-bold uppercase tracking-wider">
             Host Moderator Monitor: You do not vote. Observe town voting or conclude ballots when discussion ends.
           </p>
         </Card>
       ) : !me.isAlive ? (
-        <Card className="p-4 border border-zinc-300 dark:border-zinc-800 bg-zinc-100/50 dark:bg-zinc-900/40 text-center">
-          <p className="text-xs font-mono text-zinc-500">
+        <Card className="p-4 border border-rule bg-canvas-sunk/40 text-center">
+          <p className="text-xs font-mono text-ink-muted">
             You are deceased and cannot cast a ballot. You observe the town trial in spirit.
           </p>
         </Card>
@@ -80,7 +80,7 @@ export function DayVotingScreen({ playerView, onAction, isHost }: DayVotingScree
           </p>
         </Card>
       ) : (
-        <p className="text-xs font-mono text-zinc-500 uppercase tracking-wider font-bold">
+        <p className="text-xs font-mono text-ink-muted uppercase tracking-wider font-bold">
           Select one suspect to vote for execution, or choose to abstain:
         </p>
       )}
@@ -99,8 +99,8 @@ export function DayVotingScreen({ playerView, onAction, isHost }: DayVotingScree
                 onClick={() => setSelectedTargetId(target.id)}
                 className={`w-full p-4 rounded-xs border text-left transition-all cursor-pointer flex items-center justify-between ${
                   isSelected
-                    ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black ring-2 ring-black dark:ring-white shadow-lg'
-                    : 'border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-black dark:text-white hover:border-zinc-400 dark:hover:border-zinc-700'
+                    ? 'border-rule-strong bg-ink text-canvas ring-2 ring-ink shadow-lg'
+                    : 'border-rule bg-canvas text-ink hover:border-ink/40'
                 }`}
               >
                 <div className="min-w-0 pr-2">
@@ -113,11 +113,11 @@ export function DayVotingScreen({ playerView, onAction, isHost }: DayVotingScree
                 </div>
 
                 {isSelected ? (
-                  <div className="w-6 h-6 rounded-full bg-white dark:bg-black text-black dark:text-white flex items-center justify-center shrink-0 font-bold">
+                  <div className="w-6 h-6 rounded-full bg-canvas text-ink flex items-center justify-center shrink-0 font-bold">
                     <Check size={14} />
                   </div>
                 ) : (
-                  <div className="w-6 h-6 rounded-full border border-zinc-300 dark:border-zinc-700 shrink-0" />
+                  <div className="w-6 h-6 rounded-full border border-rule shrink-0" />
                 )}
               </button>
             );
@@ -129,8 +129,8 @@ export function DayVotingScreen({ playerView, onAction, isHost }: DayVotingScree
             onClick={() => setSelectedTargetId('SKIP')}
             className={`w-full p-4 rounded-xs border text-left transition-all cursor-pointer flex items-center justify-between ${
               selectedTargetId === 'SKIP'
-                ? 'border-black dark:border-white bg-black dark:bg-white text-white dark:text-black ring-2 ring-black dark:ring-white shadow-lg'
-                : 'border-dashed border-zinc-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300 hover:border-zinc-600'
+                ? 'border-rule-strong bg-ink text-canvas ring-2 ring-ink shadow-lg'
+                : 'border-dashed border-ink/40 bg-canvas-sunk/60 text-ink hover:border-ink/40'
             }`}
           >
             <div className="min-w-0 pr-2">
@@ -143,26 +143,26 @@ export function DayVotingScreen({ playerView, onAction, isHost }: DayVotingScree
             </div>
 
             {selectedTargetId === 'SKIP' ? (
-              <div className="w-6 h-6 rounded-full bg-white dark:bg-black text-black dark:text-white flex items-center justify-center shrink-0">
+              <div className="w-6 h-6 rounded-full bg-canvas text-ink flex items-center justify-center shrink-0">
                 <Check size={14} />
               </div>
             ) : (
-              <div className="w-6 h-6 rounded-full border border-zinc-400 dark:border-zinc-600 shrink-0" />
+              <div className="w-6 h-6 rounded-full border border-ink/40 shrink-0" />
             )}
           </button>
         </div>
       )}
 
       {/* Voters Status Roster */}
-      <Card className="p-5 border border-zinc-300 dark:border-zinc-800">
-        <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-zinc-500 block mb-3">
+      <Card className="p-5 border border-rule">
+        <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block mb-3">
           Citizens Status
         </span>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {livingPlayers.map((p) => (
             <div
               key={p.id}
-              className="p-2 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 rounded-xs flex items-center justify-between text-xs font-mono"
+              className="p-2 border border-rule bg-canvas-sunk/60 rounded-xs flex items-center justify-between text-xs font-mono"
             >
               <span className="truncate">{p.displayName}</span>
               <span className={`text-[10px] font-bold ${p.hasVoted ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400'}`}>
@@ -174,7 +174,7 @@ export function DayVotingScreen({ playerView, onAction, isHost }: DayVotingScree
       </Card>
 
       {/* Footer Controller Bar */}
-      <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="pt-4 border-t border-rule flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
           {isHost && (
             <Button

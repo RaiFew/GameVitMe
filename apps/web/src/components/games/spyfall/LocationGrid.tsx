@@ -17,8 +17,8 @@ export function LocationGrid({ locations }: { locations: string[] }) {
           className={cn(
             "p-2.5 rounded-xs text-xs font-mono font-semibold transition-colors text-left border cursor-pointer",
             crossedOut[loc]
-              ? "bg-zinc-100 dark:bg-zinc-900 text-zinc-400 dark:text-zinc-600 line-through border-zinc-200 dark:border-zinc-800"
-              : "bg-white dark:bg-zinc-950 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 border-zinc-300 dark:border-zinc-700"
+              ? "bg-canvas-sunk text-ink-muted line-through border-rule"
+              : "bg-canvas text-ink hover:bg-canvas-sunk border-rule"
           )}
         >
           {loc}

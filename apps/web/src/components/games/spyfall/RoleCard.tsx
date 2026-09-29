@@ -50,10 +50,10 @@ export function RoleCard({ isSpy, roleName, locationName, onProceed }: RoleCardP
           transition={{ duration: 0.7, type: 'spring', damping: 15 }}
         >
           {/* Front: Face-down cover before flip */}
-          <div className="absolute inset-0 backface-hidden bg-zinc-900 border-2 border-zinc-700 rounded-xs flex flex-col items-center justify-center p-8 text-center">
-            <span className="font-mono text-xs uppercase tracking-widest text-zinc-400 mb-2">Confidential</span>
+          <div className="absolute inset-0 backface-hidden bg-zinc-900 border-2 border-ink/40 rounded-xs flex flex-col items-center justify-center p-8 text-center">
+            <span className="font-mono text-xs uppercase tracking-widest text-ink-faint mb-2">Confidential</span>
             <h2 className="text-2xl font-black text-white tracking-wider uppercase mb-3">Secret Identity</h2>
-            <p className="text-xs font-mono text-zinc-400">Revealing card...</p>
+            <p className="text-xs font-mono text-ink-faint">Revealing card...</p>
           </div>
 
           {/* Back: Revealed details */}
@@ -61,7 +61,7 @@ export function RoleCard({ isSpy, roleName, locationName, onProceed }: RoleCardP
             className={`absolute inset-0 backface-hidden rotate-y-180 rounded-xs border-2 flex flex-col justify-between p-8 text-center ${
               isSpy
                 ? 'bg-black text-white border-white'
-                : 'bg-white text-black dark:bg-zinc-950 dark:text-white border-black dark:border-white'
+                : 'bg-canvas text-ink border-rule-strong'
             }`}
           >
             <div>
@@ -72,7 +72,7 @@ export function RoleCard({ isSpy, roleName, locationName, onProceed }: RoleCardP
               {isSpy ? (
                 <div className="space-y-2">
                   <h3 className="text-3xl font-black uppercase tracking-tight text-red-500">You Are The Spy</h3>
-                  <p className="text-xs text-zinc-300 leading-relaxed max-w-xs mx-auto">
+                  <p className="text-xs text-ink-faint leading-relaxed max-w-xs mx-auto">
                     The location is unknown to you. Listen closely to what other players ask and answer.
                   </p>
                 </div>
@@ -82,7 +82,7 @@ export function RoleCard({ isSpy, roleName, locationName, onProceed }: RoleCardP
                     <span className="text-[10px] font-mono uppercase tracking-wider block opacity-60">Secret Location</span>
                     <h3 className="text-3xl font-black uppercase tracking-tight">{locationName}</h3>
                   </div>
-                  <div className="border-t border-zinc-200 dark:border-zinc-800 pt-3">
+                  <div className="border-t border-rule pt-3">
                     <span className="text-[10px] font-mono uppercase tracking-wider block opacity-60">Your Role</span>
                     <p className="text-lg font-bold uppercase">{roleName}</p>
                   </div>
@@ -90,7 +90,7 @@ export function RoleCard({ isSpy, roleName, locationName, onProceed }: RoleCardP
               )}
             </div>
 
-            <div className="border-t border-zinc-200 dark:border-zinc-800 pt-4">
+            <div className="border-t border-rule pt-4">
               <span className="text-xs font-mono opacity-60 block">Auto-proceeding in {secondsLeft}s</span>
               <span className="text-[10px] font-mono uppercase font-bold tracking-wider mt-1 block">Tap card to start</span>
             </div>

@@ -155,18 +155,18 @@ export function FriendSearch() {
         {results.map((user) => (
           <div
             key={user.id}
-            className="flex items-center justify-between p-3 border border-zinc-200 dark:border-zinc-800 rounded-xs"
+            className="flex items-center justify-between p-3 border border-rule rounded-xs"
           >
             <div className="flex items-center gap-3">
               <Avatar fallback={user.displayName ?? '?'} src={user.avatarUrl ?? undefined} size="sm" />
               <div>
-                <div className="text-black dark:text-white font-bold text-xs flex items-center gap-1.5">
+                <div className="text-ink font-bold text-xs flex items-center gap-1.5">
                   {user.displayName}
                   {user.isOnline && (
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Online" />
                   )}
                 </div>
-                <div className="text-zinc-500 text-[10px] font-mono">
+                <div className="text-ink-muted text-[10px] font-mono">
                   @{user.username || user.displayName}
                 </div>
               </div>

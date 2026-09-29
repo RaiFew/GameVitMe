@@ -72,7 +72,7 @@ export function NumberGridBoard({
   return (
     <div className="w-full flex items-center justify-center">
       <div
-        className={`w-full max-w-[min(92vw,560px)] aspect-square bg-zinc-50/50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800 rounded-sm grid ${getGapClass()} transition-all`}
+        className={`w-full max-w-[min(92vw,560px)] aspect-square bg-canvas-sunk/30 border border-rule rounded-sm grid ${getGapClass()} transition-all`}
         style={{
           gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${gridSize}, minmax(0, 1fr))`,

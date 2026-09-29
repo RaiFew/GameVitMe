@@ -21,7 +21,7 @@ export function GameTimer({ expiresAt, inline = false }: { expiresAt: number; in
     ? 'border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20'
     : isWarning
     ? 'border-amber-600 dark:border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20'
-    : 'border-black dark:border-white text-black dark:text-white bg-white dark:bg-zinc-950';
+    : 'border-rule-strong text-ink bg-canvas';
 
   if (inline) {
     return (
