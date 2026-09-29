@@ -100,21 +100,26 @@ export const initSocketGateway = (fastify: FastifyInstance) => {
     }
   });
 
-  io.on('connection', async (socket) => {
+  io.on('connection', (socket) => {
     const userId = socket.data.user?.id;
     if (!userId) return;
 
     socket.join(`user:${userId}`);
-    await presence.userConnected(userId, socket.id);
 
-    // Register handlers
+    // Handlers go on synchronously, before any await. The client treats the
+    // socket as usable the moment it sees 'connect', so an await here (presence
+    // is a network round trip) opens a window where its first emit — room:join,
+    // game:start — reaches a socket with no listener and is silently dropped.
     registerRoomHandlers(io, socket);
     registerGameHandlers(io, socket);
     registerChatHandlers(io, socket);
     registerFriendHandlers(io, socket);
 
-    socket.on('disconnect', async () => {
-      await presence.userDisconnected(userId, socket.id);
+    // Presence is bookkeeping, not a gate on being able to act.
+    presence.userConnected(userId, socket.id).catch(() => {});
+
+    socket.on('disconnect', () => {
+      presence.userDisconnected(userId, socket.id).catch(() => {});
     });
   });
 

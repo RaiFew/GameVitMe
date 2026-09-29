@@ -57,6 +57,57 @@ const FEATURED_GAMES = [
   },
 ];
 
+interface JoinFormProps {
+  joinCode: string;
+  setJoinCode: (value: string) => void;
+  error: string;
+  isLoading: boolean;
+  onJoin: (e: React.FormEvent) => void;
+  onScan: () => void;
+}
+
+/** Shared by the desktop join card and the mobile header modal. */
+function JoinForm({ joinCode, setJoinCode, error, isLoading, onJoin, onScan }: JoinFormProps) {
+  return (
+    <div className="space-y-3">
+      {error && (
+        <div className="border border-red-600 dark:border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 p-2.5 rounded-xs text-xs">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={onJoin} className="space-y-3">
+        <div className="flex gap-2">
+          <Input
+            placeholder="CODE"
+            value={joinCode}
+            onChange={(e) => {
+              setJoinCode(e.target.value.toUpperCase());
+            }}
+            className="uppercase text-center font-mono tracking-widest font-bold text-base"
+            maxLength={5}
+            disabled={isLoading}
+          />
+          <Button type="submit" disabled={isLoading || !joinCode.trim()}>
+            {isLoading ? '...' : 'Join'}
+          </Button>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full flex items-center justify-center gap-2 text-xs"
+          onClick={onScan}
+          disabled={isLoading}
+        >
+          <Camera size={14} /> Scan QR Code
+        </Button>
+      </form>
+    </div>
+  );
+}
+
 export function DashboardPage() {
   const { user } = useAuth();
   const { setRoom } = useRoomStore();
@@ -67,6 +118,7 @@ export function DashboardPage() {
   const [friends, setFriends] = useState<any[]>([]);
   const [games, setGames] = useState<any[]>([]);
   const [showScanner, setShowScanner] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
@@ -163,6 +215,11 @@ export function DashboardPage() {
     executeJoin(joinCode.trim().toUpperCase());
   };
 
+  const handleCodeChange = (value: string) => {
+    setJoinCode(value);
+    if (error) setError('');
+  };
+
   useEffect(() => {
     const codeParam = searchParams.get('join');
     if (codeParam) {
@@ -227,12 +284,21 @@ export function DashboardPage() {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link to="/friends">
             <Button variant="secondary" size="sm">
               <Users size={14} className="mr-1.5" /> Friends
             </Button>
           </Link>
+          {/* Stands in for the join card, which is hidden on mobile. */}
+          <Button
+            variant="secondary"
+            size="sm"
+            className="sm:hidden"
+            onClick={() => setShowJoinModal(true)}
+          >
+            <LogIn size={14} className="mr-1.5" /> Join Room
+          </Button>
           <Link to="/room/create">
             <Button size="sm">
               <Plus size={14} className="mr-1.5" /> Create Room
@@ -257,8 +323,8 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* Primary Actions Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Primary Actions Grid — the header buttons replace these on mobile. */}
+      <div className="hidden sm:grid md:grid-cols-2 gap-6">
         {/* Create Room Card */}
         <Card
           className="flex flex-col justify-between p-8 border-2 border-rule-strong hover:bg-canvas-sunk/60 transition-colors cursor-pointer"
@@ -293,41 +359,14 @@ export function DashboardPage() {
               Enter a 5-character room code or scan your host screen QR code.
             </p>
 
-            {error && (
-              <div className="border border-red-600 dark:border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 p-2.5 rounded-xs text-xs mb-4">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleJoin} className="space-y-3">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="CODE"
-                  value={joinCode}
-                  onChange={(e) => {
-                    setJoinCode(e.target.value.toUpperCase());
-                    if (error) setError('');
-                  }}
-                  className="uppercase text-center font-mono tracking-widest font-bold text-base"
-                  maxLength={5}
-                  disabled={isLoading}
-                />
-                <Button type="submit" disabled={isLoading || !joinCode.trim()}>
-                  {isLoading ? '...' : 'Join'}
-                </Button>
-              </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full flex items-center justify-center gap-2 text-xs"
-                onClick={() => setShowScanner(true)}
-                disabled={isLoading}
-              >
-                <Camera size={14} /> Scan QR Code
-              </Button>
-            </form>
+            <JoinForm
+              joinCode={joinCode}
+              setJoinCode={handleCodeChange}
+              error={error}
+              isLoading={isLoading}
+              onJoin={handleJoin}
+              onScan={() => setShowScanner(true)}
+            />
           </div>
         </Card>
       </div>
@@ -413,6 +452,37 @@ export function DashboardPage() {
           </Card>
         </div>
       </div>
+
+      {/* Mobile Join Modal — the join card is hidden below sm */}
+      {showJoinModal && (
+        <Modal isOpen={showJoinModal} onClose={() => setShowJoinModal(false)}>
+          <div className="space-y-4">
+            <h3 className="text-title font-black tracking-tight text-ink">Join a Room</h3>
+            <p className="text-label text-ink-muted">
+              Enter the 5-character code from the host's screen, or scan its QR code.
+            </p>
+            <JoinForm
+              joinCode={joinCode}
+              setJoinCode={handleCodeChange}
+              error={error}
+              isLoading={isLoading}
+              onJoin={handleJoin}
+              onScan={() => {
+                setShowJoinModal(false);
+                setShowScanner(true);
+              }}
+            />
+            <Button
+              variant="secondary"
+              size="sm"
+              className="w-full"
+              onClick={() => setShowJoinModal(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </Modal>
+      )}
 
       {/* QR Code Scanner Modal */}
       {showScanner && (
