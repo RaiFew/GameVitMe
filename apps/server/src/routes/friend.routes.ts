@@ -56,6 +56,8 @@ const friendRoutes: FastifyPluginAsync = async (fastify) => {
         if (!friend) return null;
         return {
           id: friend.id,
+          // The delete endpoint keys on the friendship, not the friend.
+          friendshipId: f.id,
           username: friend.username,
           displayName: friend.displayName || friend.name,
           avatarUrl: friend.avatarUrl,

@@ -381,7 +381,7 @@ export function DashboardPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between border-b border-rule pb-2">
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-ink-muted">
-              Friends Online ({friends.filter((f) => f.status === 'online').length})
+              Friends Online ({friends.filter((f) => f.isOnline).length})
             </span>
             <Link to="/friends" className="text-xs font-mono text-ink-muted hover:text-ink">
               Manage →
