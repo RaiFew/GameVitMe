@@ -99,7 +99,9 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
       }
     }
 
-    if (isHostForcedGame) {
+    // Salem has no role slots: its Witch/Constable cards are physical, so the
+    // roster-count gate applies to Werewolf only.
+    if (room.gameType === 'werewolf') {
       const playingCount = hostMode ? room.players.filter(p => p.id !== room.hostId).length : room.players.length;
       const roleCounts = (room.settings?.roleCounts || {}) as Record<string, number>;
       const totalConfiguredRoles = Object.values(roleCounts).reduce((a, b) => a + Number(b || 0), 0);

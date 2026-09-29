@@ -24,18 +24,7 @@ export function calculateDefaultRoleCounts(
     };
   }
 
-  if (gameType === 'salem') {
-    const witchCount = Math.max(1, Math.floor(effectiveCount / 3));
-    const townCrierCount = 1;
-    const puritanCount = Math.max(0, effectiveCount - witchCount - townCrierCount);
-
-    return {
-      witch: witchCount,
-      town_crier: townCrierCount,
-      puritan: puritanCount,
-    };
-  }
-
+  // Salem has no role roster: its Witch and Constable cards are physical.
   return {};
 }
 
@@ -53,7 +42,7 @@ export function updateRoomDefaultRolesIfUncustomized(room: {
     [key: string]: any;
   };
 }): void {
-  const isSocialDeduction = room.gameType === 'werewolf' || room.gameType === 'salem';
+  const isSocialDeduction = room.gameType === 'werewolf';
   if (!isSocialDeduction) return;
 
   if (room.settings.isRoleConfigurationCustomized) {

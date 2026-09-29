@@ -118,7 +118,10 @@ export function LobbyPage() {
     });
   };
 
-  const isRoleGame = room.gameType === 'werewolf' || room.gameType === 'salem';
+  // Salem has no role slots to fill: its cards are physical, so the roster
+  // count check and the role config card belong to Werewolf alone.
+  const isRoleGame = room.gameType === 'werewolf';
+  const isSalem = room.gameType === 'salem';
   const roleCounts = (room.settings as any)?.roleCounts || {};
   const totalConfiguredRoles = Object.values(roleCounts).reduce(
     (acc: number, c: any) => acc + (Number(c) || 0),
@@ -303,7 +306,6 @@ export function LobbyPage() {
           {/* Role Configuration (Only visible to Host when roles tab is selected) */}
           {isHost && isRoleGame && hostTab === 'roles' && (
             <RoleConfigurationCard
-              gameType={room.gameType as 'werewolf' | 'salem'}
               isHost={isHost}
               playingPlayerCount={playingPlayers.length}
               settings={room.settings as any}
@@ -549,7 +551,9 @@ export function LobbyPage() {
                 : isCodenames
                 ? 'Codenames Overview'
                 : isRoleGame
-                ? `${room.gameType === 'salem' ? 'Salem 1692' : 'Werewolf'} Overview`
+                ? 'Werewolf Overview'
+                : isSalem
+                ? 'Salem 1692 Overview'
                 : 'Spyfall Overview'}
             </h3>
             {isRPS ? (
@@ -581,6 +585,12 @@ export function LobbyPage() {
                 <li>Social deduction between Town/Village and hidden evils.</li>
                 <li>Follow the Host Moderator instructions during Day and Night phases.</li>
                 <li>Accuse, deliberate, and vote out suspects.</li>
+              </ul>
+            ) : isSalem ? (
+              <ul className="text-xs text-ink-muted space-y-2 list-disc list-inside">
+                <li>Played with physical cards: one Witch, one Constable, the rest villagers.</li>
+                <li>Each night the Witch names one player to kill; the Constable names one to guard.</li>
+                <li>At dawn the cards are revealed and the village works out what happened.</li>
               </ul>
             ) : (
               <ul className="text-xs text-ink-muted space-y-2 list-disc list-inside">

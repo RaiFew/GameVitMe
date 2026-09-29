@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { RoleRegistry } from '@party/werewolf';
-import { SalemRoleRegistry } from '@party/salem';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Shield, Sparkles, AlertCircle, RefreshCw, Layers, Check, HelpCircle } from 'lucide-react';
 import type { RoomGameSettings } from '@party/shared-types';
 
 interface Props {
-  gameType: 'werewolf' | 'salem';
   isHost: boolean;
   playingPlayerCount: number;
   settings?: RoomGameSettings;
@@ -15,7 +13,6 @@ interface Props {
 }
 
 export function RoleConfigurationCard({
-  gameType,
   isHost,
   playingPlayerCount,
   settings = {},
@@ -28,10 +25,7 @@ export function RoleConfigurationCard({
   const isCustomized = !!settings.isRoleConfigurationCustomized;
   const tieRule = settings.werewolfTieRule || 'NO_KILL';
 
-  const roles =
-    gameType === 'salem'
-      ? SalemRoleRegistry.getInstance().list()
-      : RoleRegistry.getInstance().list();
+  const roles = RoleRegistry.getInstance().list();
 
   const totalConfigured: number = Object.values(roleCounts).reduce(
     (acc: number, c: number) => acc + (c || 0),
@@ -193,34 +187,32 @@ export function RoleConfigurationCard({
       </div>
 
       {/* Tie rule selector for Werewolf */}
-      {gameType === 'werewolf' && (
-        <div className="space-y-2 pt-2 border-t border-rule">
-          <div className="flex items-center justify-between">
-            <label className="text-[10px] font-mono text-ink-muted uppercase tracking-widest font-bold block">
-              Werewolf Pack Tie Resolution
-            </label>
-            <span className="text-[10px] font-mono text-ink-faint">Night Attack Policy</span>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            {(['NO_KILL', 'RANDOM', 'HOST_DECIDES'] as const).map((rule) => (
-              <button
-                key={rule}
-                type="button"
-                disabled={!isHost}
-                onClick={() => handleTieRuleChange(rule)}
-                className={`py-2 px-3 text-center border rounded-xs font-mono text-xs uppercase tracking-wider font-bold transition-all ${
-                  tieRule === rule
-                    ? 'border-rule-strong bg-ink text-canvas'
-                    : 'border-rule hover:border-ink/40 text-ink-muted'
-                } ${!isHost ? 'cursor-default' : 'cursor-pointer'}`}
-              >
-                {rule === 'NO_KILL' ? 'No Kill' : rule === 'RANDOM' ? 'Random' : 'Host Decides'}
-              </button>
-            ))}
-          </div>
+      <div className="space-y-2 pt-2 border-t border-rule">
+        <div className="flex items-center justify-between">
+          <label className="text-[10px] font-mono text-ink-muted uppercase tracking-widest font-bold block">
+            Werewolf Pack Tie Resolution
+          </label>
+          <span className="text-[10px] font-mono text-ink-faint">Night Attack Policy</span>
         </div>
-      )}
+
+        <div className="grid grid-cols-3 gap-2">
+          {(['NO_KILL', 'RANDOM', 'HOST_DECIDES'] as const).map((rule) => (
+            <button
+              key={rule}
+              type="button"
+              disabled={!isHost}
+              onClick={() => handleTieRuleChange(rule)}
+              className={`py-2 px-3 text-center border rounded-xs font-mono text-xs uppercase tracking-wider font-bold transition-all ${
+                tieRule === rule
+                  ? 'border-rule-strong bg-ink text-canvas'
+                  : 'border-rule hover:border-ink/40 text-ink-muted'
+              } ${!isHost ? 'cursor-default' : 'cursor-pointer'}`}
+            >
+              {rule === 'NO_KILL' ? 'No Kill' : rule === 'RANDOM' ? 'Random' : 'Host Decides'}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Category Tabs & Reset Action */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-2 border-t border-rule">
