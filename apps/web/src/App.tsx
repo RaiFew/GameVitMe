@@ -38,7 +38,7 @@ export function App() {
   useAuthHandoff();
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text-primary)] flex flex-col transition-colors">
+    <div className="min-h-screen bg-canvas text-ink flex flex-col transition-colors">
       {!isGameRoute && <Navbar />}
       <main className="flex-1 flex flex-col">
         <Routes>

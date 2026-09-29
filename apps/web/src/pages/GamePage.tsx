@@ -102,7 +102,7 @@ export function GamePage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[var(--bg)]">
+    <div className="flex-1 flex flex-col bg-canvas">
       {/* Game Top Control Bar */}
       <div className="bg-zinc-100/90 dark:bg-zinc-900/90 border-b border-zinc-200 dark:border-zinc-800 px-4 py-2 flex items-center justify-between text-xs font-mono">
         <div className="flex items-center gap-2">
