@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "tsc && vite build && node scripts/copy-dist.js",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "i18n:doc": "tsx src/i18n/export-translations.ts"
   },
   "dependencies": {
     "@party/shared-types": "workspace:*",
