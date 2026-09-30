@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { NumberGridPlayerView } from '@party/number-grid';
 import { NumberGridBoard } from './NumberGridBoard';
 import { HealthDisplay } from './HealthDisplay';
@@ -6,6 +6,7 @@ import { RoundLeaderboard } from './RoundLeaderboard';
 import { NumberGridGameOver } from './NumberGridGameOver';
 import { RoundResultModal } from './RoundResultModal';
 import { RankedHud } from './RankedHud';
+import { sfx } from '../../../lib/sfx';
 import { Target, CheckCircle2, Skull } from 'lucide-react';
 
 interface Props {
@@ -43,9 +44,18 @@ export function NumberGridGame({
     [onAction],
   );
 
-  const handleNextRound = useCallback(() => {
+    const handleNextRound = useCallback(() => {
     onAction('START_NEXT_ROUND');
   }, [onAction]);
+
+  // Fires on the false→true edge only. The view re-renders on every click, so
+  // keying the effect on `completed` alone would replay the cue each round.
+  const wasCompleted = useRef(false);
+  useEffect(() => {
+    const done = !!me?.completed;
+    if (done && !wasCompleted.current) sfx.stageClear();
+    wasCompleted.current = done;
+  }, [me?.completed]);
 
   if (phase === 'GAME_OVER') {
     return (

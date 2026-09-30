@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { GridSize, NumberCircleCard } from '@party/number-grid';
 import { NumberCircle } from './NumberCircle';
+import { sfx } from '../../../lib/sfx';
 
 interface NumberGridBoardProps {
   cards: NumberCircleCard[];
@@ -47,12 +48,16 @@ export function NumberGridBoard({
 
       if (number !== expectedNumber) {
         // Immediate optimistic wrong click feedback
+        sfx.wrong();
         setFlashCardId(cardId);
         setIsFlashWrong(true);
         setTimeout(() => {
           setFlashCardId((prev) => (prev === cardId ? null : prev));
           setIsFlashWrong(false);
         }, 280);
+      } else {
+        // Pitch tracks the run so a streak is audible without looking up.
+        sfx.click(expectedNumber);
       }
 
       onCardClick(cardId, number);
