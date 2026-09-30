@@ -3,10 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
+import { useT } from '../stores/langStore';
 
 export function GamesPage() {
   const [code, setCode] = useState('');
   const navigate = useNavigate();
+  const t = useT();
 
   // JoinRoomPage forwards to the dashboard, which owns the socket handshake.
   const submitCode = (e: React.FormEvent) => {
@@ -19,65 +21,70 @@ export function GamesPage() {
       id: 'spyfall',
       name: 'Spyfall',
       category: 'Social Deduction',
+      categoryKey: 'games.catSpyfall',
       players: '4–12 Players',
       duration: '8–10 Min',
-      description: 'Find the secret spy among the players. Everyone knows the secret location except for one player: The Spy.',
+      descriptionKey: 'games.descSpyfall',
       status: 'Ready to play',
     },
     {
       id: 'werewolf',
       name: 'Werewolf',
       category: 'Hidden Roles',
+      categoryKey: 'games.catWerewolf',
       players: '4–12 Players',
       duration: '15 Min',
-      description: 'Villagers and special roles work together to uncover and eliminate hidden werewolves before they outnumber the village.',
+      descriptionKey: 'games.descWerewolf',
       status: 'Ready to play',
     },
     {
       id: 'salem',
       name: 'Salem 1692',
       category: 'Witch Trials & Deduction',
+      categoryKey: 'games.catSalem',
       players: '4–12 Players',
       duration: '15 Min',
-      description: 'Accuse, conspire, and defend against hidden witches before Salem falls into hysteria. 1 Host Moderator required.',
+      descriptionKey: 'games.descSalem',
       status: 'Ready to play',
     },
     {
       id: 'codenames',
       name: 'Codenames',
       category: 'Word Deduction & Teams',
+      categoryKey: 'games.catCodenames',
       players: '2–20 Players',
       duration: '10–15 Min',
-      description: 'Two rival teams (Red vs Blue) deduce word cards via Spymaster clues. Features 2-Player Cooperative mode and custom word file uploads.',
+      descriptionKey: 'games.descCodenames',
       status: 'Ready to play',
     },
     {
       id: 'rock-paper-scissors',
       name: 'Rock Paper Scissors',
       category: 'Arcade & Battle Royale',
+      categoryKey: 'games.catRps',
       players: '2–20 Players',
       duration: '3–5 Min',
-      description: 'Fast-paced hand battles! Features 1v1 Fighting Game Duel with TV Host Screen mode, Battle Royale Survival Elimination, and Points Race.',
+      descriptionKey: 'games.descRps',
       status: 'Ready to play',
     },
     {
       id: 'number-grid',
       name: 'Number Grid / Rush',
       category: 'Speedrun & Reflex',
+      categoryKey: 'games.catNumberGrid',
       players: '1–20 Players',
       duration: '2–5 Min',
-      description: 'Click numbered circles in ascending order from 2x2 up to 10x10. Features sequential rounds, custom grid layouts, HP penalty, and survival damage modes.',
+      descriptionKey: 'games.descNumberGrid',
       status: 'Ready to play',
     },
-  ];
+  ] as const;
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-6xl">
       <div className="border-b border-rule pb-8 mb-10">
-        <h1 className="text-display font-extrabold">Available Games</h1>
+        <h1 className="text-display font-extrabold">{t('games.heading')}</h1>
         <p className="mt-2 text-body text-ink-muted max-w-xl">
-          Browse multiplayer party and social deduction games optimized for mobile and
-          desktop screens.
+          {t('games.subheading')}
         </p>
       </div>
 
@@ -89,13 +96,13 @@ export function GamesPage() {
       >
         <div className="flex-1">
           <label htmlFor="join-code" className="block text-label font-semibold mb-2">
-            Got a room code?
+            {t('games.gotCode')}
           </label>
           <Input
             id="join-code"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="5-character code"
+            placeholder={t('games.codePlaceholder')}
             maxLength={5}
             autoComplete="off"
             autoCapitalize="characters"
@@ -104,7 +111,7 @@ export function GamesPage() {
           />
         </div>
         <Button type="submit" size="lg" disabled={!code.trim()}>
-          Join room
+          {t('games.joinRoom')}
         </Button>
       </form>
 
@@ -121,11 +128,11 @@ export function GamesPage() {
               <div>
                 <div className="flex items-center justify-between gap-2 mb-4">
                   <span className="text-micro font-mono px-2 py-0.5 border border-rule bg-canvas-sunk text-ink-muted">
-                    {game.category}
+                    {t(game.categoryKey)}
                   </span>
                   {isPlayable && (
                     <span className="text-micro font-mono font-semibold text-live">
-                      {game.status}
+                      {t('games.ready')}
                     </span>
                   )}
                 </div>
@@ -133,7 +140,7 @@ export function GamesPage() {
                 <h2 className="text-title font-bold mb-2">{game.name}</h2>
 
                 <p className="text-label text-ink-muted leading-relaxed mb-6">
-                  {game.description}
+                  {t(game.descriptionKey)}
                 </p>
               </div>
 
@@ -146,12 +153,12 @@ export function GamesPage() {
                 {isPlayable ? (
                   <Link to={`/room/create?game=${game.id}`} className="block w-full">
                     <Button variant="secondary" className="w-full">
-                      Start a room
+                      {t('games.startRoom')}
                     </Button>
                   </Link>
                 ) : (
                   <Button variant="secondary" className="w-full" disabled>
-                    Coming soon
+                    {t('games.comingSoon')}
                   </Button>
                 )}
               </div>

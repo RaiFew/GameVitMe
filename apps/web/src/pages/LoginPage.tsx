@@ -4,12 +4,14 @@ import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
+import { useT } from '../stores/langStore';
 
 export default function LoginPage() {
   const { isAuthenticated, login, devLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [name, setName] = useState('');
+  const t = useT();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fromLocation = (location.state as any)?.from;
@@ -41,23 +43,23 @@ export default function LoginPage() {
         </div>
 
         <h1 className="text-2xl font-black uppercase tracking-tight text-ink mb-2">
-          Sign In
+          {t('login.title')}
         </h1>
         <p className="text-ink-faint text-xs mb-8">
-          Enter a nickname to play as guest or sign in with Google.
+          {t('login.subtitle')}
         </p>
 
         <form onSubmit={handleGuestLogin} className="space-y-4 text-left">
           <Input
-            label="Player Nickname"
-            placeholder="e.g. Maverick"
+            label={t('login.nicknameLabel')}
+            placeholder={t('login.nicknamePlaceholder')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="text-center font-mono"
             autoFocus
           />
           <Button type="submit" className="w-full" disabled={isSubmitting || !name.trim()}>
-            {isSubmitting ? 'Entering Room...' : 'Play As Guest'}
+            {isSubmitting ? t('login.entering') : t('login.playAsGuest')}
           </Button>
         </form>
 
@@ -66,7 +68,7 @@ export default function LoginPage() {
             <div className="w-full border-t border-rule" />
           </div>
           <div className="relative flex justify-center text-[10px] uppercase font-mono tracking-wider">
-            <span className="px-2 bg-canvas text-ink-faint">Or Continue With</span>
+            <span className="px-2 bg-canvas text-ink-faint">{t('login.orContinueWith')}</span>
           </div>
         </div>
 
@@ -94,7 +96,7 @@ export default function LoginPage() {
               d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
             />
           </svg>
-          Google Account
+          {t('login.google')}
         </Button>
       </Card>
     </div>

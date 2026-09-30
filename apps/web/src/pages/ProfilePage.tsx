@@ -7,11 +7,13 @@ import { Button } from '../components/ui/Button';
 import { Avatar } from '../components/ui/Avatar';
 import { useUserSettingsStore } from '../stores/userSettingsStore';
 import { CodenamesLibraryCard } from '../components/profile/CodenamesLibraryCard';
+import { useT } from '../stores/langStore';
 
 export function ProfilePage() {
   const { user, logout } = useAuth();
   const { streamerMode, toggleStreamerMode } = useUserSettingsStore();
   const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const t = useT();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -34,10 +36,10 @@ export function ProfilePage() {
     <div className="container mx-auto px-4 py-12 max-w-xl space-y-6">
       <div className="border-b border-rule pb-4">
         <span className="text-xs font-mono font-bold uppercase tracking-widest text-ink-muted">
-          Account Settings
+          {t('profile.accountSettings')}
         </span>
         <h1 className="text-3xl font-black uppercase tracking-tight text-ink mt-1">
-          Profile
+          {t('profile.heading')}
         </h1>
       </div>
 
@@ -58,10 +60,10 @@ export function ProfilePage() {
             />
             <div className="flex gap-2">
               <Button onClick={handleSave} isLoading={isLoading} className="flex-1 text-xs">
-                Save
+                {t('common.save')}
               </Button>
               <Button variant="secondary" onClick={() => setIsEditing(false)} className="flex-1 text-xs">
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </div>
@@ -71,22 +73,22 @@ export function ProfilePage() {
               {user.displayName}
             </h2>
             <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="text-xs py-1 px-3">
-              Edit
+              {t('common.edit')}
             </Button>
           </div>
         )}
 
         <div className="w-full text-left space-y-3 p-4 border border-rule bg-canvas-sunk/60 rounded-xs">
           <div>
-            <span className="text-ink-muted text-[10px] font-mono uppercase tracking-wider block">Username</span>
+            <span className="text-ink-muted text-[10px] font-mono uppercase tracking-wider block">{t('profile.username')}</span>
             <p className="text-ink text-sm font-mono font-bold">@{(user as any).username || user.displayName}</p>
           </div>
           <div>
-            <span className="text-ink-muted text-[10px] font-mono uppercase tracking-wider block">Email</span>
-            <p className="text-ink text-sm font-mono">{(user as any).email || 'Guest Player (No Email)'}</p>
+            <span className="text-ink-muted text-[10px] font-mono uppercase tracking-wider block">{t('profile.email')}</span>
+            <p className="text-ink text-sm font-mono">{(user as any).email || t('profile.guestPlayer')}</p>
           </div>
           <div>
-            <span className="text-ink-muted text-[10px] font-mono uppercase tracking-wider block">Account Created</span>
+            <span className="text-ink-muted text-[10px] font-mono uppercase tracking-wider block">{t('profile.accountCreated')}</span>
             <p className="text-ink text-sm font-mono">{new Date((user as any).createdAt || Date.now()).toLocaleDateString()}</p>
           </div>
         </div>
@@ -96,13 +98,13 @@ export function ProfilePage() {
           <div className="flex items-center justify-between">
             <div>
               <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
-                Privacy & Broadcast
+                {t('profile.privacy')}
               </span>
               <h3 className="text-sm font-black uppercase tracking-tight text-ink mt-0.5">
-                Streamer Mode
+                {t('profile.streamerMode')}
               </h3>
               <p className="text-xs text-ink-muted font-mono mt-1 max-w-sm">
-                Always hides room join codes and QR codes across the site by default to prevent stream sniping.
+                {t('profile.streamerModeBody')}
               </p>
             </div>
 
@@ -124,9 +126,9 @@ export function ProfilePage() {
           </div>
 
           <div className="mt-2 text-[10px] font-mono font-bold uppercase">
-            Status:{' '}
+            {t('profile.status')}{' '}
             <span className={streamerMode ? 'text-emerald-600 dark:text-emerald-400' : 'text-ink-muted'}>
-              {streamerMode ? 'ACTIVE (Codes & QR Hidden)' : 'OFF (Normal Display)'}
+              {streamerMode ? t('profile.statusActive') : t('profile.statusOff')}
             </span>
           </div>
         </div>
@@ -135,7 +137,7 @@ export function ProfilePage() {
         <CodenamesLibraryCard />
 
         <Button variant="danger" className="mt-8 w-full text-xs" onClick={logout}>
-          Sign Out
+          {t('nav.signOut')}
         </Button>
       </Card>
     </div>

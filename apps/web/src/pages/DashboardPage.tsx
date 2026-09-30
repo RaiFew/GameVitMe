@@ -11,51 +11,52 @@ import { Input } from '../components/ui/Input';
 import { Avatar } from '../components/ui/Avatar';
 import { Modal } from '../components/ui/Modal';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import { useT } from '../stores/langStore';
 
 const FEATURED_GAMES = [
   {
     id: 'spyfall',
     name: 'Spyfall',
-    category: 'Social Deduction',
+    categoryKey: 'games.catSpyfall',
     players: '4–12 Players',
-    description: 'Find the secret spy without giving away the secret location.',
+    descriptionKey: 'games.descSpyfall',
   },
   {
     id: 'werewolf',
     name: 'Werewolf',
-    category: 'Hidden Roles',
+    categoryKey: 'games.catWerewolf',
     players: '4–12 Players',
-    description: 'Villagers and special roles uncover hidden werewolves before it is too late.',
+    descriptionKey: 'games.descWerewolf',
   },
   {
     id: 'salem',
     name: 'Salem 1692',
-    category: 'Witch Trials',
+    categoryKey: 'games.catSalem',
     players: '4–12 Players',
-    description: 'Accuse and defend against hidden witches with moderator host screen.',
+    descriptionKey: 'games.descSalem',
   },
   {
     id: 'codenames',
     name: 'Codenames',
-    category: 'Word Teams & 2P Co-op',
+    categoryKey: 'games.catCodenamesShort',
     players: '2–20 Players',
-    description: 'Deduce word cards via Spymaster clues. Supports 2-Player Co-op and custom words.',
+    descriptionKey: 'games.descCodenames',
   },
   {
     id: 'rock-paper-scissors',
     name: 'Rock Paper Scissors',
-    category: 'Arcade Duel & BR',
+    categoryKey: 'games.catRpsShort',
     players: '2–20 Players',
-    description: '1v1 Fighting Game duel, TV Host mode, Battle Royale elimination & Points Race.',
+    descriptionKey: 'games.descRps',
   },
   {
     id: 'number-grid',
     name: 'Number Grid / Rush',
-    category: 'Speedrun & Reflex',
+    categoryKey: 'games.catNumberGrid',
     players: '1–20 Players',
-    description: 'Click numbered circles in ascending order from 2x2 to 10x10. Features custom rounds & damage modes.',
+    descriptionKey: 'games.descNumberGrid',
   },
-];
+] as const;
 
 interface JoinFormProps {
   joinCode: string;
@@ -68,6 +69,7 @@ interface JoinFormProps {
 
 /** Shared by the desktop join card and the mobile header modal. */
 function JoinForm({ joinCode, setJoinCode, error, isLoading, onJoin, onScan }: JoinFormProps) {
+  const t = useT();
   return (
     <div className="space-y-3">
       {error && (
@@ -79,7 +81,7 @@ function JoinForm({ joinCode, setJoinCode, error, isLoading, onJoin, onScan }: J
       <form onSubmit={onJoin} className="space-y-3">
         <div className="flex gap-2">
           <Input
-            placeholder="CODE"
+            placeholder={t('dashboard.codePlaceholder')}
             value={joinCode}
             onChange={(e) => {
               setJoinCode(e.target.value.toUpperCase());
@@ -89,7 +91,7 @@ function JoinForm({ joinCode, setJoinCode, error, isLoading, onJoin, onScan }: J
             disabled={isLoading}
           />
           <Button type="submit" disabled={isLoading || !joinCode.trim()}>
-            {isLoading ? '...' : 'Join'}
+            {isLoading ? '...' : t('dashboard.join')}
           </Button>
         </div>
 
@@ -101,7 +103,7 @@ function JoinForm({ joinCode, setJoinCode, error, isLoading, onJoin, onScan }: J
           onClick={onScan}
           disabled={isLoading}
         >
-          <Camera size={14} /> Scan QR Code
+          <Camera size={14} /> {t('dashboard.scanQr')}
         </Button>
       </form>
     </div>
@@ -122,6 +124,7 @@ export function DashboardPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
+  const t = useT();
 
   useEffect(() => {
     if (location.state?.info || location.state?.message) {
@@ -132,7 +135,7 @@ export function DashboardPage() {
 
   const executeJoin = async (targetCode: string) => {
     if (!targetCode) {
-      setError('Please enter a room code');
+      setError(t('dashboard.errNoCode'));
       return;
     }
 
@@ -155,7 +158,7 @@ export function DashboardPage() {
       const timer = setTimeout(() => {
         if (!resolved) {
           setIsLoading(false);
-          setError('Room join request timed out. Please check room code.');
+          setError(t('dashboard.errJoinTimeout'));
         }
       }, 6000);
 
@@ -190,7 +193,7 @@ export function DashboardPage() {
       activeSocket.once('room:error', (err: any) => {
         clearTimeout(timer);
         activeSocket.off('room:state', handleRoomState);
-        setError(err?.message || 'Failed to join room');
+        setError(err?.message || t('dashboard.errJoinFailed'));
         setIsLoading(false);
       });
     };
@@ -200,7 +203,7 @@ export function DashboardPage() {
     } else {
       const connectTimeout = setTimeout(() => {
         setIsLoading(false);
-        setError('Connecting to game server timed out.');
+        setError(t('dashboard.errConnectTimeout'));
       }, 5000);
 
       activeSocket.once('connect', () => {
@@ -276,7 +279,7 @@ export function DashboardPage() {
           <Avatar fallback={user?.displayName || 'Player'} src={user?.avatarUrl} size="lg" />
           <div>
             <span className="text-[10px] uppercase tracking-widest font-mono text-ink-muted font-bold">
-              Player Hub
+              {t('dashboard.playerHub')}
             </span>
             <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-ink">
               {user?.displayName || 'Player'}
@@ -287,7 +290,7 @@ export function DashboardPage() {
         <div className="flex flex-wrap gap-2">
           <Link to="/friends">
             <Button variant="secondary" size="sm">
-              <Users size={14} className="mr-1.5" /> Friends
+              <Users size={14} className="mr-1.5" /> {t('dashboard.friends')}
             </Button>
           </Link>
           {/* Stands in for the join card, which is hidden on mobile. */}
@@ -297,11 +300,11 @@ export function DashboardPage() {
             className="sm:hidden"
             onClick={() => setShowJoinModal(true)}
           >
-            <LogIn size={14} className="mr-1.5" /> Join Room
+            <LogIn size={14} className="mr-1.5" /> {t('dashboard.joinRoom')}
           </Button>
           <Link to="/room/create">
             <Button size="sm">
-              <Plus size={14} className="mr-1.5" /> Create Room
+              <Plus size={14} className="mr-1.5" /> {t('dashboard.createRoom')}
             </Button>
           </Link>
         </div>
@@ -311,7 +314,7 @@ export function DashboardPage() {
       {notice && (
         <div className="border border-amber-500 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 p-4 rounded-xs text-xs font-mono flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-bold">NOTICE:</span>
+            <span className="font-bold">{t('dashboard.notice')}</span>
             <span>{notice}</span>
           </div>
           <button
@@ -335,14 +338,14 @@ export function DashboardPage() {
               <Plus size={20} />
             </div>
             <h2 className="text-xl font-black uppercase tracking-tight text-ink mb-2">
-              Create New Room
+              {t('dashboard.createNewRoom')}
             </h2>
             <p className="text-xs text-ink-muted leading-relaxed mb-6">
-              Start an official room as Host (TV / Screen Mode) or join together with 4–12 players.
+              {t('dashboard.createNewRoomBody')}
             </p>
           </div>
           <Button className="w-full text-xs">
-            Start Room <ArrowRight size={14} className="ml-1" />
+            {t('dashboard.startRoom')} <ArrowRight size={14} className="ml-1" />
           </Button>
         </Card>
 
@@ -353,10 +356,10 @@ export function DashboardPage() {
               <LogIn size={20} />
             </div>
             <h2 className="text-xl font-black uppercase tracking-tight text-ink mb-2">
-              Join Existing Room
+              {t('dashboard.joinExistingRoom')}
             </h2>
             <p className="text-xs text-ink-muted leading-relaxed mb-6">
-              Enter a 5-character room code or scan your host screen QR code.
+              {t('dashboard.joinExistingRoomBody')}
             </p>
 
             <JoinForm
@@ -377,10 +380,10 @@ export function DashboardPage() {
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between border-b border-rule pb-2">
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-ink-muted">
-              Featured Games
+              {t('dashboard.featuredGames')}
             </span>
             <Link to="/games" className="text-xs font-mono text-ink-muted hover:text-ink">
-              View All →
+              {t('dashboard.viewAll')}
             </Link>
           </div>
 
@@ -396,14 +399,14 @@ export function DashboardPage() {
                       {game.name}
                     </h3>
                     <span className="text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 border border-rule bg-canvas-sunk text-ink">
-                      {game.category}
+                      {t(game.categoryKey)}
                     </span>
                     <span className="text-[10px] font-mono text-ink-faint">
                       {game.players}
                     </span>
                   </div>
                   <p className="text-xs text-ink-muted">
-                    {game.description}
+                    {t(game.descriptionKey)}
                   </p>
                 </div>
                 <Link to={`/room/create?game=${game.id}`} className="shrink-0 w-full sm:w-auto">
@@ -420,17 +423,17 @@ export function DashboardPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between border-b border-rule pb-2">
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-ink-muted">
-              Friends Online ({friends.filter((f) => f.isOnline).length})
+              {t('dashboard.friendsOnline', { count: friends.filter((f) => f.isOnline).length })}
             </span>
             <Link to="/friends" className="text-xs font-mono text-ink-muted hover:text-ink">
-              Manage →
+              {t('dashboard.manage')}
             </Link>
           </div>
 
           <Card className="p-4 border border-rule">
             {friends.length === 0 ? (
               <div className="text-center py-6 text-xs text-ink-muted font-mono">
-                No friends added yet.
+                {t('dashboard.noFriends')}
               </div>
             ) : (
               <div className="divide-y divide-rule">
@@ -457,9 +460,9 @@ export function DashboardPage() {
       {showJoinModal && (
         <Modal isOpen={showJoinModal} onClose={() => setShowJoinModal(false)}>
           <div className="space-y-4">
-            <h3 className="text-title font-black tracking-tight text-ink">Join a Room</h3>
+            <h3 className="text-title font-black tracking-tight text-ink">{t('dashboard.mobileJoinTitle')}</h3>
             <p className="text-label text-ink-muted">
-              Enter the 5-character code from the host's screen, or scan its QR code.
+              {t('dashboard.mobileJoinBody')}
             </p>
             <JoinForm
               joinCode={joinCode}
@@ -489,7 +492,7 @@ export function DashboardPage() {
         <Modal isOpen={showScanner} onClose={() => setShowScanner(false)}>
           <div className="text-center space-y-4">
             <h3 className="text-lg font-black uppercase text-ink">
-              Scan Room QR Code
+              {t('dashboard.scanQrTitle')}
             </h3>
             <div id="dashboard-reader" className="w-full overflow-hidden border border-rule rounded-xs" />
             <Button variant="secondary" size="sm" onClick={() => setShowScanner(false)}>

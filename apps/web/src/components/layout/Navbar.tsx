@@ -1,6 +1,7 @@
 ﻿import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useThemeStore } from '../../stores/themeStore';
+import { useT, useLangStore } from '../../stores/langStore';
 import { Sun, Moon, Menu, X, Gamepad2, Users, User, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../ui/Button';
@@ -9,14 +10,16 @@ import { NotificationBell } from '../notifications/NotificationBell';
 export default function Navbar() {
   const { isAuthenticated, clearUser, user } = useAuthStore();
   const { resolvedTheme, toggleTheme } = useThemeStore();
+  const t = useT();
+  const { lang, toggleLang } = useLangStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
   const navLinks = [
-    { name: 'Home', path: isAuthenticated ? '/dashboard' : '/' },
-    { name: 'Games', path: '/games' },
-    { name: 'Ranking', path: '/ranking' },
-    ...(isAuthenticated ? [{ name: 'Friends', path: '/friends' }] : []),
+    { name: t('nav.home'), path: isAuthenticated ? '/dashboard' : '/' },
+    { name: t('nav.games'), path: '/games' },
+    { name: t('nav.ranking'), path: '/ranking' },
+    ...(isAuthenticated ? [{ name: t('nav.friends'), path: '/friends' }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -55,12 +58,24 @@ export default function Navbar() {
 
           <NotificationBell />
 
+          {/* Language Toggle — the label is the language you switch TO. */}
+          <button
+            onClick={toggleLang}
+            className="p-2 text-ink-muted hover:text-ink transition-colors cursor-pointer rounded-xs hover:bg-surface-hover"
+            title={t('nav.toggleLanguage')}
+            aria-label={t('nav.toggleLanguage')}
+          >
+            <span className="text-[11px] font-mono font-bold tracking-wider">
+              {lang === 'en' ? 'TH' : 'EN'}
+            </span>
+          </button>
+
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
             className="p-2 text-ink-muted hover:text-ink transition-colors cursor-pointer rounded-xs hover:bg-surface-hover"
-            title={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
-            aria-label="Toggle theme"
+            title={resolvedTheme === 'dark' ? t('nav.switchToLight') : t('nav.switchToDark')}
+            aria-label={t('nav.toggleTheme')}
           >
             {resolvedTheme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
           </button>
@@ -81,24 +96,34 @@ export default function Navbar() {
                 onClick={clearUser}
                 className="text-xs py-1.5 px-3 h-8"
               >
-                Sign Out
+                {t('nav.signOut')}
               </Button>
             </div>
           ) : (
             <Link to="/login">
               <Button size="sm" className="text-xs py-1.5 px-4 h-8">
-                Login
+                {t('nav.login')}
               </Button>
             </Link>
           )}
         </div>
 
-        {/* Mobile controls: Theme toggle + hamburger */}
+        {/* Mobile controls: Language + theme toggles + hamburger */}
         <div className="flex md:hidden items-center gap-2">
+          <button
+            onClick={toggleLang}
+            className="p-2 text-ink-muted hover:text-ink transition-colors rounded-xs"
+            aria-label={t('nav.toggleLanguage')}
+          >
+            <span className="text-[12px] font-mono font-bold tracking-wider">
+              {lang === 'en' ? 'TH' : 'EN'}
+            </span>
+          </button>
+
           <button
             onClick={toggleTheme}
             className="p-2 text-ink-muted hover:text-ink transition-colors rounded-xs"
-            aria-label="Toggle theme"
+            aria-label={t('nav.toggleTheme')}
           >
             {resolvedTheme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
@@ -106,7 +131,7 @@ export default function Navbar() {
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 text-ink-muted hover:text-ink transition-colors rounded-xs"
-            aria-label="Toggle navigation menu"
+            aria-label={t('nav.toggleMenu')}
           >
             {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -149,13 +174,13 @@ export default function Navbar() {
                   }}
                   className="text-xs"
                 >
-                  Sign Out
+                  {t('nav.signOut')}
                 </Button>
               </div>
             ) : (
               <Link to="/login" className="w-full" onClick={() => setMobileMenuOpen(false)}>
                 <Button size="sm" className="w-full text-xs">
-                  Login
+                  {t('nav.login')}
                 </Button>
               </Link>
             )}
