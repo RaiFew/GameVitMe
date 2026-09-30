@@ -22,6 +22,20 @@ export function NumberGridSettingsCard({
   const customGridSizes: GridSize[] = Array.isArray(settings?.customGridSizes) && settings.customGridSizes.length > 0
     ? settings.customGridSizes
     : [3, 4, 5];
+  // Normal-room Chaos. Ranked variants never reach this card — those are chosen
+  // on the Ranked page, not configured by a host. Nested under `gameSettings`
+  // because that is the object the server hands to the engine.
+  const isChaos = settings?.gameSettings?.variant === 'CHAOS';
+
+  const handleChaosToggle = (enabled: boolean) => {
+    if (!isHost) return;
+    onUpdateSettings({
+      gameSettings: {
+        ...(settings?.gameSettings || {}),
+        variant: enabled ? 'CHAOS' : undefined,
+      },
+    });
+  };
 
   const handleDifficultySelect = (mode: DifficultyMode) => {
     if (!isHost) return;
@@ -101,6 +115,37 @@ export function NumberGridSettingsCard({
             {difficultyMode} Progression
           </span>
         </div>
+      </div>
+
+      {/* Chaos: random 1–1000 numbers, server-picked grid size every round.
+          Not ranked — guests play it like any other room. */}
+      <div className="space-y-2 pt-3 border-t border-rule">
+        <button
+          type="button"
+          disabled={!isHost}
+          onClick={() => handleChaosToggle(!isChaos)}
+          className={`w-full p-3 border rounded-xs text-left transition-all flex items-center justify-between gap-3 ${
+            isChaos
+              ? 'border-live ring-2 ring-live'
+              : 'border-rule hover:border-ink/40 bg-canvas'
+          } ${!isHost ? 'opacity-75 cursor-default' : 'cursor-pointer'}`}
+        >
+          <div>
+            <span className="text-xs font-black uppercase text-ink block">Chaos</span>
+            <span className="text-[10px] font-mono text-ink-muted block mt-0.5">
+              Random numbers 1–1000 and a random grid size (2x2–10x10) every round.
+            </span>
+          </div>
+          <span
+            className={`shrink-0 text-[10px] font-mono font-black uppercase px-2 py-0.5 rounded-xs border ${
+              isChaos
+                ? 'border-live bg-live text-live-ink'
+                : 'border-rule bg-canvas-sunk text-ink-muted'
+            }`}
+          >
+            {isChaos ? 'On' : 'Off'}
+          </span>
+        </button>
       </div>
 
       {/* Difficulty Mode Selector */}

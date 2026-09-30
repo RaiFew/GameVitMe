@@ -10,18 +10,24 @@ import type {
   NumberGridMasterState,
   NumberGridPlayerView,
   NumberGridSettings,
+  NumberGridVariant,
   PlayerProgressState,
   GridSize,
 } from './types/index.js';
 import {
-  generateBoard,
+  ALL_GRID_SIZES,
+  buildBoard,
   calculateRoundGridSizes,
 } from './engine/board-generator.js';
 import {
   validateNumberGridMove,
   processNumberGridMove,
+  ENDLESS_TOTAL_ROUNDS,
+  isEndless,
+  usesChaosNumbers,
 } from './moves/index.js';
 import { projectNumberGridPlayerView } from './projection/player-view.js';
+import { isRankedVariant, RANKED_TIME_STAGES } from './types/index.js';
 
 export * from './types/index.js';
 export * from './engine/board-generator.js';
@@ -37,6 +43,62 @@ export const DEFAULT_NUMBER_GRID_SETTINGS: NumberGridSettings = {
   wrongClickDamage: true,
 };
 
+/**
+ * Server-authored starting settings for a variant. Ranked modes are fixed by
+ * design: a client may pick which mode to play, never how it is scored.
+ */
+export function settingsForVariant(
+  variant: NumberGridVariant,
+  overrides: Partial<NumberGridSettings> = {},
+): NumberGridSettings {
+  const base: NumberGridSettings = { ...DEFAULT_NUMBER_GRID_SETTINGS, variant: 'STANDARD' };
+
+  switch (variant) {
+    case 'CHAOS':
+      return {
+        ...base,
+        variant,
+        difficultyMode: 'RANDOM',
+        // Guests may play Chaos, so nothing here touches ranking.
+        totalRounds: Math.max(1, Math.min(20, overrides.totalRounds ?? 9)),
+      };
+    case 'RANKED_TIME':
+      return {
+        ...base,
+        variant,
+        totalRounds: RANKED_TIME_STAGES,
+        maxHp: 999,
+        // No HP: a wrong click costs 10 locked-out seconds, which shows up in
+        // the clock rather than as a life.
+        wrongClickDamage: false,
+        hostMode: false,
+        damageMode: 'LAST_PLAYER',
+      };
+    case 'RANKED_TOWER':
+      return {
+        ...base,
+        variant,
+        totalRounds: ENDLESS_TOTAL_ROUNDS,
+        maxHp: 3,
+        difficultyMode: 'DEFAULT',
+        wrongClickDamage: true,
+        hostMode: false,
+      };
+    case 'RANKED_CHAOS':
+      return {
+        ...base,
+        variant,
+        totalRounds: ENDLESS_TOTAL_ROUNDS,
+        maxHp: 3,
+        difficultyMode: 'RANDOM',
+        wrongClickDamage: true,
+        hostMode: false,
+      };
+    default:
+      return { ...base, ...overrides, variant: 'STANDARD' };
+  }
+}
+
 export const numberGridGame: GameDefinition<
   NumberGridMasterState,
   NumberGridPlayerView,
@@ -44,7 +106,7 @@ export const numberGridGame: GameDefinition<
 > = {
   id: 'number-grid',
   name: 'Number Grid',
-  version: '1.0.0',
+  version: '2.0.0',
   minPlayers: 1,
   maxPlayers: 20,
   defaultSettings: DEFAULT_NUMBER_GRID_SETTINGS,
@@ -116,10 +178,12 @@ export const numberGridGame: GameDefinition<
   ] satisfies GameSettingsField[],
 
   setup(ctx: GameContext, settings: NumberGridSettings): NumberGridMasterState {
-    const effectiveSettings: NumberGridSettings = {
-      ...DEFAULT_NUMBER_GRID_SETTINGS,
-      ...settings,
-    };
+    const variant: NumberGridVariant = settings.variant ?? 'STANDARD';
+    // A ranked run's scoring rules are not negotiable, so nothing the caller
+    // passed can reach them. Normal rooms still take host settings as-is.
+    const effectiveSettings: NumberGridSettings = isRankedVariant(variant)
+      ? settingsForVariant(variant)
+      : { ...settingsForVariant(variant, settings), ...settings, variant };
 
     const hostMode = !!effectiveSettings.hostMode;
     const hostPlayerId =
@@ -131,30 +195,49 @@ export const numberGridGame: GameDefinition<
         ? ctx.players.filter((p) => p.id !== hostPlayerId)
         : ctx.players;
 
-    const maxHp = Math.max(1, Math.min(10, Number(effectiveSettings.maxHp) || 3));
-    const totalRounds = Math.max(1, Math.min(20, Number(effectiveSettings.totalRounds) || 9));
+    // A Time run is 10 stages; the others round up to a configured count.
+    const rawRounds = Number(effectiveSettings.totalRounds) || 9;
+    const totalRounds = variant === 'RANKED_TIME'
+      ? RANKED_TIME_STAGES
+      : isEndless(variant)
+      ? ENDLESS_TOTAL_ROUNDS
+      : Math.max(1, Math.min(20, rawRounds));
 
-    const roundGridSizes = calculateRoundGridSizes(
-      effectiveSettings.difficultyMode,
-      totalRounds,
-      effectiveSettings.customGridSizes,
-    );
+    // Time has no HP. maxHp is kept at a large sentinel so the existing HP
+    // guards can never fire; the penalty is the lock, not a life.
+    const maxHp =
+      variant === 'RANKED_TIME'
+        ? Number.MAX_SAFE_INTEGER
+        : Math.max(1, Math.min(10, Number(effectiveSettings.maxHp) || 3));
 
-    const firstGridSize = roundGridSizes[0] || 2;
-    const cards = generateBoard(firstGridSize);
+    const roundGridSizes = isEndless(variant) || usesChaosNumbers(variant)
+      ? []
+      : calculateRoundGridSizes(effectiveSettings.difficultyMode, totalRounds, effectiveSettings.customGridSizes);
+
+    // Chaos randomizes from the very first round, including the size.
+    const firstGridSize: GridSize = usesChaosNumbers(variant)
+      ? (ALL_GRID_SIZES[Math.floor(ctx.random() * ALL_GRID_SIZES.length)] ?? 3)
+      : roundGridSizes[0] || 2;
+
+    const { cards, sequence } = buildBoard(firstGridSize, {
+      numberRange: usesChaosNumbers(variant) ? 'CHAOS' : 'SEQUENTIAL',
+      random: ctx.random,
+    });
 
     const playersMap: Record<string, PlayerProgressState> = {};
     for (const p of activePlayers) {
       playersMap[p.id] = {
         playerId: p.id,
         displayName: p.displayName || 'Player',
-        expectedNumber: 1,
+        expectedIndex: 0,
+        expectedNumber: sequence[0] ?? 1,
         hp: maxHp,
         maxHp,
         completed: false,
         finishOrder: null,
         eliminated: false,
         wrongClicks: 0,
+        lockedUntil: null,
       };
     }
 
@@ -163,6 +246,7 @@ export const numberGridGame: GameDefinition<
       sessionId: ctx.gameSessionId,
       phase: 'PLAYING',
       settings: effectiveSettings,
+      variant,
       currentRoundNumber: 1,
       totalRounds,
       roundGridSizes,
@@ -171,11 +255,13 @@ export const numberGridGame: GameDefinition<
         gridSize: firstGridSize,
         totalNumbers: firstGridSize * firstGridSize,
         cards,
+        numberSequence: sequence,
         completedPlayerIds: [],
         startedAt: Date.now(),
       },
       players: playersMap,
       winnerPlayerIds: [],
+      roundTimesMs: [],
       // Kept even outside host mode: it is what identifies who may advance rounds.
       hostPlayerId,
     };
@@ -241,6 +327,9 @@ export const numberGridGame: GameDefinition<
         data: {
           totalRounds: state.currentRoundNumber,
           results: state.roundResults,
+          // Present only for ranked runs. The server writes this to the
+          // leaderboard; the client only renders it.
+          rankedResult: state.rankedResult,
         },
       };
     }

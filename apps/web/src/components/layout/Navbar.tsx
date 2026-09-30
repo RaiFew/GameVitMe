@@ -15,6 +15,7 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Home', path: isAuthenticated ? '/dashboard' : '/' },
     { name: 'Games', path: '/games' },
+    { name: 'Ranking', path: '/ranking' },
     ...(isAuthenticated ? [{ name: 'Friends', path: '/friends' }] : []),
   ];
 

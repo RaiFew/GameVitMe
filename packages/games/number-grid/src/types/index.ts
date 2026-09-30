@@ -11,6 +11,56 @@ export type GamePhase =
   | 'ROUND_RESULT'
   | 'GAME_OVER';
 
+/**
+ * STANDARD  Normal room, sequential 1..N numbers, existing progression.
+ * CHAOS     Normal room, random size 2x2-10x10 per round, unique numbers drawn
+ *           from 1-1000. Playable by guests, awards no ranking points.
+ * RANKED_*  Solo runs. Same mechanic as above but scored and leaderboarded.
+ */
+export type NumberGridVariant =
+  | 'STANDARD'
+  | 'CHAOS'
+  | 'RANKED_TIME'
+  | 'RANKED_TOWER'
+  | 'RANKED_CHAOS';
+
+export const RANKED_VARIANTS: NumberGridVariant[] = [
+  'RANKED_TIME',
+  'RANKED_TOWER',
+  'RANKED_CHAOS',
+];
+
+export function isRankedVariant(variant?: string): boolean {
+  return RANKED_VARIANTS.includes(variant as NumberGridVariant);
+}
+
+/** Higher rank value wins. Only ranked variants have one. */
+export function rankingDirectionFor(variant?: string): 'HIGHER_IS_BETTER' | 'LOWER_IS_BETTER' | null {
+  if (variant === 'RANKED_TIME') return 'LOWER_IS_BETTER';
+  if (variant === 'RANKED_TOWER' || variant === 'RANKED_CHAOS') return 'HIGHER_IS_BETTER';
+  return null;
+}
+
+/** The leaderboard a variant writes to, or null when it is not ranked. */
+export function leaderboardKeyFor(variant?: string): string | null {
+  switch (variant) {
+    case 'RANKED_TIME':
+      return 'number-rush.time';
+    case 'RANKED_TOWER':
+      return 'number-rush.tower-climb';
+    case 'RANKED_CHAOS':
+      return 'number-rush.chaos';
+    default:
+      return null;
+  }
+}
+
+/** RANKED_TIME is a fixed 10-stage run. */
+export const RANKED_TIME_STAGES = 10;
+
+/** Wrong-click lock applied by the server, in ms. */
+export const RANKED_TIME_PENALTY_MS = 10_000;
+
 export interface NumberCircleCard {
   id: string;
   number: number;
@@ -20,13 +70,26 @@ export interface NumberCircleCard {
 export interface PlayerProgressState {
   playerId: string;
   displayName: string;
-  expectedNumber: number; // starts at 1, goes up to totalNumbers + 1
+  /**
+   * The number the player must click next. Derived from the round's
+   * `numberSequence`, not from `previous + 1`, because Chaos boards hold
+   * arbitrary values from 1-1000.
+   */
+  expectedNumber: number;
+  /** How many of the current board the player has cleared. */
+  expectedIndex: number;
   hp: number;
   maxHp: number;
   completed: boolean;
   finishOrder: number | null; // 1, 2, 3...
   eliminated: boolean;
   wrongClicks: number;
+  /**
+   * Server timestamp before which clicks are rejected. Only set by RANKED_TIME.
+   * Reconnect-safe by construction: the lock is compared against the server
+   * clock on every move, so a refresh cannot shorten or clear it.
+   */
+  lockedUntil?: number | null;
   lastClickResult?: {
     cardId: string;
     number: number;
@@ -40,12 +103,19 @@ export interface RoundState {
   gridSize: GridSize;
   totalNumbers: number; // gridSize * gridSize
   cards: NumberCircleCard[];
+  /**
+   * Ascending click order for this board. STANDARD is 1..N; Chaos is the sorted
+   * draw from 1-1000. Held on the round so the expected number is always a
+   * lookup rather than arithmetic.
+   */
+  numberSequence: number[];
   completedPlayerIds: string[];
   startedAt: number;
   endedAt?: number;
 }
 
 export interface NumberGridSettings {
+  variant?: NumberGridVariant;
   difficultyMode: DifficultyMode;
   totalRounds: number;
   customGridSizes?: GridSize[];
@@ -56,11 +126,27 @@ export interface NumberGridSettings {
   wrongClickDamage?: boolean; // default true: 1 HP per wrong click
 }
 
+/** Server-calculated outcome of a ranked run. Never assembled from client input. */
+export interface RankedRunResult {
+  mode: 'TIME' | 'TOWER' | 'CHAOS';
+  stages: number;
+  completedStages: number;
+  totalTimeMs: number;
+  mistakes: number;
+  highestFloor: number;
+  hpRemaining: number;
+  completed: boolean;
+  status: 'COMPLETED' | 'DIED' | 'ABANDONED';
+  rankingValue: number;
+  rankingDirection: 'HIGHER_IS_BETTER' | 'LOWER_IS_BETTER';
+}
+
 export interface NumberGridMasterState {
   roomId: string;
   sessionId: string;
   phase: GamePhase;
   settings: NumberGridSettings;
+  variant: NumberGridVariant;
   currentRoundNumber: number;
   totalRounds: number;
   roundGridSizes: GridSize[];
@@ -68,6 +154,10 @@ export interface NumberGridMasterState {
   players: Record<string, PlayerProgressState>;
   winnerPlayerIds: string[];
   hostPlayerId?: string;
+  /** Per-stage durations in ms, appended as each round resolves. */
+  roundTimesMs: number[];
+  /** Set once the final stage of a ranked run resolves. */
+  rankedResult?: RankedRunResult;
   roundResults?: {
     roundNumber: number;
     finishOrder: { playerId: string; displayName: string; finishOrder: number }[];
@@ -90,6 +180,7 @@ export interface OpponentSummary {
 
 export interface NumberGridPlayerView {
   phase: GamePhase;
+  variant: NumberGridVariant;
   currentRoundNumber: number;
   totalRounds: number;
   gridSize: GridSize;
@@ -100,6 +191,20 @@ export interface NumberGridPlayerView {
   canPlay: boolean;
   damageMode: DamageMode;
   opponents: OpponentSummary[];
+  /** Server clock, so the client countdown cannot drift or be forged. */
+  serverNow?: number;
+  /** Ranked runs only. */
+  ranked?: {
+    leaderboardKey: string;
+    rankingDirection: 'HIGHER_IS_BETTER' | 'LOWER_IS_BETTER';
+    elapsedMs: number;
+    stages: number;
+    penaltyMs: number;
+    /** Penalty seconds still to burn off. Display only. */
+    lockedForMs: number;
+    /** Present once the run has ended. */
+    result?: RankedRunResult;
+  };
   roundResults?: {
     roundNumber: number;
     finishOrder: { playerId: string; displayName: string; finishOrder: number }[];

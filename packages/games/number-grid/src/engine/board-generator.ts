@@ -2,26 +2,67 @@ import type { GridSize, DifficultyMode, NumberCircleCard } from '../types/index.
 
 export const ALL_GRID_SIZES: GridSize[] = [2, 3, 4, 5, 6, 7, 8, 9, 10];
 
+/** Upper bound of the Chaos / RANKED_CHAOS number pool. */
+export const CHAOS_NUMBER_CEILING = 1000;
+
+/**
+ * Draws `count` distinct values from 1..ceiling and returns them ascending.
+ * Ascending because the click order is the sort order: the player hunts for the
+ * smallest remaining value, which is what makes a sparse 1-1000 board readable.
+ *
+ * Rejection sampling over a Set rather than a shuffled 1000-slot pool: a board
+ * holds at most 100 values, so the loop is short and there is no 1000-entry
+ * allocation per floor.
+ */
+export function drawChaosNumbers(count: number, random: () => number = Math.random): number[] {
+  const size = Math.max(1, Math.min(CHAOS_NUMBER_CEILING, Math.floor(count)));
+  const picked = new Set<number>();
+  while (picked.size < size) {
+    picked.add(1 + Math.floor(random() * CHAOS_NUMBER_CEILING));
+  }
+  return [...picked].sort((a, b) => a - b);
+}
+
+/**
+ * Builds a server-authoritative board.
+ *
+ * `sequence` is the click order (ascending); the cards are that same set
+ * shuffled into visual position, so position carries no information about order.
+ */
+export function buildBoard(
+  gridSize: GridSize,
+  options: { numberRange?: 'SEQUENTIAL' | 'CHAOS'; random?: () => number } = {},
+): { cards: NumberCircleCard[]; sequence: number[] } {
+  const random = options.random ?? Math.random;
+  const total = gridSize * gridSize;
+  const sequence =
+    options.numberRange === 'CHAOS' ? drawChaosNumbers(total, random) : Array.from({ length: total }, (_, i) => i + 1);
+
+  const cards = [...sequence];
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    const tmp = cards[i]!;
+    cards[i] = cards[j]!;
+    cards[j] = tmp;
+  }
+
+  return {
+    cards: cards.map((num, idx) => ({
+      // Index is part of the id so two boards with identical number sets still
+      // produce distinct card ids.
+      id: `card_${gridSize}x${gridSize}_${num}_${idx}`,
+      number: num,
+      index: idx,
+    })),
+    sequence,
+  };
+}
+
 /**
  * Generates an authoritative shuffled board of 1..N cards inside a gridSize * gridSize grid.
  */
 export function generateBoard(gridSize: GridSize): NumberCircleCard[] {
-  const total = gridSize * gridSize;
-  const numbers: number[] = Array.from({ length: total }, (_, i) => i + 1);
-
-  // Fisher-Yates shuffle
-  for (let i = numbers.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const temp = numbers[i]!;
-    numbers[i] = numbers[j]!;
-    numbers[j] = temp;
-  }
-
-  return numbers.map((num, idx) => ({
-    id: `card_${gridSize}x${gridSize}_${num}_${idx}`,
-    number: num,
-    index: idx,
-  }));
+  return buildBoard(gridSize).cards;
 }
 
 /**

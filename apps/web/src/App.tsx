@@ -11,6 +11,8 @@ import { LobbyPage } from './pages/LobbyPage';
 import { GamePage } from './pages/GamePage';
 import HomePage from './pages/HomePage';
 import GamesPage from './pages/GamesPage';
+import { RankingPage } from './pages/RankingPage';
+import { RankedPage } from './pages/RankedPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -47,6 +49,8 @@ export function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/join" element={<JoinRoomPage />} />
           <Route path="/join/:roomCode" element={<JoinRoomPage />} />
+          <Route path="/ranking" element={<RankingPage />} />
+          <Route path="/ranked" element={<ProtectedRoute><RankedPage /></ProtectedRoute>} />
 
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />

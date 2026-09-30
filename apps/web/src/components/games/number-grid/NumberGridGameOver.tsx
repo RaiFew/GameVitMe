@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import type { NumberGridPlayerView } from '@party/number-grid';
 import { Trophy, RotateCcw, Home, Skull, Award } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
+import { api } from '../../../lib/api';
 
 interface NumberGridGameOverProps {
   playerView: NumberGridPlayerView;
@@ -9,12 +11,100 @@ interface NumberGridGameOverProps {
   onReturnLobby: () => void;
 }
 
+const MODE_LABEL: Record<string, string> = {
+  TIME: 'Time',
+  TOWER: 'Tower Climb',
+  CHAOS: 'Chaos',
+};
+
+const formatMs = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
+
+/**
+ * The ranked run's own summary: what the server scored, the resulting personal
+ * best, and where that put the player. The personal best and rank are read back
+ * from the server rather than assumed, so a run that did not beat the previous
+ * best still reports honestly.
+ */
+function RankedResult({ playerView }: { playerView: NumberGridPlayerView }) {
+  const { ranked } = playerView;
+  const [mine, setMine] = useState<{ score: number; rank: number | null } | null>(null);
+
+  useEffect(() => {
+    if (!ranked) return;
+    api
+      .get<{ entries: Record<string, { score: number; rank: number | null }> }>('/api/ranking/me')
+      .then((res) => {
+        const entry = res?.entries?.[ranked.leaderboardKey];
+        if (entry) setMine({ score: entry.score, rank: entry.rank });
+      })
+      .catch(() => {});
+  }, [ranked?.leaderboardKey]);
+
+  if (!ranked) return null;
+  const result = ranked.result;
+  const isTime = ranked.rankingDirection === 'LOWER_IS_BETTER';
+
+  return (
+    <div className="space-y-2 text-left">
+      <span className="text-[10px] font-bold uppercase tracking-widest text-ink-muted block">
+        Result • Ranked
+      </span>
+
+      <div className="border border-rule rounded-xs divide-y divide-rule">
+        <Row label="Mode" value={result ? MODE_LABEL[result.mode] ?? result.mode : '—'} />
+        <Row
+          label="Result"
+          value={
+            result
+              ? isTime
+                ? formatMs(result.totalTimeMs)
+                : `${result.highestFloor} floor${result.highestFloor === 1 ? '' : 's'}`
+              : '—'
+          }
+          highlight
+        />
+        <Row
+          label="Status"
+          value={result ? result.status.charAt(0) + result.status.slice(1).toLowerCase() : '—'}
+        />
+        <Row
+          label="Personal Best"
+          value={mine ? (isTime ? formatMs(mine.score) : String(mine.score)) : '—'}
+        />
+        <Row
+          label="Current Ranking"
+          value={mine?.rank ? `#${mine.rank}` : 'Unranked'}
+        />
+      </div>
+
+      {result && result.status !== 'COMPLETED' && (
+        <p className="text-[10px] font-mono text-ink-muted">
+          {isTime
+            ? 'A run that is not completed still records the time reached.'
+            : 'The run ended early; the floors you cleared are still scored.'}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className="px-2.5 py-2 flex items-center justify-between text-xs">
+      <span className="text-ink-muted">{label}</span>
+      <span className={`font-mono font-bold ${highlight ? 'text-ink' : 'text-ink-muted'}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export function NumberGridGameOver({
   playerView,
   onPlayAgain,
   onReturnLobby,
 }: NumberGridGameOverProps) {
-  const { me, isHost, winners, opponents, totalRounds, currentRoundNumber } = playerView;
+  const { me, isHost, ranked, winners, opponents, totalRounds, currentRoundNumber } = playerView;
 
   // Aggregate all players for final standings
   const allPlayers = [
@@ -79,8 +169,12 @@ export function NumberGridGameOver({
           )}
         </div>
 
-        {/* Final Standings */}
-        <div className="space-y-2 text-left">
+        {/* Ranked runs report the score instead of standings — there is no one
+            else in the room. */}
+        {ranked ? (
+          <RankedResult playerView={playerView} />
+        ) : (
+          <div className="space-y-2 text-left">
           <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted block">
             Final Standings
           </span>
@@ -131,7 +225,8 @@ export function NumberGridGameOver({
               );
             })}
           </div>
-        </div>
+          </div>
+        )}
 
         {/* Host controls & actions */}
         <div className="pt-4 border-t border-rule space-y-2">

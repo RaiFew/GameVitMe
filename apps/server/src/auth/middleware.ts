@@ -13,7 +13,12 @@ declare module 'fastify' {
   }
 }
 
-export const requireAuth = async (request: FastifyRequest, reply: FastifyReply) => {
+/**
+ * Resolves the session for a request without ever replying. `requireAuth` is
+ * unusable for public-but-personalised routes: it sends its own 401, so a
+ * try/catch around it still leaves the response already written.
+ */
+export const resolveRequestSession = async (request: FastifyRequest) => {
   // 1. Try Better Auth getSession
   let session: any = await auth.api
     .getSession({
@@ -76,12 +81,17 @@ export const requireAuth = async (request: FastifyRequest, reply: FastifyReply) 
   }
 }
 
-  if (!session || !session.user) {
+  return session?.user ? { session: session.session, user: session.user } : null;
+};
+
+export const requireAuth = async (request: FastifyRequest, reply: FastifyReply) => {
+  const resolved = await resolveRequestSession(request);
+  if (!resolved) {
     return reply.status(401).send({ error: 'Unauthorized' });
   }
 
-  request.user = session.user;
-  request.session = session.session;
+  request.user = resolved.user;
+  request.session = resolved.session;
 };
 
 const authMiddlewarePlugin: FastifyPluginAsync = async (fastify) => {

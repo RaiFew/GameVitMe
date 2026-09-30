@@ -5,6 +5,7 @@ import { HealthDisplay } from './HealthDisplay';
 import { RoundLeaderboard } from './RoundLeaderboard';
 import { NumberGridGameOver } from './NumberGridGameOver';
 import { RoundResultModal } from './RoundResultModal';
+import { RankedHud } from './RankedHud';
 import { Target, CheckCircle2, Skull } from 'lucide-react';
 
 interface Props {
@@ -22,6 +23,9 @@ export function NumberGridGame({
 }: Props) {
   const {
     phase,
+    variant,
+    ranked,
+    serverNow,
     currentRoundNumber,
     totalRounds,
     gridSize,
@@ -59,6 +63,15 @@ export function NumberGridGame({
 
   return (
     <div className="flex-1 flex flex-col items-center justify-between p-3 sm:p-5 max-w-4xl mx-auto w-full font-mono select-none">
+      {ranked && (
+        <RankedHud
+          ranked={ranked}
+          currentRoundNumber={currentRoundNumber}
+          serverNow={serverNow}
+          isTimeMode={variant === 'RANKED_TIME'}
+        />
+      )}
+
       {/* Game Header Bar */}
       <div className="w-full max-w-[min(92vw,560px)] flex flex-wrap items-center justify-between gap-2 border-b border-rule pb-3 mb-3">
         <div className="flex items-center gap-2">

@@ -6,6 +6,24 @@ import { gameSessions, rooms } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { getCodenamesWordFile } from '../../routes/codenames.routes.js';
+import { isRankedVariant } from '@party/number-grid';
+import type { RankedRunResult } from '@party/number-grid';
+import { recordRankedResult, resolveRankedUser } from '../../ranking/ranking.service.js';
+
+/**
+ * Writes a finished ranked run to the board.
+ *
+ * The result object is built by the engine from state only the server holds, so
+ * nothing here is client-supplied. Guests are re-checked rather than trusted
+ * from the start gate, because a run can outlive the session that began it.
+ */
+const persistRankedResult = (userId: string | undefined, summary: unknown) => {
+  const rankedResult = (summary as { rankedResult?: RankedRunResult } | undefined)?.rankedResult;
+  if (!rankedResult || !userId) return;
+  recordRankedResult(userId, rankedResult).catch((err) => {
+    console.warn('[GameHandler] Failed to record ranked result:', err);
+  });
+};
 
 export const registerGameHandlers = (io: Server, socket: Socket) => {
   const user = socket.data.user;
@@ -26,7 +44,36 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
     }
 
     const isHostForcedGame = room.gameType === 'werewolf' || room.gameType === 'salem';
-    const hostMode = isHostForcedGame ? true : room.settings?.hostMode !== false;
+
+    // A ranked run is an ordinary run in an ordinary room: same room, same
+    // runner, same click handling, same reconnect path. The only differences
+    // are the server-owned variant and the requirement to be a real account.
+    const requestedVariant = (room.settings as any)?.gameSettings?.variant as string | undefined;
+    const isRanked = room.gameType === 'number-grid' && isRankedVariant(requestedVariant);
+    if (isRanked) {
+      // `socket.data.user` is not an identity: the gateway falls back to
+      // client-supplied handshake auth, so anyone can claim any id. Only a row
+      // in `users` that is not a guest may score.
+      const auth = await resolveRankedUser(user?.id);
+      if (!auth.ok) {
+        const msg = 'Ranked play requires a registered account. Sign in to record a score.';
+        socket.emit('game:action_error', { code: 'RANKED_LOGIN_REQUIRED', message: msg });
+        if (callback) callback({ error: msg });
+        return;
+      }
+      if (room.players.length > 1) {
+        const msg = 'Ranked runs are played alone. Start a new ranked run.';
+        socket.emit('game:action_error', { code: 'RANKED_NOT_SOLO', message: msg });
+        if (callback) callback({ error: msg });
+        return;
+      }
+    }
+
+    const hostMode = isRanked
+      ? false
+      : isHostForcedGame
+        ? true
+        : room.settings?.hostMode !== false;
 
     // In Host Mode, only host can start
     if (hostMode && room.hostId !== user.id) {
@@ -176,6 +223,8 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
       // End game handler (called on win, unanimous vote, or timer expiration)
       runner.setOnGameEnd((endResult) => {
         room.status = 'finished';
+
+        persistRankedResult(user?.id, endResult.data);
 
         io.to(`room:${room.id}`).emit('game:finished' as any, {
           winners: endResult.winners,
@@ -328,6 +377,8 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
       const endResult = runner.checkGameEnd();
       if (endResult) {
         room.status = 'finished';
+
+        persistRankedResult(user?.id, endResult.data);
 
         io.to(`room:${room.id}`).emit('game:finished' as any, {
           winners: endResult.winners,

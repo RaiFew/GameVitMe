@@ -1,14 +1,34 @@
 import type { GameContext } from '@party/game-engine';
 import type {
   NumberGridMasterState,
+  NumberGridVariant,
   GridSize,
   PlayerProgressState,
+  RankedRunResult,
 } from '../types/index.js';
-import { generateBoard } from '../engine/board-generator.js';
+import { isRankedVariant, RANKED_TIME_PENALTY_MS, RANKED_TIME_STAGES, rankingDirectionFor } from '../types/index.js';
+import { buildBoard, ALL_GRID_SIZES } from '../engine/board-generator.js';
 
 export interface ClickNumberPayload {
   cardId: string;
   number: number;
+}
+
+/** Tower Climb and Chaos run until the player dies, not for a fixed round count. */
+export const ENDLESS_TOTAL_ROUNDS = 9999;
+
+export function usesChaosNumbers(variant: NumberGridVariant): boolean {
+  return variant === 'CHAOS' || variant === 'RANKED_CHAOS';
+}
+
+export function isEndless(variant: NumberGridVariant): boolean {
+  return variant === 'RANKED_TOWER' || variant === 'RANKED_CHAOS';
+}
+
+/** Milliseconds left on the wrong-click lock, from the server's own clock. */
+export function lockRemainingMs(player: PlayerProgressState, now: number): number {
+  if (!player.lockedUntil) return 0;
+  return Math.max(0, player.lockedUntil - now);
 }
 
 export function validateNumberGridMove(
@@ -16,6 +36,7 @@ export function validateNumberGridMove(
   playerId: string,
   type: string,
   payload: unknown,
+  now: number = Date.now(),
 ): { valid: boolean; error?: string } {
   if (!state) return { valid: false, error: 'Game not initialized' };
 
@@ -35,6 +56,11 @@ export function validateNumberGridMove(
 
     if (player.completed) {
       return { valid: false, error: 'You already completed this round!' };
+    }
+
+    const locked = lockRemainingMs(player, now);
+    if (locked > 0) {
+      return { valid: false, error: `Locked out for ${Math.ceil(locked / 1000)}s after a wrong click.` };
     }
 
     const data = payload as ClickNumberPayload;
@@ -74,13 +100,14 @@ export function processNumberGridMove(
   type: string,
   payload: unknown,
   ctx: GameContext,
+  now: number = Date.now(),
 ): NumberGridMasterState {
   if (type === 'CLICK_NUMBER') {
-    return processClickNumber(state, playerId, payload as ClickNumberPayload, ctx);
+    return processClickNumber(state, playerId, payload as ClickNumberPayload, ctx, now);
   }
 
   if (type === 'START_NEXT_ROUND') {
-    return startNextRound(state, ctx);
+    return startNextRound(state, ctx, now);
   }
 
   return state;
@@ -91,49 +118,46 @@ function processClickNumber(
   playerId: string,
   payload: ClickNumberPayload,
   ctx: GameContext,
+  now: number,
 ): NumberGridMasterState {
   const player = state.players[playerId];
   if (!player || player.eliminated || player.completed || state.phase !== 'PLAYING') {
     return state;
   }
+  if (lockRemainingMs(player, now) > 0) return state;
 
   const { cardId, number } = payload;
   const isCorrect = number === player.expectedNumber;
 
   if (isCorrect) {
-    // Correct click
-    player.expectedNumber += 1;
-    player.lastClickResult = {
-      cardId,
-      number,
-      correct: true,
-      timestamp: Date.now(),
-    };
+    player.lastClickResult = { cardId, number, correct: true, timestamp: now };
+    player.expectedIndex += 1;
 
-    // Check if player completed the whole grid!
-    if (player.expectedNumber > state.currentRound.totalNumbers) {
+    const upcoming = state.currentRound.numberSequence[player.expectedIndex];
+    if (upcoming === undefined) {
       player.completed = true;
       state.currentRound.completedPlayerIds.push(playerId);
       player.finishOrder = state.currentRound.completedPlayerIds.length;
 
-      // Broadcast completion badge
       ctx.broadcast('number_grid:player_completed', {
         playerId,
         displayName: player.displayName,
         finishOrder: player.finishOrder,
       });
+    } else {
+      player.expectedNumber = upcoming;
     }
   } else {
-    // Wrong click!
     player.wrongClicks += 1;
-    player.lastClickResult = {
-      cardId,
-      number,
-      correct: false,
-      timestamp: Date.now(),
-    };
+    player.lastClickResult = { cardId, number, correct: false, timestamp: now };
 
-    // Deduct 1 HP if wrong click damage is enabled (default true)
+    // RANKED_TIME has no HP: a wrong click costs 10 locked-out seconds instead,
+    // which lands in the final time because the clock never stops.
+    if (state.variant === 'RANKED_TIME') {
+      player.lockedUntil = now + RANKED_TIME_PENALTY_MS;
+      return state;
+    }
+
     if (state.settings.wrongClickDamage !== false) {
       player.hp = Math.max(0, player.hp - 1);
       if (player.hp === 0) {
@@ -148,8 +172,7 @@ function processClickNumber(
     }
   }
 
-  // Check if round should end
-  checkRoundCompletion(state, ctx);
+  checkRoundCompletion(state, ctx, now);
 
   return state;
 }
@@ -160,20 +183,19 @@ function processClickNumber(
 export function checkRoundCompletion(
   state: NumberGridMasterState,
   ctx: GameContext,
+  now: number = Date.now(),
 ): boolean {
   const allPlayers = Object.values(state.players);
   const alivePlayers = allPlayers.filter((p) => !p.eliminated && p.hp > 0);
 
-  // If all alive players have completed the board:
   const allAliveCompleted =
     alivePlayers.length > 0 && alivePlayers.every((p) => p.completed);
 
-  // If the match started with 2+ players, but only <= 1 survivor remains:
   const startedWithMultiple = allPlayers.length >= 2;
   const onlyOneSurvivorLeft = startedWithMultiple && alivePlayers.length <= 1;
 
   if (allAliveCompleted || onlyOneSurvivorLeft || alivePlayers.length === 0) {
-    executeRoundResolution(state, ctx);
+    executeRoundResolution(state, ctx, now);
     return true;
   }
 
@@ -187,8 +209,15 @@ export function checkRoundCompletion(
 export function executeRoundResolution(
   state: NumberGridMasterState,
   ctx: GameContext,
+  now: number = Date.now(),
 ): void {
-  state.currentRound.endedAt = Date.now();
+  state.currentRound.endedAt = now;
+
+  // Only cleared floors count toward the time. A floor the player died on is
+  // excluded, otherwise dying would improve a time-based tie-break.
+  if (state.currentRound.completedPlayerIds.length > 0) {
+    state.roundTimesMs.push(Math.max(0, now - state.currentRound.startedAt));
+  }
 
   const allPlayers = Object.values(state.players);
   const previouslyAlive = allPlayers.filter((p) => p.hp > 0 && !p.eliminated);
@@ -268,6 +297,13 @@ export function executeRoundResolution(
   if (decidedByElimination || everyoneDead || isFinalRound) {
     state.phase = 'GAME_OVER';
 
+    if (isRankedVariant(state.variant)) {
+      // The ranked result is built here, from state the server owns. Nothing in
+      // it came from a client message, so it can be written to the leaderboard
+      // without re-validating anything.
+      state.rankedResult = buildRankedResult(state, currentAlive.length > 0);
+    }
+
     if (currentAlive.length === 1 && currentAlive[0]) {
       state.winnerPlayerIds = [currentAlive[0].playerId];
     } else if (currentAlive.length > 1) {
@@ -299,32 +335,93 @@ export function executeRoundResolution(
 }
 
 /**
+ * Assembles the ranked result for a finished run. Pure function of server state.
+ */
+export function buildRankedResult(state: NumberGridMasterState, survived: boolean): RankedRunResult {
+  const variant = state.variant;
+  const player = Object.values(state.players)[0];
+  const totalTimeMs = state.roundTimesMs.reduce((a, b) => a + b, 0);
+  const mistakes = player?.wrongClicks ?? 0;
+  const hpRemaining = player?.hp ?? 0;
+  const direction = rankingDirectionFor(variant)!;
+
+  if (variant === 'RANKED_TIME') {
+    // No HP loss is possible in this mode, so a finished run always completed.
+    const completed = survived && state.currentRoundNumber >= RANKED_TIME_STAGES;
+    return {
+      mode: 'TIME',
+      stages: RANKED_TIME_STAGES,
+      completedStages: state.roundTimesMs.length,
+      totalTimeMs,
+      mistakes,
+      // Not a scoring metric for Time; the floor count is exposed for the UI only.
+      highestFloor: state.roundTimesMs.length,
+      hpRemaining,
+      completed,
+      status: completed ? 'COMPLETED' : 'ABANDONED',
+      rankingValue: totalTimeMs,
+      rankingDirection: direction,
+    };
+  }
+
+  const mode = variant === 'RANKED_CHAOS' ? 'CHAOS' : 'TOWER';
+  // "Highest floor" is the count of cleared floors. The floor a player died on
+  // was reached but not completed, so it does not score.
+  const highestFloor = state.roundTimesMs.length;
+  return {
+    mode,
+    stages: 0,
+    completedStages: highestFloor,
+    totalTimeMs,
+    mistakes,
+    highestFloor,
+    hpRemaining,
+    completed: false,
+    status: survived ? 'COMPLETED' : 'DIED',
+    rankingValue: highestFloor,
+    rankingDirection: direction,
+  };
+}
+
+/** Picks the grid size for a round, honoring Chaos randomization. */
+function gridSizeForRound(state: NumberGridMasterState, random: () => number): GridSize {
+  if (usesChaosNumbers(state.variant)) {
+    return ALL_GRID_SIZES[Math.floor(random() * ALL_GRID_SIZES.length)] ?? 3;
+  }
+  return state.roundGridSizes[state.currentRoundNumber - 1] ?? 3;
+}
+
+/**
  * Advances to the next round with a freshly shuffled board and resets active progress.
  */
 export function startNextRound(
   state: NumberGridMasterState,
   ctx: GameContext,
+  now: number = Date.now(),
 ): NumberGridMasterState {
   if (state.phase === 'GAME_OVER') return state;
 
   state.currentRoundNumber += 1;
-  const nextGridSize: GridSize =
-    state.roundGridSizes[state.currentRoundNumber - 1] || 3;
-
-  const cards = generateBoard(nextGridSize);
+  const nextGridSize = gridSizeForRound(state, ctx.random);
+  const { cards, sequence } = buildBoard(nextGridSize, {
+    numberRange: usesChaosNumbers(state.variant) ? 'CHAOS' : 'SEQUENTIAL',
+    random: ctx.random,
+  });
 
   state.currentRound = {
     roundNumber: state.currentRoundNumber,
     gridSize: nextGridSize,
     totalNumbers: nextGridSize * nextGridSize,
     cards,
+    numberSequence: sequence,
     completedPlayerIds: [],
-    startedAt: Date.now(),
+    startedAt: now,
   };
 
   // Reset player per-round progress while preserving persistent HP and elimination
   for (const player of Object.values(state.players)) {
-    player.expectedNumber = 1;
+    player.expectedIndex = 0;
+    player.expectedNumber = sequence[0] ?? 1;
     player.completed = false;
     player.finishOrder = null;
     delete player.lastClickResult;

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, pgEnum, boolean, integer, jsonb, unique, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, pgEnum, boolean, integer, jsonb, numeric, unique, uniqueIndex, index } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 
 export const userStatusEnum = pgEnum('user_status', ['online', 'offline', 'in-game']);
@@ -11,6 +11,17 @@ export const invitationStatusEnum = pgEnum('invitation_status', [
   'DECLINED',
   'EXPIRED',
   'CANCELLED',
+]);
+// Which end of the scale wins. A leaderboard that assumes "higher is better"
+// cannot express a time, and Time is a first-class ranked mode.
+export const leaderboardDirectionEnum = pgEnum('leaderboard_direction', [
+  'HIGHER_IS_BETTER',
+  'LOWER_IS_BETTER',
+]);
+export const rankedRunStatusEnum = pgEnum('ranked_run_status', [
+  'COMPLETED',
+  'DIED',
+  'ABANDONED',
 ]);
 
 export const users = pgTable('users', {
@@ -154,6 +165,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   receivedFriendships: many(friendships, { relationName: 'addressee' }),
   sentInvitations: many(gameInvitations, { relationName: 'inviter' }),
   receivedInvitations: many(gameInvitations, { relationName: 'invitee' }),
+  leaderboardEntries: many(leaderboardEntries),
+  rankedGameResults: many(rankedGameResults),
 }));
 
 export const friendshipsRelations = relations(friendships, ({ one }) => ({
@@ -173,6 +186,98 @@ export const gameInvitationsRelations = relations(gameInvitations, ({ one }) => 
   room: one(rooms, { fields: [gameInvitations.roomId], references: [rooms.id] }),
   inviter: one(users, { fields: [gameInvitations.inviterId], references: [users.id], relationName: 'inviter' }),
   invitee: one(users, { fields: [gameInvitations.inviteeId], references: [users.id], relationName: 'invitee' }),
+}));
+
+/**
+ * Generic leaderboard registry. Adding a future ranking (Play Streak, a
+ * game-specific streak) is a row here, not a new table.
+ *
+ * `key` is the stable identifier code branches on ('number-rush.time'); `name`
+ * and `category` are display-only. `mode` and `metric` are documentation of
+ * what the score actually is, so a future UI can explain itself generically.
+ */
+export const leaderboards = pgTable('leaderboards', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  key: text('key').notNull().unique(),
+  name: text('name').notNull(),
+  category: text('category').notNull(),
+  gameType: text('game_type'),
+  mode: text('mode'),
+  metric: text('metric'),
+  direction: leaderboardDirectionEnum('direction').notNull(),
+  /**
+   * Seasons are not implemented yet. The column exists so that adding a weekly
+   * rotation later is a filter, not a migration of every leaderboard row.
+   */
+  season: text('season').notNull().default('all-time'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * One row per (leaderboard, user) holding that user's best score. This is the
+ * personal best AND the leaderboard position at once — a worse result is
+ * written to rankedGameResults but never here.
+ */
+export const leaderboardEntries = pgTable('leaderboard_entries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  leaderboardId: uuid('leaderboard_id')
+    .notNull()
+    .references(() => leaderboards.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  // Numeric, not integer: a Time score is milliseconds and a future streak
+  // leaderboard may want a ratio. Integer would force a unit change per metric.
+  score: numeric('score', { precision: 20, scale: 4 }).notNull(),
+  rank: integer('rank'),
+  metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => ({
+  unq: unique().on(t.leaderboardId, t.userId),
+}));
+
+/**
+ * Every ranked attempt, kept separate from the leaderboard so the board can be
+ * reset, re-ranked, or re-computed from history without players losing runs.
+ * Guests never appear here — the ranked:start handler rejects them before a
+ * run can begin.
+ */
+export const rankedGameResults = pgTable('ranked_game_results', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  gameType: text('game_type').notNull(),
+  mode: text('mode').notNull(),
+  leaderboardKey: text('leaderboard_key'),
+  /** The comparable number: ms for Time, floor count for Tower/Chaos. */
+  rankingValue: numeric('ranking_value', { precision: 20, scale: 4 }).notNull(),
+  totalTimeMs: integer('total_time_ms').notNull(),
+  highestFloor: integer('highest_floor').notNull(),
+  mistakes: integer('mistakes').notNull(),
+  status: rankedRunStatusEnum('status').notNull(),
+  metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => ({
+  idx: index('ranked_results_user_idx').on(t.userId, t.leaderboardKey),
+}));
+
+export const leaderboardsRelations = relations(leaderboards, ({ many }) => ({
+  entries: many(leaderboardEntries),
+}));
+
+export const leaderboardEntriesRelations = relations(leaderboardEntries, ({ one }) => ({
+  leaderboard: one(leaderboards, {
+    fields: [leaderboardEntries.leaderboardId],
+    references: [leaderboards.id],
+  }),
+  user: one(users, { fields: [leaderboardEntries.userId], references: [users.id] }),
+}));
+
+export const rankedGameResultsRelations = relations(rankedGameResults, ({ one }) => ({
+  user: one(users, { fields: [rankedGameResults.userId], references: [users.id] }),
 }));
 
 export const codenamesWordFiles = pgTable('codenames_word_files', {
