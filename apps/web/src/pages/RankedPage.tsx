@@ -7,6 +7,8 @@ import { useAuthStore } from '../stores/authStore';
 import { useRoomStore } from '../stores/roomStore';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { useT } from '../stores/langStore';
+import type { TranslationKey } from '../i18n/dictionaries';
 
 /**
  * The three ranked modes. Each card states the metric and which end of the scale
@@ -20,38 +22,23 @@ const MODES = [
   {
     variant: 'RANKED_TIME',
     key: 'number-rush.time',
-    name: 'Time',
-    blurb: 'Clear 10 stages as fast as you can.',
-    rules: [
-      'Exactly 10 stages.',
-      'No HP — a wrong click does not end the run.',
-      'A wrong click locks you out for 10 seconds.',
-      'Score is your total completion time. Lower is better.',
-    ],
+    nameKey: 'ranking.modeTime',
+    blurbKey: 'ranked.time.blurb',
+    ruleKeys: ['ranked.time.rule1', 'ranked.time.rule2', 'ranked.time.rule3', 'ranked.time.rule4'] as const,
   },
   {
     variant: 'RANKED_TOWER',
     key: 'number-rush.tower-climb',
-    name: 'Tower Climb',
-    blurb: 'Climb as high as you can before you run out of HP.',
-    rules: [
-      'Start with 3 HP.',
-      'Floors get harder the higher you go.',
-      'A wrong click costs 1 HP. At 0 HP the run ends.',
-      'Score is the highest floor you reached. Higher is better.',
-    ],
+    nameKey: 'ranking.modeTowerClimb',
+    blurbKey: 'ranked.tower.blurb',
+    ruleKeys: ['ranked.tower.rule1', 'ranked.tower.rule2', 'ranked.tower.rule3', 'ranked.tower.rule4'] as const,
   },
   {
     variant: 'RANKED_CHAOS',
     key: 'number-rush.chaos',
-    name: 'Chaos',
-    blurb: 'Random numbers, random grids, 3 HP. No ramp.',
-    rules: [
-      'Numbers are random values from 1 to 1000.',
-      'Grid size is randomized from 2x2 to 10x10, every round including the first.',
-      'Start with 3 HP. A wrong click costs 1 HP.',
-      'Score is the highest floor you reached. Higher is better.',
-    ],
+    nameKey: 'ranking.modeChaos',
+    blurbKey: 'ranked.chaos.blurb',
+    ruleKeys: ['ranked.chaos.rule1', 'ranked.chaos.rule2', 'ranked.chaos.rule3', 'ranked.chaos.rule4'] as const,
   },
 ] as const;
 
@@ -63,6 +50,7 @@ export function RankedPage() {
   const [personalBests, setPersonalBests] = useState<Record<string, { score: number; rank: number | null }>>({});
   const [starting, setStarting] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const t = useT();
 
   // Guests may browse and see the rules; the server refuses to score them, and
   // the card says so before they press Start.
@@ -77,9 +65,9 @@ export function RankedPage() {
       .catch(() => {});
   }, [canPlay]);
 
-  const startRun = (variant: string, name: string) => {
+  const startRun = (variant: string) => {
     if (!socket || !isConnected) {
-      setError('Not connected to the server.');
+      setError(t('ranked.errNotConnected'));
       return;
     }
     setError('');
@@ -90,7 +78,7 @@ export function RankedPage() {
       {
         gameId: 'number-grid',
         gameType: 'number-grid',
-        name: `Ranked ${name}`,
+        name: `Ranked ${variant}`,
         maxPlayers: 1,
         isPrivate: true,
         hostMode: false,
@@ -98,7 +86,7 @@ export function RankedPage() {
       (room: any) => {
         if (!room?.roomCode) {
           setStarting(null);
-          setError(room?.error || 'Could not open a ranked run.');
+          setError(room?.error || t('ranked.errOpenRun'));
           return;
         }
         if (room.room) setRoom(room.room);
@@ -131,15 +119,14 @@ export function RankedPage() {
     <div className="flex-1 w-full max-w-4xl mx-auto px-4 py-8 space-y-6">
       <header className="space-y-2">
         <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
-          Number Rush • Played alone
+          {t('ranked.eyebrow')}
         </span>
         <h1 className="text-3xl font-black uppercase tracking-tight text-ink flex items-center gap-2.5">
           <Swords size={26} className="text-live" />
-          Ranked
+          {t('ranked.title')}
         </h1>
         <p className="text-sm text-ink-muted max-w-prose">
-          Each mode has its own leaderboard and they are never combined. Your score is
-          measured and recorded on the server.
+          {t('ranked.subtitle')}
         </p>
       </header>
 
@@ -147,13 +134,13 @@ export function RankedPage() {
         <Card className="p-4 border-live/40 flex flex-wrap items-center justify-between gap-3">
           <p className="text-xs text-ink-muted font-mono">
             {isGuest
-              ? 'Guest accounts can view leaderboards but cannot record a ranked score.'
-              : 'Sign in with a registered account to record a ranked score.'}
+              ? t('ranked.guestNotice')
+              : t('ranked.signInNotice')}
           </p>
           <Link to="/login">
             <Button size="sm" variant="primary" className="flex items-center gap-1.5">
               <LogIn size={13} />
-              {isGuest ? 'Register' : 'Sign In'}
+              {isGuest ? t('ranked.register') : t('login.title')}
             </Button>
           </Link>
         </Card>
@@ -174,30 +161,30 @@ export function RankedPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-black uppercase tracking-tight text-ink">
-                    {mode.name}
+                    {t(mode.nameKey)}
                   </h2>
-                  <p className="text-xs text-ink-muted mt-0.5">{mode.blurb}</p>
+                  <p className="text-xs text-ink-muted mt-0.5">{t(mode.blurbKey)}</p>
                 </div>
                 <span className="flex items-center gap-1.5 text-[10px] font-mono uppercase font-bold px-2 py-1 rounded-xs border border-rule bg-canvas-sunk text-ink-muted">
                   {isTime ? <TrendingDown size={12} /> : <TrendingUp size={12} />}
-                  {isTime ? 'Lower is better' : 'Higher is better'}
+                  {isTime ? t('ranked.lowerBetter') : t('ranked.higherBetter')}
                 </span>
               </div>
 
               <ul className="space-y-1.5">
-                {mode.rules.map((rule) => (
+                {mode.ruleKeys.map((rule) => (
                   <li
                     key={rule}
                     className="text-xs text-ink-muted font-mono flex gap-2 before:content-['—'] before:text-ink-faint before:shrink-0"
                   >
-                    {rule}
+                    {t(rule)}
                   </li>
                 ))}
               </ul>
 
               <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-rule">
                 <span className="text-[10px] font-mono uppercase text-ink-muted">
-                  Personal best:{' '}
+                  {t('ranked.personalBest')}{' '}
                   <span className="font-bold text-ink">
                     {best
                       ? isTime
@@ -210,9 +197,9 @@ export function RankedPage() {
                 <Button
                   variant="primary"
                   disabled={!canPlay || starting !== null}
-                  onClick={() => startRun(mode.variant, mode.name)}
+                  onClick={() => startRun(mode.variant)}
                 >
-                  {starting === mode.variant ? 'Starting…' : 'Start Ranked Run'}
+                  {starting === mode.variant ? t('ranked.starting') : t('ranked.startRun')}
                 </Button>
               </div>
             </Card>

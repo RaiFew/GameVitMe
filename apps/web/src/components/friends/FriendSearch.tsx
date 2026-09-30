@@ -3,6 +3,7 @@ import { api } from '../../lib/api';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Avatar } from '../ui/Avatar';
+import { useT } from '../../stores/langStore';
 
 type Relationship =
   | 'NOT_FRIENDS'
@@ -27,6 +28,7 @@ export function FriendSearch() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const t = useT();
 
   useEffect(() => {
     const term = q.trim();
@@ -54,7 +56,7 @@ export function FriendSearch() {
       await fn();
       patch(id, changes);
     } catch (err: any) {
-      setError(err.message || 'Something went wrong.');
+      setError(err.message || t('friends.errGeneric'));
     } finally {
       setBusyId(null);
     }
@@ -86,13 +88,13 @@ export function FriendSearch() {
       case 'FRIENDS':
         return (
           <Button size="sm" variant="outline" disabled className="text-xs py-1 px-3">
-            Friends
+            {t('friends.title')}
           </Button>
         );
       case 'REQUEST_SENT':
         return (
           <Button size="sm" variant="outline" disabled className="text-xs py-1 px-3">
-            Request Sent
+            {t('friends.requestSent')}
           </Button>
         );
       case 'REQUEST_RECEIVED':
@@ -104,7 +106,7 @@ export function FriendSearch() {
               onClick={() => acceptFriend(r)}
               className="text-xs py-1 px-3"
             >
-              Accept
+              {t('friends.accept')}
             </Button>
             <Button
               size="sm"
@@ -113,14 +115,14 @@ export function FriendSearch() {
               onClick={() => rejectFriend(r)}
               className="text-xs py-1 px-3"
             >
-              Reject
+              {t('friends.reject')}
             </Button>
           </div>
         );
       case 'BLOCKED':
         return (
           <Button size="sm" variant="outline" disabled className="text-xs py-1 px-3">
-            Blocked
+            {t('friends.blocked')}
           </Button>
         );
       default:
@@ -131,7 +133,7 @@ export function FriendSearch() {
             onClick={() => addFriend(r.id)}
             className="text-xs py-1 px-3"
           >
-            Add Friend
+            {t('friends.tabAdd')}
           </Button>
         );
     }
@@ -140,7 +142,7 @@ export function FriendSearch() {
   return (
     <div className="space-y-4">
       <Input
-        placeholder="Type username or nickname..."
+        placeholder={t('friends.searchPlaceholder')}
         value={q}
         onChange={(e) => {
           setQ(e.target.value);
@@ -163,7 +165,7 @@ export function FriendSearch() {
                 <div className="text-ink font-bold text-xs flex items-center gap-1.5">
                   {user.displayName}
                   {user.isOnline && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Online" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title={t('friends.online')} />
                   )}
                 </div>
                 <div className="text-ink-muted text-[10px] font-mono">

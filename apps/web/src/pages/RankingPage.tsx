@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import { api } from '../lib/api';
+import type { TranslationKey } from '../i18n/dictionaries';
 import { useAuthStore } from '../stores/authStore';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { useT } from '../stores/langStore';
 
 interface LeaderboardEntry {
   rank: number | null;
@@ -31,9 +33,15 @@ interface Leaderboard {
 const formatScore = (score: number, metric: string) =>
   metric === 'totalTimeMs' ? `${(score / 1000).toFixed(2)}s` : String(score);
 
-const METRIC_LABEL: Record<string, string> = {
-  totalTimeMs: 'Total time — lower is better',
-  highestFloor: 'Highest floor — higher is better',
+const METRIC_KEY: Record<string, TranslationKey> = {
+  totalTimeMs: 'ranking.metricTime',
+  highestFloor: 'ranking.metricFloor',
+};
+
+const MODE_KEY: Record<string, TranslationKey> = {
+  'number-rush.time': 'ranking.modeTime',
+  'number-rush.tower-climb': 'ranking.modeTowerClimb',
+  'number-rush.chaos': 'ranking.modeChaos',
 };
 
 /**
@@ -46,6 +54,7 @@ const METRIC_LABEL: Record<string, string> = {
  */
 export function RankingPage() {
   const { isAuthenticated, user } = useAuthStore();
+  const t = useT();
   const [boards, setBoards] = useState<any[]>([]);
   const [activeKey, setActiveKey] = useState<string>('');
   const [board, setBoard] = useState<Leaderboard | null>(null);
@@ -80,19 +89,23 @@ export function RankingPage() {
   const active = board?.leaderboard;
   const metric = active?.metric ?? 'totalTimeMs';
 
+  const modeLabel = (key: string, fallback: string) => {
+    const translated: TranslationKey | undefined = MODE_KEY[key];
+    return translated ? t(translated) : fallback;
+  };
+
   return (
     <div className="flex-1 w-full max-w-4xl mx-auto px-4 py-8 space-y-6">
       <header className="space-y-2">
         <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
-          Leaderboards
+          {t('ranking.eyebrow')}
         </span>
         <h1 className="text-3xl font-black uppercase tracking-tight text-ink flex items-center gap-2.5">
           <Trophy size={26} />
-          Ranking
+          {t('ranking.title')}
         </h1>
         <p className="text-sm text-ink-muted max-w-prose">
-          Ranked runs are played alone and scored entirely on the server. Only registered
-          accounts can record a score.
+          {t('ranking.subtitle')}
         </p>
       </header>
 
@@ -102,7 +115,7 @@ export function RankingPage() {
         {[...new Set(boards.map((b) => b.category))].map((category) => (
           <div key={category} className="space-y-2">
             <span className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold block">
-              {category}
+              {category === 'Number Rush' ? t('ranking.categoryNumberRush') : category}
             </span>
             <div className="flex flex-wrap gap-2">
               {boards
@@ -118,7 +131,7 @@ export function RankingPage() {
                         : 'border-rule bg-canvas text-ink-muted hover:border-ink/40'
                     }`}
                   >
-                    {b.name}
+                    {modeLabel(b.key, b.name)}
                   </button>
                 ))}
             </div>
@@ -129,7 +142,7 @@ export function RankingPage() {
       {active && (
         <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono uppercase text-ink-muted">
           <span className="px-2 py-0.5 rounded-xs border border-rule bg-canvas-sunk">
-            {METRIC_LABEL[metric] ?? metric}
+            {t(METRIC_KEY[metric] ?? 'ranking.metricTime')}
           </span>
           {active.direction === 'LOWER_IS_BETTER' ? (
             <TrendingDown size={13} />
@@ -141,12 +154,12 @@ export function RankingPage() {
 
       <Card className="p-0 overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-sm text-ink-muted font-mono">Loading…</div>
+          <div className="p-8 text-center text-sm text-ink-muted font-mono">{t('common.loading')}</div>
         ) : !board || board.entries.length === 0 ? (
           <div className="p-8 text-center space-y-3">
-            <p className="text-sm text-ink-muted font-mono">No ranked runs yet.</p>
+            <p className="text-sm text-ink-muted font-mono">{t('ranking.empty')}</p>
             <Link to="/ranked">
-              <Button size="sm">Play a ranked run</Button>
+              <Button size="sm">{t('ranking.playRun')}</Button>
             </Link>
           </div>
         ) : (
@@ -155,8 +168,8 @@ export function RankingPage() {
               <thead>
                 <tr className="border-b border-rule text-left text-[10px] uppercase tracking-wider text-ink-muted">
                   <th className="px-3 py-2.5 font-bold">#</th>
-                  <th className="px-3 py-2.5 font-bold">Player</th>
-                  <th className="px-3 py-2.5 font-bold text-right">Score</th>
+                  <th className="px-3 py-2.5 font-bold">{t('ranking.colPlayer')}</th>
+                  <th className="px-3 py-2.5 font-bold text-right">{t('ranking.colScore')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -173,7 +186,7 @@ export function RankingPage() {
                     <td className="px-3 py-2.5 font-bold text-ink">
                       {entry.displayName}
                       {entry.isViewer && (
-                        <span className="ml-2 text-[9px] uppercase text-ink-muted">(you)</span>
+                        <span className="ml-2 text-[9px] uppercase text-ink-muted">{t('ranking.you')}</span>
                       )}
                     </td>
                     <td className="px-3 py-2.5 text-right font-bold text-ink">
@@ -193,16 +206,16 @@ export function RankingPage() {
           <div className="flex items-center gap-2 text-ink-muted">
             <Users size={15} />
             <span className="text-[10px] font-mono uppercase tracking-wider font-bold">
-              {board?.totalRanked ?? 0} player{board?.totalRanked === 1 ? '' : 's'} ranked
+              {t('ranking.playersRanked', { count: board?.totalRanked ?? 0 })}
             </span>
           </div>
           {board?.viewer ? (
             <div className="flex items-center gap-4 text-xs font-mono">
               <span className="text-ink-muted">
-                Your rank <span className="font-bold text-ink">#{board.viewer.rank ?? '—'}</span>
+                {t('ranking.yourRank')} <span className="font-bold text-ink">#{board.viewer.rank ?? '—'}</span>
               </span>
               <span className="text-ink-muted">
-                Your best{' '}
+                {t('ranking.yourBest')}{' '}
                 <span className="font-bold text-ink">
                   {formatScore(board.viewer.score ?? 0, metric)}
                 </span>
@@ -211,18 +224,18 @@ export function RankingPage() {
           ) : isAuthenticated ? (
             <p className="text-[10px] font-mono text-ink-muted">
               {user?.isGuest
-                ? 'Guest accounts cannot be ranked. Register to record a score.'
-                : 'You have no score on this board yet.'}
+                ? t('ranking.guestNoRank')
+                : t('ranking.noScoreYet')}
             </p>
           ) : (
             <p className="text-[10px] font-mono text-ink-muted">
-              Sign in to see your rank and record scores.
+              {t('ranking.signInToRank')}
             </p>
           )}
         </div>
         <Link to="/ranked" className="block">
           <Button variant="primary" className="w-full">
-            Play Ranked
+            {t('ranking.playRanked')}
           </Button>
         </Link>
       </Card>

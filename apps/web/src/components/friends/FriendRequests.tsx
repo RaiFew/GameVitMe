@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
+import { useT } from '../../stores/langStore';
 
 export function FriendRequests() {
   const [requests, setRequests] = useState<any[]>([]);
   const [sent, setSent] = useState<any[]>([]);
   const [error, setError] = useState('');
+  const t = useT();
 
   const load = () => {
     api.get<any[]>('/api/friends/requests').then(setRequests).catch(() => {});
@@ -18,7 +20,7 @@ export function FriendRequests() {
   const handleAction = (id: string, accept: boolean) => {
     api.post(`/api/friends/${accept ? 'accept' : 'reject'}`, { friendshipId: id })
       .then(() => setRequests(prev => prev.filter(r => r.id !== id)))
-      .catch((err) => setError(err.message || 'Failed to update request.'));
+      .catch((err) => setError(err.message || t('friends.errUpdate')));
   };
 
   // Cancelling an outgoing request is a delete, not a reject: reject is
@@ -26,7 +28,7 @@ export function FriendRequests() {
   const cancelSent = (id: string) => {
     api.delete(`/api/friends/${id}`)
       .then(() => setSent(prev => prev.filter(r => r.id !== id)))
-      .catch((err) => setError(err.message || 'Failed to cancel request.'));
+      .catch((err) => setError(err.message || t('friends.errCancel')));
   };
 
   // The server projects displayName, but a missing user row would otherwise
@@ -36,9 +38,9 @@ export function FriendRequests() {
   if (requests.length === 0 && sent.length === 0) {
     return (
       <div className="px-6 py-14 text-center">
-        <p className="text-body font-semibold text-ink">No pending requests</p>
+        <p className="text-body font-semibold text-ink">{t('friends.requestsEmptyTitle')}</p>
         <p className="mt-1 text-body text-ink-muted">
-          Requests you send and receive will show up here.
+          {t('friends.requestsEmptyBody')}
         </p>
       </div>
     );
@@ -58,15 +60,15 @@ export function FriendRequests() {
               <div className="text-ink font-bold text-sm">
                 {nameOf(req.requester)}
               </div>
-              <div className="text-ink-muted text-xs font-mono">Wants to connect</div>
+              <div className="text-ink-muted text-xs font-mono">{t('friends.wantsToConnect')}</div>
             </div>
           </div>
           <div className="flex gap-2">
             <Button size="sm" onClick={() => handleAction(req.id, true)}>
-              Accept
+              {t('friends.accept')}
             </Button>
             <Button size="sm" variant="outline" onClick={() => handleAction(req.id, false)}>
-              Decline
+              {t('friends.decline')}
             </Button>
           </div>
         </div>
@@ -80,11 +82,11 @@ export function FriendRequests() {
               <div className="text-ink font-bold text-sm">
                 {nameOf(req.addressee)}
               </div>
-              <div className="text-ink-muted text-xs font-mono">Request sent · awaiting reply</div>
+              <div className="text-ink-muted text-xs font-mono">{t('friends.sentAwaiting')}</div>
             </div>
           </div>
           <Button size="sm" variant="outline" onClick={() => cancelSent(req.id)}>
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       ))}

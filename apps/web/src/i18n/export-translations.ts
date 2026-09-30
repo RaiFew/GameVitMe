@@ -19,6 +19,9 @@ const GROUPS: Record<string, string> = {
   dashboard: 'Dashboard',
   games: 'Games catalogue',
   profile: 'Profile',
+  ranking: 'Ranking',
+  friends: 'Friends',
+  ranked: 'Ranked runs',
 };
 
 const out = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../docs/THAI_TRANSLATIONS.md');
