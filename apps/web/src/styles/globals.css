@@ -48,8 +48,12 @@
 
 @layer base {
   :root {
-    --face-display: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    --face-text: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    /* Archivo and IBM Plex Mono carry no Thai glyphs, so Thai would fall to
+       whatever the OS picks. Font fallback is per-glyph, not per-string, so
+       listing Prompt after Archivo keeps Latin brutalist and gives Thai a real
+       typeface — with no language switching anywhere. */
+    --face-display: "Archivo", "Prompt", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --face-text: "Archivo", "Prompt", "Helvetica Neue", Helvetica, Arial, sans-serif;
     --face-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
     --canvas: #ffffff;
