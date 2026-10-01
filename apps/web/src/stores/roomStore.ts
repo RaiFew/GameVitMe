@@ -15,8 +15,10 @@ export const useRoomStore = create<RoomStore>((set) => ({
   updatePlayer: (playerId, data) =>
     set((state) => {
       if (!state.room) return state;
+      // PlayerState carries `id`, not `userId`. Matching on the wrong field made
+      // this a no-op, so optimistic updates never showed up.
       const players = state.room.players.map((p) =>
-        p.userId === playerId ? { ...p, ...data } : p
+        p.id === playerId ? { ...p, ...data } : p
       );
       return { room: { ...state.room, players } };
     }),

@@ -147,55 +147,66 @@ export function DashboardPage() {
     const proceedWithJoin = () => {
       let resolved = false;
 
+      const detach = () => {
+        clearTimeout(timer);
+        // Every one of these outlives the join unless it is torn down by hand.
+        // Left attached they accumulate on the shared socket across retries, and
+        // a stale room:state handler fires setRoom for a room the user has
+        // already left.
+        activeSocket.off('room:state', handleRoomState);
+        activeSocket.off('room:joined', onJoined);
+        activeSocket.off('room:error', onError);
+      };
+
+      const fail = (message: string) => {
+        if (resolved) return;
+        resolved = true;
+        detach();
+        setIsLoading(false);
+        setError(message);
+      };
+
       const finishJoin = (roomCodeStr: string, roomData?: any) => {
         if (resolved) return;
         resolved = true;
+        detach();
         setIsLoading(false);
         if (roomData) setRoom(roomData);
         navigate(`/lobby/${roomCodeStr}`);
       };
 
-      const timer = setTimeout(() => {
-        if (!resolved) {
-          setIsLoading(false);
-          setError(t('dashboard.errJoinTimeout'));
-        }
-      }, 6000);
+      // A busy server can take a while to answer. The old 6s deadline fired
+      // while the join was still in flight and told the user it had failed,
+      // then the room they had actually joined appeared moments later.
+      const timer = setTimeout(
+        () => fail(t('dashboard.errJoinTimeout')),
+        15000
+      );
 
+      const onJoined = (data: any) => finishJoin(data?.roomCode || targetCode, data?.room);
+
+      const handleRoomState = (roomData: any) => {
+        if (roomData?.code === targetCode || roomData?.room?.code === targetCode) {
+          finishJoin(targetCode, roomData?.room || roomData);
+        }
+      };
+
+      const onError = (err: any) => fail(err?.message || t('dashboard.errJoinFailed'));
+
+      activeSocket.on('room:state', handleRoomState);
+      activeSocket.once('room:joined', onJoined);
+      activeSocket.once('room:error', onError);
+
+      // Listeners are attached before the emit so an ack cannot beat them.
       activeSocket.emit(
         'room:join',
         { roomCode: targetCode, code: targetCode },
         (res: any) => {
-          clearTimeout(timer);
-          if (res?.error) {
-            setError(res.error);
-            setIsLoading(false);
-          } else if (res?.success || res?.room) {
-            finishJoin(res?.roomCode || targetCode, res?.room);
-          }
+          if (res?.error) fail(res.error);
+          else if (res?.success || res?.room) finishJoin(res?.roomCode || targetCode, res?.room);
+          else fail(t('dashboard.errJoinFailed'));
         }
       );
-
-      activeSocket.once('room:joined', (data: any) => {
-        clearTimeout(timer);
-        finishJoin(data?.roomCode || targetCode, data?.room);
-      });
-
-      const handleRoomState = (roomData: any) => {
-        if (roomData?.code === targetCode || roomData?.room?.code === targetCode) {
-          clearTimeout(timer);
-          activeSocket.off('room:state', handleRoomState);
-          finishJoin(targetCode, roomData?.room || roomData);
-        }
-      };
-      activeSocket.on('room:state', handleRoomState);
-
-      activeSocket.once('room:error', (err: any) => {
-        clearTimeout(timer);
-        activeSocket.off('room:state', handleRoomState);
-        setError(err?.message || t('dashboard.errJoinFailed'));
-        setIsLoading(false);
-      });
     };
 
     if (activeSocket.connected) {

@@ -93,7 +93,21 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
       }
 
       if (room.isPrivate) {
-        const invited = await hasValidRoomInvite(user.id, room.id);
+        // A saturated database pool used to leave this handler awaiting forever:
+        // no ack, no error, and the client gave up on its own timer with a
+        // "request timed out" message. Bound the wait so a slow database
+        // answers with something the user can act on.
+        const SLOW_DB = Symbol('slow-db');
+        const invited = await Promise.race<boolean | typeof SLOW_DB>([
+          hasValidRoomInvite(user.id, room.id),
+          new Promise<typeof SLOW_DB>((resolve) => setTimeout(() => resolve(SLOW_DB), 5000)),
+        ]);
+
+        if (invited === SLOW_DB) {
+          if (callback) callback({ error: 'The server is busy checking your invitation. Please try again.' });
+          return;
+        }
+
         if (!invited) {
           if (callback) callback({ error: 'This room is private. Ask the host for an invitation.' });
           socket.emit('room:error', { code: 'PRIVATE_ROOM', message: 'This room is private.' });

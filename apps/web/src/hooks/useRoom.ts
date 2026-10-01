@@ -1,14 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRoomStore } from '../stores/roomStore';
 import { useGameStore } from '../stores/gameStore';
+import { useAuthStore } from '../stores/authStore';
 import { useSocket } from './useSocket';
 import type { RoomState } from '@party/shared-types';
 import { useNavigate } from 'react-router-dom';
 
 export function useRoom() {
   const { socket, isConnected } = useSocket();
-  const { room, setRoom, clearRoom } = useRoomStore();
+  const { room, setRoom, clearRoom, updatePlayer } = useRoomStore();
   const navigate = useNavigate();
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!socket) return;
@@ -71,6 +73,30 @@ export function useRoom() {
     };
   }, [socket, setRoom, clearRoom, navigate]);
 
+  /**
+   * Every lobby action used to fire and forget. On a slow or dropped
+   * connection the server's `room:state` broadcast never came back, so the
+   * button did nothing at all and the lobby looked frozen. Apply the change
+   * locally straight away, then let the server's broadcast confirm it.
+   */
+  const runAction = (event: string, payload: any, onLocalUpdate?: () => void) => {
+    if (!room?.id) {
+      setActionError('Not in a room yet.');
+      return;
+    }
+    if (!socket?.connected) {
+      setActionError('Disconnected from the server. Reconnecting…');
+      return;
+    }
+
+    setActionError(null);
+    onLocalUpdate?.();
+
+    socket.emit(event, payload, (res: any) => {
+      if (res?.error) setActionError(res.error);
+    });
+  };
+
   const joinRoom = (roomCode: string) => {
     socket?.emit('room:join', { roomCode, code: roomCode });
   };
@@ -85,33 +111,28 @@ export function useRoom() {
     useGameStore.getState().clearGame();
   };
 
-  const setReady = (isReady: boolean) => {
-    if (room?.id) {
-      socket?.emit('room:ready', { roomId: room.id, isReady });
-    }
-  };
+  const setReady = (isReady: boolean) =>
+    runAction('room:ready', { roomId: room!.id, isReady }, () => {
+      const me = useAuthStore.getState().user?.id;
+      if (me) updatePlayer(me, { isReady });
+    });
 
-  const kickPlayer = (targetUserId: string) => {
-    if (room?.id) {
-      socket?.emit('room:kick', { roomId: room.id, targetUserId });
-    }
-  };
+  const kickPlayer = (targetUserId: string) =>
+    runAction('room:kick', { roomId: room!.id, targetUserId });
 
-  const transferHost = (newHostId: string) => {
-    if (room?.id) {
-      socket?.emit('room:transfer_host', { roomId: room.id, newHostId });
-    }
-  };
+  const transferHost = (newHostId: string) =>
+    runAction('room:transfer_host', { roomId: room!.id, newHostId });
 
-  const updateSettings = (settings: any) => {
-    if (room?.id) {
-      socket?.emit('room:update_settings', { roomId: room.id, settings });
-    }
-  };
+  const updateSettings = (settings: any) =>
+    runAction('room:update_settings', { roomId: room!.id, settings }, () => {
+      setRoom(room ? ({ ...room, settings: { ...room.settings, ...settings } } as any) : room);
+    });
 
   return {
     room,
     isConnected,
+    actionError,
+    clearActionError: () => setActionError(null),
     joinRoom,
     leaveRoom,
     setReady,
