@@ -42,6 +42,7 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
       updateRoomDefaultRolesIfUncustomized(roomData);
 
       socket.join(`room:${room.id}`);
+      socket.data.roomId = room.id;
 
       // Emit room:created to the creating socket
       socket.emit('room:created', {
@@ -108,6 +109,7 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
 
       updateRoomDefaultRolesIfUncustomized(result.room);
       socket.join(`room:${room.id}`);
+      socket.data.roomId = room.id;
 
       // Emit room:joined directly to the joining socket
       socket.emit('room:joined', {

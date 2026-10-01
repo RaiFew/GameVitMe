@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import type { FastifyInstance } from 'fastify';
 import { auth } from '../auth/auth.js';
 import { presence } from './presence.js';
+import { roomManager } from '../rooms/room-manager.js';
 import { registerRoomHandlers } from './handlers/room.handler.js';
 import { registerGameHandlers } from './handlers/game.handler.js';
 import { registerChatHandlers } from './handlers/chat.handler.js';
@@ -120,6 +121,17 @@ export const initSocketGateway = (fastify: FastifyInstance) => {
 
     socket.on('disconnect', () => {
       presence.userDisconnected(userId, socket.id).catch(() => {});
+
+      // Release the room seat. Without this a lobby whose host closed the tab
+      // was never freed: `room:leave` only fires on an explicit click, so the
+      // room sat in memory until the 2-hour TTL with its creator still marked
+      // connected. markDisconnected keeps the seat so a refresh rejoins as the
+      // same player; the sweep reclaims the room once nobody is connected.
+      const roomId = socket.data.roomId;
+      if (roomId) {
+        roomManager.markDisconnected(roomId, userId);
+        socket.leave(`room:${roomId}`);
+      }
     });
   });
 

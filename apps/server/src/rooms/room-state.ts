@@ -34,5 +34,10 @@ export interface InMemoryRoom {
   gameRunner?: any; // Should be RoomRunner from @party/game-engine
   createdAt: number;
   lastActivityAt: number;
+  /**
+   * When the room first had nobody connected, or undefined while it is occupied.
+   * Drives the abandoned-room sweep; see `RoomManager.cleanupRooms`.
+   */
+  emptySince?: number;
   timers: Map<string, any>;
 }

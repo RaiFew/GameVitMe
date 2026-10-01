@@ -7,10 +7,16 @@ const CHARSET = '23456789ABCDEFGHJKMNPQRSTVWXYZ';
 class RoomManager {
   private rooms: Map<string, InMemoryRoom> = new Map();
   private codeToId: Map<string, string> = new Map();
+  /**
+   * playerId -> roomId. Room membership changes rarely but is read on every
+   * `game:sync` fallback, and a linear scan of every room would grow with the
+   * junk the sweep has not reached yet.
+   */
+  private playerIndex: Map<string, string> = new Map();
 
   constructor() {
-    // TTL cleanup every 5 minutes
-    setInterval(() => this.cleanupRooms(), 1000 * 60 * 5);
+    // TTL cleanup every 5 minutes. unref so the sweep never holds the process open.
+    setInterval(() => this.cleanupRooms(), 1000 * 60 * 5).unref();
   }
 
   private generateCode(): string {
@@ -65,15 +71,16 @@ class RoomManager {
     if (!room) return null;
 
     room.lastActivityAt = Date.now();
+    room.emptySince = undefined;
     let player = room.players.find(p => p.id === user.id);
 
     if (!player) {
       if (room.players.length >= room.settings.maxPlayers) {
         throw new Error('Room is full');
       }
-      
+
       const seatNumber = room.players.length > 0 ? Math.max(...room.players.map(p => p.seatNumber)) + 1 : 1;
-      
+
       player = {
         id: user.id,
         username: user.username,
@@ -87,7 +94,37 @@ class RoomManager {
       player.connected = true; // Reconnect
     }
 
+    this.playerIndex.set(user.id, roomId);
     return { room, player };
+  }
+
+  /**
+   * A socket dropped. Distinct from `leaveRoom` on purpose: the player keeps
+   * their seat and ready state so a refresh or a tunnel blip rejoins as the
+   * same seat rather than a new one at the end of the row.
+   */
+  public markDisconnected(roomId: string, userId: string): void {
+    const room = this.rooms.get(roomId);
+    if (!room) return;
+    const player = room.players.find(p => p.id === userId);
+    if (!player) return;
+    player.connected = false;
+    this.touchEmptiness(room);
+  }
+
+  /** The room a player currently holds a seat in, if any. */
+  public getRoomByPlayer(userId: string): InMemoryRoom | undefined {
+    const roomId = this.playerIndex.get(userId);
+    return roomId ? this.rooms.get(roomId) : undefined;
+  }
+
+  private touchEmptiness(room: InMemoryRoom): void {
+    const occupied = room.players.some(p => p.connected);
+    if (occupied) {
+      room.emptySince = undefined;
+    } else if (room.emptySince === undefined) {
+      room.emptySince = Date.now();
+    }
   }
 
   /**
@@ -111,13 +148,14 @@ class RoomManager {
     if (!room) return;
 
     room.lastActivityAt = Date.now();
-    
+
     // Mark as disconnected instead of removing if game is playing
     if (room.status === 'playing') {
       const player = room.players.find(p => p.id === userId);
       if (player) player.connected = false;
     } else {
       room.players = room.players.filter(p => p.id !== userId);
+      if (this.playerIndex.get(userId) === roomId) this.playerIndex.delete(userId);
     }
 
     // Host migration
@@ -130,12 +168,13 @@ class RoomManager {
       }
     }
 
-    if (room.players.length === 0 || room.players.every(p => !p.connected)) {
-      // Delay destruction?
-      // Destroy immediately for now if empty and not playing
-      if (room.status !== 'playing') {
-        this.destroyRoom(roomId);
-      }
+    this.touchEmptiness(room);
+
+    // An idle lobby is destroyed now so its code frees up. A room mid-game gets
+    // the grace period instead: the players may be on a refresh, and taking the
+    // session out from under them would be worse than holding it a few minutes.
+    if (room.players.length === 0 && room.status !== 'playing') {
+      this.destroyRoom(roomId);
     }
   }
 
@@ -143,15 +182,27 @@ class RoomManager {
     const room = this.rooms.get(roomId);
     if (room) {
       this.codeToId.delete(room.code);
+      for (const p of room.players) {
+        if (this.playerIndex.get(p.id) === roomId) this.playerIndex.delete(p.id);
+      }
+      room.timers.forEach((timer) => clearTimeout(timer));
+      room.timers.clear();
       this.rooms.delete(roomId);
     }
   }
 
   private cleanupRooms(): void {
     const now = Date.now();
-    const TTL = 1000 * 60 * 60 * 2; // 2 hours
+    const TTL = 1000 * 60 * 60 * 2; // 2 hours of no activity at all
+    // A room nobody is connected to. Long enough to survive a refresh, a tunnel
+    // blip, or someone stepping out of the room and back, short enough that
+    // dead lobbies do not pile up for hours.
+    const ABANDONED = 1000 * 60 * 10;
+
     for (const [id, room] of this.rooms.entries()) {
-      if (now - room.lastActivityAt > TTL) {
+      const abandoned =
+        room.emptySince !== undefined && now - room.emptySince > ABANDONED;
+      if (abandoned || now - room.lastActivityAt > TTL) {
         this.destroyRoom(id);
       }
     }

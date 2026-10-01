@@ -407,14 +407,11 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
     const roomId = payload?.roomId;
     let room = roomId ? roomManager.getRoom(roomId) : undefined;
 
+    // No roomId supplied — fall back to the room this player holds a seat in.
+    // This runs on every refresh and reconnect, so it has to be a lookup rather
+    // than a scan over every live room.
     if (!room) {
-      // Find room where user is a participant
-      for (const r of (roomManager as any).rooms.values()) {
-        if (r.players.some((p: any) => p.id === user.id)) {
-          room = r;
-          break;
-        }
-      }
+      room = roomManager.getRoomByPlayer(user.id);
     }
 
     if (room && (room as any).gameRunner) {
