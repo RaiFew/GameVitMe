@@ -195,6 +195,75 @@ describe('Codenames Engine & Word File System', () => {
       assert.equal(state.cards.length, 25);
     });
 
+    test('Randomize Teams assigns every player exactly one team and one spymaster per side', () => {
+      const ctx = createMockContext(playerList);
+      let state = codenamesGame.setup(ctx, { ...DEFAULT_CODENAMES_SETTINGS, hostPlayerId: 'host-1' });
+
+      state = codenamesGame.processMove(
+        state,
+        { type: 'RANDOMIZE_TEAMS', playerId: 'host-1', payload: {}, timestamp: Date.now() },
+        ctx
+      ).newState!;
+
+      assert.equal(state.players.length, playerList.length, 'nobody is dropped');
+      assert.ok(
+        state.players.every((p) => p.team === 'RED' || p.team === 'BLUE'),
+        'everyone landed on a real team'
+      );
+      assert.ok(state.players.every((p) => !!p.role), 'everyone has a role');
+
+      const redMasters = state.players.filter((p) => p.team === 'RED' && p.role === 'SPYMASTER');
+      const blueMasters = state.players.filter((p) => p.team === 'BLUE' && p.role === 'SPYMASTER');
+      assert.equal(redMasters.length, 1, 'exactly one RED spymaster');
+      assert.equal(blueMasters.length, 1, 'exactly one BLUE spymaster');
+      assert.notEqual(redMasters[0]!.id, blueMasters[0]!.id, 'a player cannot be both spymasters');
+    });
+
+    test('Randomize Teams survives odd and even player counts', () => {
+      for (const size of [4, 5, 6, 7]) {
+        const roster = Array.from({ length: size }, (_, i) => ({
+          id: i === 0 ? 'host-1' : `p${i}`,
+          displayName: `P${i}`,
+        }));
+        const ctx = createMockContext(roster);
+        let state = codenamesGame.setup(ctx, { ...DEFAULT_CODENAMES_SETTINGS, hostPlayerId: 'host-1' });
+
+        state = codenamesGame.processMove(
+          state,
+          { type: 'RANDOMIZE_TEAMS', playerId: 'host-1', payload: {}, timestamp: Date.now() },
+          ctx
+        ).newState!;
+
+        const red = state.players.filter((p) => p.team === 'RED');
+        const blue = state.players.filter((p) => p.team === 'BLUE');
+        assert.equal(red.length + blue.length, size, `${size} players all assigned`);
+        // An odd roster puts the spare seat on RED, never an empty team.
+        assert.ok(red.length >= 1 && blue.length >= 1, `${size} players: both teams populated`);
+        assert.ok(Math.abs(red.length - blue.length) <= 1, `${size} players: teams stay even`);
+      }
+    });
+
+    test('Randomize Teams is host-only and refuses outside team setup', () => {
+      const ctx = createMockContext(playerList);
+      const state = codenamesGame.setup(ctx, { ...DEFAULT_CODENAMES_SETTINGS, hostPlayerId: 'host-1' });
+
+      const notHost = codenamesGame.validateMove(
+        state,
+        { type: 'RANDOMIZE_TEAMS', playerId: 'p1', payload: {}, timestamp: Date.now() },
+        ctx
+      );
+      assert.equal(notHost.valid, false, 'a non-host cannot trigger it');
+
+      state.players.forEach((p) => { p.team = 'RED'; p.role = 'OPERATIVE'; });
+      state.phase = 'CLUE';
+      const wrongPhase = codenamesGame.validateMove(
+        state,
+        { type: 'RANDOMIZE_TEAMS', playerId: 'host-1', payload: {}, timestamp: Date.now() },
+        ctx
+      );
+      assert.equal(wrongPhase.valid, false, 'cannot re-randomize once the match is live');
+    });
+
     test('Anti-Cheat State Masking: Spymaster sees colors, Operatives do not until revealed', () => {
       const ctx = createMockContext(playerList);
       let state = codenamesGame.setup(ctx, { ...DEFAULT_CODENAMES_SETTINGS, hostPlayerId: 'host-1' });

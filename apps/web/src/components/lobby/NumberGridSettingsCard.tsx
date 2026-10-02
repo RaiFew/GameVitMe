@@ -15,26 +15,31 @@ export function NumberGridSettingsCard({
   settings,
   onUpdateSettings,
 }: Props) {
-  const difficultyMode: DifficultyMode = settings?.difficultyMode || 'DEFAULT';
-  const totalRounds: number = Number(settings?.totalRounds) || 9;
-  const maxHp: number = Number(settings?.maxHp) || 3;
-  const damageMode: DamageMode = settings?.damageMode || 'LAST_PLAYER';
-  const customGridSizes: GridSize[] = Array.isArray(settings?.customGridSizes) && settings.customGridSizes.length > 0
-    ? settings.customGridSizes
+  // Everything the engine receives is read from `room.settings.gameSettings`
+  // (game.handler.ts). Only the Chaos toggle nested its writes, so every other
+  // control on this card wrote to the top level, where the server never looked —
+  // the whole card was decorative. Read and write the one object.
+  const gs = (settings?.gameSettings || {}) as Record<string, any>;
+
+  const updateGameSettings = (patch: Record<string, any>) => {
+    if (!isHost) return;
+    onUpdateSettings({ gameSettings: { ...gs, ...patch } });
+  };
+
+  const difficultyMode: DifficultyMode = gs.difficultyMode || 'DEFAULT';
+  const totalRounds: number = Number(gs.totalRounds) || 9;
+  const maxHp: number = Number(gs.maxHp) || 3;
+  const damageMode: DamageMode = gs.damageMode || 'LAST_PLAYER';
+  const customGridSizes: GridSize[] = Array.isArray(gs.customGridSizes) && gs.customGridSizes.length > 0
+    ? gs.customGridSizes
     : [3, 4, 5];
   // Normal-room Chaos. Ranked variants never reach this card — those are chosen
-  // on the Ranked page, not configured by a host. Nested under `gameSettings`
-  // because that is the object the server hands to the engine.
-  const isChaos = settings?.gameSettings?.variant === 'CHAOS';
+  // on the Ranked page, not configured by a host.
+  const isChaos = gs.variant === 'CHAOS';
 
   const handleChaosToggle = (enabled: boolean) => {
     if (!isHost) return;
-    onUpdateSettings({
-      gameSettings: {
-        ...(settings?.gameSettings || {}),
-        variant: enabled ? 'CHAOS' : undefined,
-      },
-    });
+    updateGameSettings({ variant: enabled ? 'CHAOS' : undefined });
   };
 
   const handleDifficultySelect = (mode: DifficultyMode) => {
@@ -43,28 +48,33 @@ export function NumberGridSettingsCard({
     if (mode === 'DEFAULT') {
       updates.totalRounds = 9;
     } else if (mode === 'CUSTOM') {
+      // The list above is a display default until it is actually sent. Without
+      // this the server holds `difficultyMode: CUSTOM` with no sizes, and
+      // `calculateRoundGridSizes` falls through to the default 2x2 progression —
+      // so the host reads "R1: 3x3" in the preview while the engine deals 2x2.
+      updates.customGridSizes = customGridSizes;
       updates.totalRounds = customGridSizes.length;
     } else if (mode === 'RANDOM') {
       updates.totalRounds = totalRounds > 9 ? 5 : totalRounds;
     }
-    onUpdateSettings(updates);
+    updateGameSettings(updates);
   };
 
   const handleHpChange = (newHp: number) => {
     if (!isHost) return;
     const clamped = Math.min(Math.max(newHp, 1), 10);
-    onUpdateSettings({ maxHp: clamped });
+    updateGameSettings({ maxHp: clamped });
   };
 
   const handleDamageModeSelect = (mode: DamageMode) => {
     if (!isHost) return;
-    onUpdateSettings({ damageMode: mode });
+    updateGameSettings({ damageMode: mode });
   };
 
   const handleRandomRoundsChange = (rounds: number) => {
     if (!isHost) return;
     const clamped = Math.min(Math.max(rounds, 1), 15);
-    onUpdateSettings({ totalRounds: clamped });
+    updateGameSettings({ totalRounds: clamped });
   };
 
   // Custom rounds editor
@@ -73,7 +83,7 @@ export function NumberGridSettingsCard({
     const lastSize = customGridSizes[customGridSizes.length - 1] || 3;
     const nextSize = Math.min(lastSize + 1, 10) as GridSize;
     const newSizes = [...customGridSizes, nextSize];
-    onUpdateSettings({
+    updateGameSettings({
       customGridSizes: newSizes,
       totalRounds: newSizes.length,
     });
@@ -82,7 +92,7 @@ export function NumberGridSettingsCard({
   const handleRemoveCustomRound = (index: number) => {
     if (!isHost || customGridSizes.length <= 1) return;
     const newSizes = customGridSizes.filter((_, i) => i !== index);
-    onUpdateSettings({
+    updateGameSettings({
       customGridSizes: newSizes,
       totalRounds: newSizes.length,
     });
@@ -92,11 +102,28 @@ export function NumberGridSettingsCard({
     if (!isHost) return;
     const newSizes = [...customGridSizes];
     newSizes[index] = size;
-    onUpdateSettings({
+    updateGameSettings({
       customGridSizes: newSizes,
       totalRounds: newSizes.length,
     });
   };
+
+  const handleResetProgression = () => {
+    if (!isHost) return;
+    updateGameSettings({ difficultyMode: 'DEFAULT', totalRounds: 9 });
+  };
+
+  // Mirrors the engine's own `calculateRoundGridSizes` so the host sees what
+  // they are about to play. RANDOM and CHAOS sizes are server-picked, so they
+  // are shown as a range rather than pretended to be known.
+  const previewRounds: (string | number)[] = (() => {
+    if (isChaos) return Array.from({ length: Math.max(totalRounds, 1) }, () => '2–10');
+    if (difficultyMode === 'CUSTOM') return customGridSizes;
+    if (difficultyMode === 'RANDOM') {
+      return Array.from({ length: Math.max(totalRounds, 1) }, () => '2–10');
+    }
+    return [2, 3, 4, 5, 6, 7, 8, 9, 10].slice(0, Math.max(totalRounds, 1));
+  })();
 
   return (
     <Card className="p-5 border border-rule space-y-4">
@@ -213,6 +240,35 @@ export function NumberGridSettingsCard({
               Server randomly picks a grid size (2x2 to 10x10) per round.
             </p>
           </button>
+        </div>
+      </div>
+
+      {/* Progression preview + reset. The engine owns the real progression, so
+          this mirrors it rather than being a second source of truth. */}
+      <div className="space-y-2 pt-2 border-t border-rule">
+        <div className="flex items-center justify-between">
+          <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold">
+            Progression Preview
+          </label>
+          {isHost && difficultyMode !== 'DEFAULT' && (
+            <button
+              type="button"
+              onClick={handleResetProgression}
+              className="text-[10px] font-mono font-bold text-ink hover:underline cursor-pointer"
+            >
+              Reset to Default
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {previewRounds.map((size, idx) => (
+            <span
+              key={idx}
+              className="px-1.5 py-1 text-[10px] font-mono border border-rule bg-canvas-sunk text-ink-muted rounded-xs"
+            >
+              R{idx + 1}: {size}x{size}
+            </span>
+          ))}
         </div>
       </div>
 

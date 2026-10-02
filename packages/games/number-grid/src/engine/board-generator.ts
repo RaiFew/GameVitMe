@@ -72,6 +72,9 @@ export function calculateRoundGridSizes(
   mode: DifficultyMode,
   totalRounds: number,
   customSizes?: GridSize[],
+  // Passed in rather than calling Math.random directly, so a run is reproducible
+  // from its seed like every other random decision a game makes.
+  random: () => number = Math.random,
 ): GridSize[] {
   const count = Math.max(1, Math.min(20, totalRounds || 9));
 
@@ -87,7 +90,7 @@ export function calculateRoundGridSizes(
   if (mode === 'RANDOM') {
     const list: GridSize[] = [];
     for (let r = 0; r < count; r++) {
-      const randomSize = ALL_GRID_SIZES[Math.floor(Math.random() * ALL_GRID_SIZES.length)] ?? 3;
+      const randomSize = ALL_GRID_SIZES[Math.floor(random() * ALL_GRID_SIZES.length)] ?? 3;
       list.push(randomSize);
     }
     return list;

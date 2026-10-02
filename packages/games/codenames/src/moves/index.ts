@@ -1,4 +1,5 @@
 import type { GameContext, GameMove, MoveResult } from '@party/game-engine';
+import { shuffle } from '@party/game-engine';
 import type {
   CodenamesMasterState,
   CodenamesRole,
@@ -212,9 +213,16 @@ export function processCodenamesMove(
     }
 
     case 'RANDOMIZE_TEAMS': {
-      const shuffled = [...state.players].sort(() => ctx.random() - 0.5);
+      // Fisher-Yates, not `sort(() => random() - 0.5)`: an inconsistent
+      // comparator makes the ordering skewed, so "randomize" was quietly biased
+      // toward whoever happened to sit in the middle of the seat order.
+      const shuffled = shuffle(state.players, ctx.random);
+      const seatById = new Map(shuffled.map((p, idx) => [p.id, idx] as const));
+
       const updatedPlayers = state.players.map((p) => {
-        const idx = shuffled.findIndex((s) => s.id === p.id);
+        const idx = seatById.get(p.id)!;
+        // Each seat yields exactly one team and one role, so nobody can end up
+        // on both teams and nobody is left unassigned.
         if (idx === 0) return { ...p, team: 'RED' as TeamColor, role: 'SPYMASTER' as CodenamesRole };
         if (idx === 1) return { ...p, team: 'BLUE' as TeamColor, role: 'SPYMASTER' as CodenamesRole };
         const team: TeamColor = idx % 2 === 0 ? 'RED' : 'BLUE';

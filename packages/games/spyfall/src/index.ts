@@ -1,4 +1,5 @@
 import type { GameDefinition, GameContext, GameMove, MoveResult, GameSettingsField } from '@party/game-engine';
+import { shuffle } from '@party/game-engine';
 import type { SpyfallMasterState, SpyfallPlayerView, SpyfallSettings } from './state.js';
 import { SpyfallPhase, DEFAULT_SPYFALL_SETTINGS } from './state.js';
 import { LOCATIONS } from './data/locations.js';
@@ -66,7 +67,7 @@ export const spyfallGame: GameDefinition<
     const activePlayerIds = playingPlayerIds.length > 0 ? playingPlayerIds : playerIds;
 
     // Shuffle and select locations for the reference list
-    const shuffledLocations = [...LOCATIONS].sort(() => ctx.random() - 0.5);
+    const shuffledLocations = shuffle(LOCATIONS, ctx.random);
     const selectedLocations = shuffledLocations.slice(
       0,
       Math.min(settings.locationCount || 16, LOCATIONS.length),
@@ -81,7 +82,7 @@ export const spyfallGame: GameDefinition<
     const spyPlayerId = activePlayerIds[spyIndex]!;
 
     // Assign roles to non-spy playing players (Host gets 'Host' role)
-    const shuffledRoles = [...roundLocation.roles].sort(() => ctx.random() - 0.5);
+    const shuffledRoles = shuffle(roundLocation.roles, ctx.random);
     const playerRoles: Record<string, string> = {};
     let roleIndex = 0;
     for (const pid of playerIds) {

@@ -2,6 +2,7 @@ import type { Server, Socket } from 'socket.io';
 import { roomManager } from '../../rooms/room-manager.js';
 import { updateRoomDefaultRolesIfUncustomized, calculateDefaultRoleCounts } from '../../rooms/role-defaults.js';
 import { hasValidRoomInvite } from '../../services/invitations.js';
+import { validateNumberGridSettings } from '../../rooms/settings-validation.js';
 
 export const registerRoomHandlers = (io: Server, socket: Socket) => {
   const user = socket.data.user;
@@ -81,8 +82,10 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
 
     const room = roomManager.getRoomByCode(code);
     if (!room) {
-      socket.emit('room:error', { code: 'NOT_FOUND', message: 'Room not found' });
-      if (callback) callback({ error: 'Room not found' });
+      // Distinct codes so the client can say *why* rather than "join failed".
+      const msg = 'No room found with that code. Check the code and try again.';
+      socket.emit('room:error', { code: 'NOT_FOUND', message: msg });
+      if (callback) callback({ error: msg, code: 'NOT_FOUND' });
       return;
     }
 
@@ -115,9 +118,20 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
         }
       }
 
+      // Checked before joining rather than by catching the manager's throw: a
+      // full room is an ordinary outcome the user needs to be told about, not
+      // an exception to be flattened into "join failed".
+      const alreadySeated = room.players.some((p) => p.id === user.id);
+      if (!alreadySeated && room.players.length >= (room.settings?.maxPlayers ?? 8)) {
+        const msg = 'This room is full. Ask the host for a spot.';
+        socket.emit('room:error', { code: 'ROOM_FULL', message: msg });
+        if (callback) callback({ error: msg, code: 'ROOM_FULL' });
+        return;
+      }
+
       const result = roomManager.joinRoom(room.id, user);
       if (!result) {
-        if (callback) callback({ error: 'Failed to join room' });
+        if (callback) callback({ error: 'Failed to join room', code: 'JOIN_FAILED' });
         return;
       }
 
@@ -148,9 +162,27 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
         });
       }
     } catch (err: any) {
-      socket.emit('room:error', { code: 'JOIN_FAILED', message: err.message });
-      if (callback) callback({ error: err.message });
+      const code = /full/i.test(err.message || '') ? 'ROOM_FULL' : 'JOIN_FAILED';
+      socket.emit('room:error', { code, message: err.message });
+      if (callback) callback({ error: err.message, code });
     }
+  });
+
+  // ─── Rejoin after a refresh or reconnect ────────────────────────
+  // The room store is memory-only on the client, so a refresh wipes it and the
+  // lobby has no room to render. This is how a page that finds itself without a
+  // room asks the server which one it belongs to, instead of spinning forever.
+  socket.on('room:sync', (_payload, callback) => {
+    const room = roomManager.reconnectPlayer(user.id);
+    if (!room) {
+      if (callback) callback({ error: 'You are not in a room' });
+      return;
+    }
+
+    socket.join(`room:${room.id}`);
+    socket.data.roomId = room.id;
+    socket.emit('room:state', room);
+    if (callback) callback({ success: true, room });
   });
 
   // ─── Room Leaving ───────────────────────────────────────────────
@@ -285,7 +317,22 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
     }
 
     const isHostForced = room.gameType === 'werewolf' || room.gameType === 'salem';
-    const updatedSettings = { ...room.settings, ...settings };
+
+    // The lobby card is not a trust boundary: this handler accepts whatever is
+    // posted. Number Grid's round config is validated so a bad grid size is
+    // refused rather than stored, broadcast to every player and then silently
+    // rewritten by the engine's clamp.
+    let patch = settings;
+    if (room.gameType === 'number-grid' && settings?.gameSettings) {
+      const checked = validateNumberGridSettings(settings.gameSettings);
+      if (!checked.ok) {
+        if (callback) callback({ error: checked.error });
+        return;
+      }
+      patch = { ...settings, gameSettings: checked.settings };
+    }
+
+    const updatedSettings = { ...room.settings, ...patch };
     if (isHostForced) {
       updatedSettings.hostMode = true;
     }

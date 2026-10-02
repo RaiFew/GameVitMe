@@ -118,6 +118,28 @@ class RoomManager {
     return roomId ? this.rooms.get(roomId) : undefined;
   }
 
+  /**
+   * The inverse of `markDisconnected`. A socket that drops and comes back is a
+   * brand-new socket object whose `data` is empty, so the server has no way to
+   * know which room it belonged to — and `roomManager.joinRoom`, the only other
+   * thing that clears the flag, only runs when a client explicitly re-emits
+   * `room:join`. Without this a refreshed or backgrounded player stays
+   * `connected: false`, and since `broadcastPlayerViews` skips disconnected
+   * players they would never receive another `game:state`.
+   *
+   * Deliberately does not create a seat: a player with no seat stays a
+   * non-member until they join something.
+   */
+  public reconnectPlayer(userId: string): InMemoryRoom | undefined {
+    const room = this.getRoomByPlayer(userId);
+    if (!room) return undefined;
+    const player = room.players.find(p => p.id === userId);
+    if (!player) return undefined;
+    player.connected = true;
+    room.emptySince = undefined;
+    return room;
+  }
+
   private touchEmptiness(room: InMemoryRoom): void {
     const occupied = room.players.some(p => p.connected);
     if (occupied) {

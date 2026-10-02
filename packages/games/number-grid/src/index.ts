@@ -212,7 +212,12 @@ export const numberGridGame: GameDefinition<
 
     const roundGridSizes = isEndless(variant) || usesChaosNumbers(variant)
       ? []
-      : calculateRoundGridSizes(effectiveSettings.difficultyMode, totalRounds, effectiveSettings.customGridSizes);
+      : calculateRoundGridSizes(
+          effectiveSettings.difficultyMode,
+          totalRounds,
+          effectiveSettings.customGridSizes,
+          ctx.random,
+        );
 
     // Chaos randomizes from the very first round, including the size.
     const firstGridSize: GridSize = usesChaosNumbers(variant)

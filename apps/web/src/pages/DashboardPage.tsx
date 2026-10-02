@@ -178,15 +178,20 @@ export function DashboardPage() {
       // A busy server can take a while to answer. The old 6s deadline fired
       // while the join was still in flight and told the user it had failed,
       // then the room they had actually joined appeared moments later.
+      //
+      // `attemptedRecycle` is threaded through as an argument rather than
+      // reassigned here: it used to be a local variable, so the recursive call
+      // started over with `false` and a failing join retried every 15 seconds
+      // forever, spinner stuck, error never shown.
       const timer = setTimeout(
         () => {
           // A half-open upgrade leaves the socket claiming to be connected
           // while dropping everything sent on it. Recycling forces a fresh
           // handshake and one more attempt; only the second failure is real.
           if (!attemptedRecycle) {
-            attemptedRecycle = true;
+            detach();
             socketService.recycle();
-            executeJoin(targetCode);
+            executeJoin(targetCode, true);
             return;
           }
           fail(t('dashboard.errJoinTimeout'));

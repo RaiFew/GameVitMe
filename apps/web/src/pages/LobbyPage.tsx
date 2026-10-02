@@ -50,6 +50,15 @@ export function LobbyPage() {
     };
   }, [socket, navigate, roomCode]);
 
+  // A player who was away when the round started is handed the lobby, because
+  // `game:started` is room-scoped and was broadcast before their socket came
+  // back. Catch them up rather than making them press something.
+  useEffect(() => {
+    if (room?.status === 'playing') {
+      navigate(`/game/${roomCode}`, { replace: true });
+    }
+  }, [room?.status, roomCode, navigate]);
+
   if (!room || !user) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">

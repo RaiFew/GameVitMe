@@ -15,7 +15,13 @@ export function useGameState() {
     });
     
     socket.on('game:started', () => {
+      // The previous round's view is stale the instant a new one begins. Leaving
+      // it in place means a client that missed this event keeps rendering the
+      // old GAME_OVER screen with a live "Play Another Round" button, so a
+      // second rematch appears to do nothing.
+      setPlayerView(null);
       setGameResult(null);
+      setTimer(null);
       setActionError(null);
     });
     
@@ -25,6 +31,12 @@ export function useGameState() {
     
     socket.on('game:finished', (result: any) => {
       setGameResult(result);
+    });
+
+    // The runner is destroyed server-side on return-to-lobby, so every piece of
+    // game state this client is holding is now fiction.
+    socket.on('game:returned_to_lobby', () => {
+      clearGame();
     });
 
     socket.on('game:action_error', (error: any) => {
@@ -38,8 +50,9 @@ export function useGameState() {
       socket.off('game:timer');
       socket.off('game:finished');
       socket.off('game:action_error');
+      socket.off('game:returned_to_lobby');
     };
-  }, [socket, setPlayerView, setTimer, setGameResult, setActionError]);
+  }, [socket, setPlayerView, setTimer, setGameResult, setActionError, clearGame]);
 
   const startGame = (roomId: string, roundDurationSeconds?: number, callback?: (res: any) => void) => {
     socket?.emit('game:start', { roomId, roundDurationSeconds }, callback);

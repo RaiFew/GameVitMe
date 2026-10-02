@@ -116,6 +116,19 @@ export const initSocketGateway = (fastify: FastifyInstance) => {
     registerChatHandlers(io, socket);
     registerFriendHandlers(io, socket);
 
+    // A socket that dropped and came back is a new object with empty `data`, so
+    // it only ever joins the user channel above. Put it back on its room
+    // channel and clear its seat's disconnected flag, otherwise a refreshed or
+    // backgrounded player is invisible to every room broadcast and — because
+    // `broadcastPlayerViews` skips disconnected players — never gets another
+    // `game:state`. This is the reconnect path for all six games.
+    const restoredRoom = roomManager.reconnectPlayer(userId);
+    if (restoredRoom) {
+      socket.join(`room:${restoredRoom.id}`);
+      socket.data.roomId = restoredRoom.id;
+      socket.emit('room:state', restoredRoom);
+    }
+
     // Presence is bookkeeping, not a gate on being able to act.
     presence.userConnected(userId, socket.id).catch(() => {});
 

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGameState } from '../hooks/useGameState';
 import { useRoom } from '../hooks/useRoom';
@@ -26,6 +26,7 @@ export function GamePage() {
   const { sendAction, startGame } = useGameState();
   const { playerView } = useGameStore();
   const navigate = useNavigate();
+  const [rematchError, setRematchError] = useState<string | null>(null);
 
   useEffect(() => {
     if (socket && room?.id) {
@@ -74,16 +75,30 @@ export function GamePage() {
     }
   };
 
+  /**
+   * Rematch. Both emits used to be fire-and-forget, so a socket that was
+   * mid-reconnect dropped them and the player was told nothing — the button
+   * looked dead. A mobile client hits this constantly, because backgrounding
+   * the tab is exactly when the transport drops.
+   */
   const handlePlayAgain = (customDurationSeconds?: number) => {
-    if (room?.id) {
-      if (customDurationSeconds) {
-        socket?.emit('room:update_settings', {
-          roomId: room.id,
-          settings: { roundDurationSeconds: customDurationSeconds },
-        });
-      }
-      startGame(room.id, customDurationSeconds);
-    }
+    if (!room?.id) return;
+
+    const applySettings = (next: () => void) => {
+      if (!customDurationSeconds) return next();
+      socket?.emit(
+        'room:update_settings',
+        { roomId: room.id, settings: { roundDurationSeconds: customDurationSeconds } },
+        (res: any) => (res?.error ? setRematchError(res.error) : next())
+      );
+    };
+
+    applySettings(() => {
+      startGame(room.id, customDurationSeconds, (res: any) => {
+        if (res?.error) setRematchError(res.error);
+        else setRematchError(null);
+      });
+    });
   };
 
   const handleLeaveGame = () => {
@@ -103,6 +118,18 @@ export function GamePage() {
 
   return (
     <div className="flex-1 flex flex-col bg-canvas">
+      {rematchError && (
+        <div className="border-b border-red-600 dark:border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 px-4 py-2 text-xs font-mono flex items-center justify-between">
+          <span>{rematchError}</span>
+          <button
+            onClick={() => setRematchError(null)}
+            className="font-bold underline cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Game Top Control Bar */}
       <div className="bg-canvas-sunk/90 border-b border-rule px-4 py-2 flex items-center justify-between text-xs font-mono">
         <div className="flex items-center gap-2">

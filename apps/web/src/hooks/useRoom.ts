@@ -74,6 +74,31 @@ export function useRoom() {
   }, [socket, setRoom, clearRoom, navigate]);
 
   /**
+   * The room store is memory-only, so a refresh — or any navigation that did
+   * not come through the dashboard's join flow — leaves LobbyPage and GamePage
+   * mounted with nothing to render. Neither page emitted anything to recover,
+   * so both sat on a "Synchronizing…" spinner indefinitely. Ask the server
+   * once which room this player holds a seat in.
+   */
+  useEffect(() => {
+    if (!socket) return;
+    let cancelled = false;
+
+    const sync = () => {
+      if (cancelled || useRoomStore.getState().room) return;
+      socket.emit('room:sync', {}, () => {});
+    };
+
+    sync();
+    socket.on('connect', sync);
+
+    return () => {
+      cancelled = true;
+      socket.off('connect', sync);
+    };
+  }, [socket]);
+
+  /**
    * Every lobby action used to fire and forget. On a slow or dropped
    * connection the server's `room:state` broadcast never came back, so the
    * button did nothing at all and the lobby looked frozen. Apply the change

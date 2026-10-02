@@ -2,3 +2,4 @@ export type { GameDefinition, GameContext, GamePlayer, GameMove, MoveResult, Gam
 export { GameRegistry } from './registry.js';
 export { RoomRunner } from './room-runner.js';
 export { TimerManager } from './timer.js';
+export { shuffle } from './shuffle.js';
