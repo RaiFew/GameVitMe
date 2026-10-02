@@ -133,7 +133,7 @@ export function DashboardPage() {
     }
   }, [location.state]);
 
-  const executeJoin = async (targetCode: string) => {
+  const executeJoin = async (targetCode: string, attemptedRecycle = false) => {
     if (!targetCode) {
       setError(t('dashboard.errNoCode'));
       return;
@@ -179,7 +179,18 @@ export function DashboardPage() {
       // while the join was still in flight and told the user it had failed,
       // then the room they had actually joined appeared moments later.
       const timer = setTimeout(
-        () => fail(t('dashboard.errJoinTimeout')),
+        () => {
+          // A half-open upgrade leaves the socket claiming to be connected
+          // while dropping everything sent on it. Recycling forces a fresh
+          // handshake and one more attempt; only the second failure is real.
+          if (!attemptedRecycle) {
+            attemptedRecycle = true;
+            socketService.recycle();
+            executeJoin(targetCode);
+            return;
+          }
+          fail(t('dashboard.errJoinTimeout'));
+        },
         15000
       );
 
