@@ -6,6 +6,7 @@ import { gameSessions, rooms } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { getCodenamesWordFile } from '../../routes/codenames.routes.js';
+import { clampCodenamesTimer } from '../../rooms/settings-validation.js';
 import { isRankedVariant } from '@party/number-grid';
 import type { RankedRunResult } from '@party/number-grid';
 import { recordRankedResult, resolveRankedUser } from '../../ranking/ranking.service.js';
@@ -305,6 +306,8 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
         (settings as any).wordSource = wordSource;
         (settings as any).wordFileId = wordFileId;
         (settings as any).gameMode = codenamesGameMode;
+        (settings as any).clueTimeSeconds = clampCodenamesTimer(roomSettings.codenamesClueTimeSeconds, 300);
+        (settings as any).guessTimeSeconds = clampCodenamesTimer(roomSettings.codenamesGuessTimeSeconds, 600);
         if (wordPoolSnapshot) {
           (settings as any).wordPoolSnapshot = wordPoolSnapshot;
         }

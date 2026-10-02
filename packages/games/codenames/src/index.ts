@@ -15,17 +15,24 @@ import type {
 import { DEFAULT_CODENAMES_DICTIONARY } from './data/default-words.js';
 import { validateCodenamesMove, processCodenamesMove } from './moves/index.js';
 import { projectCodenamesPlayerView } from './projection/player-view.js';
+import { armTimer, closeTurn } from './turns.js';
 
 export * from './types/index.js';
 export * from './data/default-words.js';
 export * from './data/word-file-parser.js';
 export * from './engine/board-generator.js';
+export * from './turns.js';
 
 export const DEFAULT_CODENAMES_SETTINGS: CodenamesSettings = {
   hostMode: false,
   gameMode: 'CLASSIC',
   wordSource: 'DEFAULT',
   roundDurationSeconds: 120,
+  // Off by default. Physical Codenames runs on no clock at all, and putting one
+  // on players who never asked for it is the worse failure than making the host
+  // opt in from the lobby.
+  clueTimeSeconds: 0,
+  guessTimeSeconds: 0,
 };
 
 export const codenamesGame: GameDefinition<
@@ -53,13 +60,22 @@ export const codenamesGame: GameDefinition<
       description: 'Choose whether to play with built-in words or an uploaded custom word file',
     },
     {
-      key: 'roundDurationSeconds',
-      label: 'Turn Timer (Seconds)',
+      key: 'clueTimeSeconds',
+      label: 'Spymaster Clue Time (Seconds)',
       type: 'number',
-      default: 120,
-      min: 30,
+      default: 0,
+      min: 0,
+      max: 300,
+      description: 'Time a Spymaster has to give a clue. 0 disables the timer.',
+    },
+    {
+      key: 'guessTimeSeconds',
+      label: 'Operative Guessing Time (Seconds)',
+      type: 'number',
+      default: 0,
+      min: 0,
       max: 600,
-      description: 'Time limit per turn (clue and guessing)',
+      description: 'Time the Operatives have to make their guesses. 0 disables the timer.',
     },
   ] satisfies GameSettingsField[],
 
@@ -97,6 +113,7 @@ export const codenamesGame: GameDefinition<
       startingTeam: 'RED',
       currentTeam: 'RED',
       currentClue: null,
+      currentGuesses: [],
       guessesRemaining: 0,
       guessesMadeInTurn: 0,
       cards: [],
@@ -109,6 +126,11 @@ export const codenamesGame: GameDefinition<
       wordPoolSnapshot,
       turnNumber: 1,
       history: [],
+      // Armed by START_MATCH, not here: TEAM_SETUP has no deadline.
+      turnExpiresAt: null,
+      timerKind: null,
+      clueTimeSeconds: Number(settings.clueTimeSeconds) || 0,
+      guessTimeSeconds: Number(settings.guessTimeSeconds) || 0,
     };
   },
 
@@ -176,6 +198,60 @@ export const codenamesGame: GameDefinition<
         turnsPlayed: state.turnNumber,
       },
     };
+  },
+
+  /**
+   * A timer running out forfeits the turn; it never plays for the player.
+   * `guessesRemaining` is deliberately not spent on the timeout and no clue is
+   * synthesised — the Spymaster's word is theirs to give or withhold, and the
+   * Operatives' next card is theirs to pick.
+   */
+  onTimerExpired(
+    state: CodenamesMasterState,
+    timerType: string,
+    ctx: GameContext
+  ): MoveResult<CodenamesMasterState> {
+    if (timerType !== 'clue_timer' && timerType !== 'guess_timer') {
+      return { success: false, error: `Unknown timer: ${timerType}` };
+    }
+
+    // A timer that fires into a phase it no longer belongs to is a leftover
+    // from the previous turn; the current turn's timer is still running.
+    const expected = timerType === 'clue_timer' ? 'CLUE' : 'GUESSING';
+    if (state.phase !== expected) {
+      return { success: false, error: `Timer "${timerType}" does not match the ${state.phase} phase` };
+    }
+
+    const nextTeam: TeamColor =
+      state.gameMode === 'TWO_PLAYER'
+        ? 'RED'
+        : state.currentTeam === 'RED'
+        ? 'BLUE'
+        : 'RED';
+
+    return {
+      success: true,
+      newState: {
+        ...state,
+        phase: 'CLUE',
+        currentTeam: nextTeam,
+        guessesRemaining: 0,
+        guessesMadeInTurn: 0,
+        turnNumber: state.turnNumber + 1,
+        ...closeTurn(state, timerType === 'clue_timer' ? 'CLUE_TIMEOUT' : 'MAX_GUESSES'),
+        ...armTimer(state, ctx, 'CLUE'),
+      },
+    };
+  },
+
+  onPlayerDisconnected(
+    state: CodenamesMasterState,
+    _playerId: string,
+    _ctx: GameContext
+  ): MoveResult<CodenamesMasterState> {
+    // Turn state is preserved so a reconnecting player lands back in the same
+    // phase with the same deadline rather than a fresh turn.
+    return { success: true, newState: state };
   },
 };
 

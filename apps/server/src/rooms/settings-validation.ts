@@ -100,3 +100,10 @@ export function validateNumberGridSettings(
 
   return { ok: true, settings: out };
 }
+/**
+ * Codenames turn timers. 0 means the host turned the timer off, which is a real
+ * setting rather than a missing one, so the floor is 0 rather than 1 and the
+ * clamped result is always a number the engine can divide into milliseconds.
+ */
+export const clampCodenamesTimer = (value: unknown, max: number): number =>
+  clamp(value, 0, max, 0);

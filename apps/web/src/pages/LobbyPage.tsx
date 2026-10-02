@@ -8,6 +8,7 @@ import { QRCodeDisplay } from '../components/lobby/QRCodeDisplay';
 import { InviteFriends } from '../components/lobby/InviteFriends';
 import { RoleConfigurationCard } from '../components/lobby/RoleConfigurationCard';
 import { CodenamesWordSourceCard } from '../components/lobby/CodenamesWordSourceCard';
+import { CodenamesTimerSettingsCard } from '../components/lobby/CodenamesTimerSettingsCard';
 import { RPSSettingsCard } from '../components/lobby/RPSSettingsCard';
 import { NumberGridSettingsCard } from '../components/lobby/NumberGridSettingsCard';
 import { Button } from '../components/ui/Button';
@@ -461,6 +462,15 @@ export function LobbyPage() {
           {isCodenames && (
             <CodenamesWordSourceCard
               roomId={room.id}
+              isHost={isHost}
+              settings={room.settings as any}
+              onUpdateSettings={updateSettings}
+            />
+          )}
+
+          {/* Codenames Spymaster / Operative turn timers */}
+          {isCodenames && (
+            <CodenamesTimerSettingsCard
               isHost={isHost}
               settings={room.settings as any}
               onUpdateSettings={updateSettings}

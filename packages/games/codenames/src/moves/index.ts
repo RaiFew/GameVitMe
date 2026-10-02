@@ -5,8 +5,10 @@ import type {
   CodenamesRole,
   TeamColor,
   CodenamesGuess,
+  CodenamesTurnLog,
 } from '../types/index.js';
 import { generateCodenamesBoard } from '../engine/board-generator.js';
+import { armTimer, closeTurn } from '../turns.js';
 
 export function validateCodenamesMove(
   state: CodenamesMasterState,
@@ -275,11 +277,14 @@ export function processCodenamesMove(
           blueRemaining: boardGen.blueTotal,
           mistakesMade: 0,
           currentClue: null,
+          currentGuesses: [],
           guessesRemaining: 0,
           guessesMadeInTurn: 0,
           turnNumber: 1,
+          history: [],
           winner: null,
           winReason: undefined,
+          ...armTimer(state, ctx, 'CLUE'),
         },
       };
     }
@@ -300,8 +305,10 @@ export function processCodenamesMove(
             team: state.currentTeam,
             submittedAt: Date.now(),
           },
+          currentGuesses: [],
           guessesRemaining,
           guessesMadeInTurn: 0,
+          ...armTimer(state, ctx, 'GUESSING'),
         },
       };
     }
@@ -311,20 +318,21 @@ export function processCodenamesMove(
       const card = state.cards.find((c) => c.id === cardId)!;
       const currentTeam = state.currentTeam;
       const opponentTeam: TeamColor = currentTeam === 'RED' ? 'BLUE' : 'RED';
+      const isTwoPlayer = state.gameMode === 'TWO_PLAYER';
 
-      const updatedCard = {
-        ...card,
-        revealed: true,
-        revealedByTeam: currentTeam,
-      };
-
+      const updatedCard = { ...card, revealed: true, revealedByTeam: currentTeam };
       const updatedCards = state.cards.map((c) => (c.id === cardId ? updatedCard : c));
+
       let redRemaining = state.redRemaining;
       let blueRemaining = state.blueRemaining;
+      let mistakesMade = state.mistakesMade;
       let winner: TeamColor | null = null;
       let winReason: CodenamesMasterState['winReason'];
       let phase: CodenamesMasterState['phase'] = 'GUESSING';
+      // Only the branches that end a turn hand it on; a correct guess keeps it.
       let nextTeam = currentTeam;
+      let endedReason: CodenamesTurnLog['endedReason'] = 'MAX_GUESSES';
+
       const newGuessesRemaining = state.guessesRemaining - 1;
       const newGuessesMade = state.guessesMadeInTurn + 1;
 
@@ -343,109 +351,59 @@ export function processCodenamesMove(
         guessedBy: move.playerId,
       };
 
-      if (state.gameMode === 'TWO_PLAYER') {
-        let redRemaining = state.redRemaining;
-        let blueRemaining = state.blueRemaining;
-        let mistakesMade = state.mistakesMade;
-        let winner: TeamColor | null = null;
-        let winReason: CodenamesMasterState['winReason'];
-        let phase: CodenamesMasterState['phase'] = 'GUESSING';
-
-        if (card.color === 'ASSASSIN') {
-          // Instant loss
-          winner = null;
-          winReason = 'ASSASSIN_TRIGGERED';
-          phase = 'GAME_OVER';
-        } else if (card.color === 'RED') {
-          // Friendly card found
-          redRemaining--;
-          if (redRemaining <= 0) {
-            // Victory: all friendly agents contacted!
-            winner = 'RED';
-            winReason = 'ALL_CARDS_FOUND';
-            phase = 'GAME_OVER';
-          } else if (newGuessesRemaining <= 0) {
-            // Out of guesses -> turn ends, return to CLUE
-            phase = 'CLUE';
-          } else {
-            // Continue guessing
-            phase = 'GUESSING';
-          }
-        } else if (card.color === 'BLUE') {
-          // Opposing decoy card: mistake and turn ends immediately
-          blueRemaining--;
-          mistakesMade++;
-          phase = 'CLUE';
-        } else {
-          // NEUTRAL bystander: mistake and turn ends immediately
-          mistakesMade++;
-          phase = 'CLUE';
-        }
-
-        const turnNumber = phase === 'CLUE' ? state.turnNumber + 1 : state.turnNumber;
-
-        return {
-          success: true,
-          newState: {
-            ...state,
-            cards: updatedCards,
-            redRemaining,
-            blueRemaining,
-            mistakesMade,
-            phase,
-            currentTeam: 'RED',
-            currentClue: phase === 'CLUE' ? null : state.currentClue,
-            guessesRemaining: phase === 'CLUE' ? 0 : newGuessesRemaining,
-            guessesMadeInTurn: phase === 'CLUE' ? 0 : newGuessesMade,
-            winner,
-            winReason,
-            turnNumber,
-          },
-        };
-      }
+      const guesses = [...state.currentGuesses, guessRecord];
 
       if (card.color === 'ASSASSIN') {
-        // Instant loss: opponent wins!
-        winner = opponentTeam;
+        // Classic play hands the win to the other team; co-op play just loses.
+        winner = isTwoPlayer ? null : opponentTeam;
         winReason = 'ASSASSIN_TRIGGERED';
         phase = 'GAME_OVER';
+        endedReason = 'ASSASSIN';
       } else if (card.color === currentTeam) {
         if (currentTeam === 'RED') redRemaining--;
         else blueRemaining--;
 
-        // Check if current team found all cards
-        if ((currentTeam === 'RED' && redRemaining <= 0) || (currentTeam === 'BLUE' && blueRemaining <= 0)) {
+        if (redRemaining <= 0 || blueRemaining <= 0) {
           winner = currentTeam;
           winReason = 'ALL_CARDS_FOUND';
           phase = 'GAME_OVER';
+          endedReason = 'WIN';
         } else if (newGuessesRemaining <= 0) {
-          // Out of guesses -> switch turn
           phase = 'CLUE';
-          nextTeam = opponentTeam;
-        } else {
-          // Continue guessing!
-          phase = 'GUESSING';
-        }
-      } else if (card.color === opponentTeam) {
-        if (opponentTeam === 'RED') redRemaining--;
-        else blueRemaining--;
-
-        // Check if opponent won from this
-        if ((opponentTeam === 'RED' && redRemaining <= 0) || (opponentTeam === 'BLUE' && blueRemaining <= 0)) {
-          winner = opponentTeam;
-          winReason = 'ALL_CARDS_FOUND';
-          phase = 'GAME_OVER';
-        } else {
-          // Turn ends immediately on opponent card
-          phase = 'CLUE';
-          nextTeam = opponentTeam;
+          endedReason = 'MAX_GUESSES';
         }
       } else {
-        // NEUTRAL bystander -> Turn ends immediately
-        phase = 'CLUE';
-        nextTeam = opponentTeam;
+        // Opponent card, or a bystander: the turn is over either way. In co-op
+        // there is no opponent team to hand the turn to, so it stays RED's.
+        if (card.color === opponentTeam) {
+          if (opponentTeam === 'RED') redRemaining--;
+          else blueRemaining--;
+          // Only the pair's own error in co-op; in classic play the turn simply
+          // passes to the team that owns the card.
+          if (isTwoPlayer) mistakesMade++;
+
+          if ((opponentTeam === 'RED' && redRemaining <= 0) || (opponentTeam === 'BLUE' && blueRemaining <= 0)) {
+            winner = opponentTeam;
+            winReason = 'ALL_CARDS_FOUND';
+            phase = 'GAME_OVER';
+            endedReason = 'WIN';
+          } else {
+            phase = 'CLUE';
+            nextTeam = opponentTeam;
+          }
+        } else {
+          // A bystander counts as a mistake only in co-op, where it is the
+          // pair's own error. In classic play it just ends the turn.
+          if (isTwoPlayer) mistakesMade++;
+          phase = 'CLUE';
+          nextTeam = opponentTeam;
+        }
+        endedReason = 'WRONG_GUESS';
       }
 
+      const turnEnded = phase === 'CLUE' || phase === 'GAME_OVER';
+      // Co-op has no opponent to pass to: the same Spymaster is always on.
+      if (isTwoPlayer) nextTeam = 'RED';
       const turnNumber = phase === 'CLUE' ? state.turnNumber + 1 : state.turnNumber;
 
       return {
@@ -455,46 +413,39 @@ export function processCodenamesMove(
           cards: updatedCards,
           redRemaining,
           blueRemaining,
+          mistakesMade,
           phase,
           currentTeam: nextTeam,
-          currentClue: phase === 'CLUE' ? null : state.currentClue,
-          guessesRemaining: phase === 'CLUE' ? 0 : newGuessesRemaining,
-          guessesMadeInTurn: phase === 'CLUE' ? 0 : newGuessesMade,
+          currentGuesses: guesses,
+          guessesRemaining: turnEnded ? 0 : newGuessesRemaining,
+          guessesMadeInTurn: turnEnded ? 0 : newGuessesMade,
           winner,
           winReason,
           turnNumber,
+          ...(turnEnded
+            ? closeTurn({ ...state, currentGuesses: guesses }, endedReason)
+            : {}),
+          ...armTimer(state, ctx, turnEnded ? 'CLUE' : 'GUESSING'),
         },
       };
     }
 
     case 'END_GUESSING':
     case 'PASS_TURN': {
-      if (state.gameMode === 'TWO_PLAYER') {
-        return {
-          success: true,
-          newState: {
-            ...state,
-            phase: 'CLUE',
-            currentTeam: 'RED',
-            currentClue: null,
-            guessesRemaining: 0,
-            guessesMadeInTurn: 0,
-            turnNumber: state.turnNumber + 1,
-          },
-        };
-      }
+      const nextTeam: TeamColor =
+        state.gameMode === 'TWO_PLAYER' ? 'RED' : state.currentTeam === 'RED' ? 'BLUE' : 'RED';
 
-      const opponentTeam: TeamColor = state.currentTeam === 'RED' ? 'BLUE' : 'RED';
       return {
         success: true,
         newState: {
           ...state,
           phase: 'CLUE',
-          currentTeam: opponentTeam,
-          currentClue: null,
+          currentTeam: nextTeam,
           guessesRemaining: 0,
           guessesMadeInTurn: 0,
           turnNumber: state.turnNumber + 1,
+          ...closeTurn(state, 'PASS'),
+          ...armTimer(state, ctx, 'CLUE'),
         },
       };
     }

@@ -9,7 +9,7 @@
     "type-check": "tsc --noEmit",
     "build": "tsc",
     "clean": "rm -rf dist",
-    "test": "tsx --test test/codenames.test.ts"
+    "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
     "@party/game-engine": "workspace:*",

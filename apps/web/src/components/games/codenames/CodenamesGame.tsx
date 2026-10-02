@@ -3,6 +3,8 @@ import { TeamSetupScreen } from './TeamSetupScreen';
 import { CodenamesBoard } from './CodenamesBoard';
 import { ClueController } from './ClueController';
 import { CodenamesGameOver } from './CodenamesGameOver';
+import { TurnHistory } from './TurnHistory';
+import { GameTimer } from '../spyfall/GameTimer';
 import { Card } from '../../ui/Card';
 import { Eye, Crosshair } from 'lucide-react';
 
@@ -34,6 +36,10 @@ export function CodenamesGame({ playerView, onAction, onReturnLobby, onPlayAgain
 
   const isSpymaster = me.role === 'SPYMASTER';
   const isRedTurn = currentTeam === 'RED';
+
+  // Stamped on the state by the server, so a client that reconnects mid-turn
+  // shows the same remaining time as everyone else rather than restarting.
+  const showTimer = playerView.turnExpiresAt != null && playerView.turnExpiresAt > 0;
 
   const handleSelectCard = (cardId: string) => {
     onAction('SELECT_CARD', { cardId });
@@ -97,6 +103,15 @@ export function CodenamesGame({ playerView, onAction, onReturnLobby, onPlayAgain
                 <span className="text-ink uppercase">{me.role}</span>
               </div>
             </div>
+
+            {showTimer && (
+              <div className="flex flex-col items-end gap-0.5">
+                <GameTimer expiresAt={playerView.turnExpiresAt!} inline />
+                <span className="text-[9px] font-mono uppercase font-bold text-ink-faint">
+                  {playerView.timerKind === 'CLUE' ? 'To give a clue' : 'To guess'}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       ) : (
@@ -147,6 +162,15 @@ export function CodenamesGame({ playerView, onAction, onReturnLobby, onPlayAgain
                 </span>
               </div>
             )}
+
+            {showTimer && (
+              <div className="flex flex-col items-end gap-0.5">
+                <GameTimer expiresAt={playerView.turnExpiresAt!} inline />
+                <span className="text-[9px] font-mono uppercase font-bold text-ink-faint">
+                  {playerView.timerKind === 'CLUE' ? 'To give a clue' : 'To guess'}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -165,6 +189,38 @@ export function CodenamesGame({ playerView, onAction, onReturnLobby, onPlayAgain
         canGuess={me.canGuess}
         onSelectCard={handleSelectCard}
       />
+
+      <div className="flex flex-wrap gap-x-6 gap-y-2 border border-rule rounded-xs bg-canvas px-4 py-3">
+        {(['RED', 'BLUE'] as const).map((team) => (
+          <div key={team} className="flex items-baseline gap-2 flex-wrap">
+            <span className={`text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded-xs border ${
+              team === 'RED'
+                ? 'border-red-600 text-red-600 dark:text-red-400'
+                : 'border-blue-600 text-blue-600 dark:text-blue-400'
+            }`}>
+              {team}
+            </span>
+            {playerView.players
+              .filter((p) => p.team === team)
+              .map((p) => (
+                <span
+                  key={p.id}
+                  className={`text-[11px] font-mono uppercase ${
+                    p.id === me.id ? 'text-ink font-bold' : 'text-ink-muted'
+                  }`}
+                >
+                  {p.displayName}
+                  <span className="text-ink-faint">
+                    {' '}
+                    {p.role === 'SPYMASTER' ? '(sm)' : p.role === 'OPERATIVE' ? '(op)' : ''}
+                  </span>
+                </span>
+              ))}
+          </div>
+        ))}
+      </div>
+
+      <TurnHistory playerView={playerView} />
     </div>
   );
 }

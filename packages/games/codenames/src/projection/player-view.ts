@@ -65,6 +65,38 @@ export function projectCodenamesPlayerView(
       }
     : undefined;
 
+  // History is a replay of what actually happened, so every recorded word is one
+  // an Operative already saw selected — except at game over, when the board is
+  // uncovered anyway and an Operative is about to be shown the key.
+  const revealAll = isGameOver || isSpymaster;
+  const mask = (g: (typeof state.currentGuesses)[number]) => ({
+    cardId: g.cardId,
+    word: g.word,
+    resultedIn: g.resultedIn,
+    guessedBy: g.guessedBy,
+    color: revealAll ? g.color : undefined,
+  });
+
+  const history = state.history.map((turn) => ({
+    turnNumber: turn.turnNumber,
+    team: turn.team,
+    clue: turn.clue,
+    endedReason: turn.endedReason,
+    guesses: turn.guesses.map(mask),
+  }));
+
+  // The turn in flight is appended so a word guessed a second ago is visible
+  // now, not only once the turn has been filed.
+  if (state.phase === 'GUESSING' && state.currentClue) {
+    history.push({
+      turnNumber: state.turnNumber,
+      team: state.currentTeam,
+      clue: state.currentClue,
+      endedReason: 'IN_PROGRESS',
+      guesses: state.currentGuesses.map(mask),
+    });
+  }
+
   return {
     phase: state.phase,
     gameMode: state.gameMode || 'CLASSIC',
@@ -104,5 +136,10 @@ export function projectCodenamesPlayerView(
     wordSource: state.wordSource,
     turnNumber: state.turnNumber,
     canStartMatch,
+    history,
+    // Only meaningful while a turn is live; a stale deadline on the game-over
+    // screen would keep counting down after play stopped.
+    turnExpiresAt: isGameOver || state.phase === 'TEAM_SETUP' ? null : state.turnExpiresAt,
+    timerKind: isGameOver || state.phase === 'TEAM_SETUP' ? null : state.timerKind,
   };
 }

@@ -48,9 +48,18 @@ export interface CodenamesGuess {
 export interface CodenamesTurnLog {
   turnNumber: number;
   team: TeamColor;
-  clue: CodenamesClue;
+  /** Null when the turn was forfeited on the clue timer before any clue was given. */
+  clue: CodenamesClue | null;
   guesses: CodenamesGuess[];
-  endedReason: 'MAX_GUESSES' | 'WRONG_GUESS' | 'PASS' | 'ASSASSIN' | 'WIN';
+  endedReason:
+    | 'MAX_GUESSES'
+    | 'WRONG_GUESS'
+    | 'PASS'
+    | 'ASSASSIN'
+    | 'WIN'
+    | 'CLUE_TIMEOUT'
+    /** The turn is still running; this entry is the live one, not a filed record. */
+    | 'IN_PROGRESS';
 }
 
 export interface CodenamesMasterState {
@@ -64,6 +73,8 @@ export interface CodenamesMasterState {
   currentClue: CodenamesClue | null;
   guessesRemaining: number;
   guessesMadeInTurn: number;
+  /** Guesses made in the turn currently in progress; folded into `history` when it ends. */
+  currentGuesses: CodenamesGuess[];
   cards: CodenamesCard[];
   redRemaining: number;
   blueRemaining: number;
@@ -75,6 +86,12 @@ export interface CodenamesMasterState {
   wordPoolSnapshot: string[];
   turnNumber: number;
   history: CodenamesTurnLog[];
+  /** Absolute timestamp the current phase's timer runs out, or null when timers are off. */
+  turnExpiresAt: number | null;
+  /** Which phase's timer `turnExpiresAt` belongs to. */
+  timerKind: 'CLUE' | 'GUESSING' | null;
+  clueTimeSeconds: number;
+  guessTimeSeconds: number;
 }
 
 export interface CodenamesPlayerView {
@@ -121,6 +138,23 @@ export interface CodenamesPlayerView {
   wordSource: 'DEFAULT' | 'CUSTOM';
   turnNumber: number;
   canStartMatch?: boolean;
+  /**
+   * Turns already finished, oldest first. An Operative sees the words it actually
+   * saw guessed — the colour of a word that was never selected would leak the
+   * key layout — so `CodenamesGuess` is masked per viewer before it goes out.
+   */
+  history: CodenamesTurnLogView[];
+  turnExpiresAt: number | null;
+  timerKind: 'CLUE' | 'GUESSING' | null;
+}
+
+export interface CodenamesTurnLogView extends Omit<CodenamesTurnLog, 'guesses'> {
+  guesses: CodenamesGuessView[];
+}
+
+export interface CodenamesGuessView extends Omit<CodenamesGuess, 'color'> {
+  /** Omitted for an Operative viewing a word that was never selected. */
+  color?: CardColor;
 }
 
 export interface CodenamesSettings {
@@ -131,4 +165,8 @@ export interface CodenamesSettings {
   wordFileId?: string;
   wordPoolSnapshot?: string[];
   roundDurationSeconds?: number;
+  /** Seconds a Spymaster has to give a clue. 0 disables the timer. */
+  clueTimeSeconds?: number;
+  /** Seconds the Operatives have to guess. 0 disables the timer. */
+  guessTimeSeconds?: number;
 }

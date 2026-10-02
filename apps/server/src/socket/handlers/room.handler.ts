@@ -325,6 +325,8 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
     'codenamesGameMode',
     'codenamesWordFileId',
     'codenamesWordSource',
+    'codenamesClueTimeSeconds',
+    'codenamesGuessTimeSeconds',
     'rpsGameMode',
     'rpsRoundDurationSeconds',
     'rpsTargetScore',

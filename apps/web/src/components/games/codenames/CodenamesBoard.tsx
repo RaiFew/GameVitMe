@@ -18,7 +18,9 @@ export function CodenamesBoard({ cards, isSpymaster, canGuess, onSelectCard }: P
         return 'bg-blue-600 dark:bg-blue-700 text-white border-blue-700 shadow-inner font-black';
       }
       if (card.color === 'ASSASSIN') {
-        return 'bg-ink text-canvas border-2 border-red-600 font-black';
+        // The assassin is a red card, not a black one with a red edge — a
+        // revealed assassin has to read as instantly fatal at a glance.
+        return 'bg-red-600 dark:bg-red-700 text-white border-red-800 shadow-inner font-black';
       }
       // NEUTRAL
       return 'bg-surface-hover text-ink-faint border-rule line-through';
@@ -34,7 +36,7 @@ export function CodenamesBoard({ cards, isSpymaster, canGuess, onSelectCard }: P
         return 'border-2 border-blue-600/80 bg-blue-50/70 dark:bg-blue-950/30 text-blue-950 dark:text-blue-200 font-black shadow-xs';
       }
       if (card.color === 'ASSASSIN') {
-        return 'border-2 border-rule-strong bg-canvas-sunk text-canvas font-black';
+        return 'border-2 border-red-600 bg-red-100 dark:bg-red-950/60 text-red-900 dark:text-red-200 font-black';
       }
       // NEUTRAL
       return 'border border-rule bg-canvas-sunk/40 text-ink-muted';
@@ -82,13 +84,13 @@ export function CodenamesBoard({ cards, isSpymaster, canGuess, onSelectCard }: P
                 <span
                   className={`text-[8px] sm:text-[9px] font-mono font-black uppercase tracking-wider absolute top-1.5 left-2 px-1 py-0.2 rounded-xs ${
                     card.revealed
-                      ? 'opacity-80'
+                      ? 'opacity-90'
                       : card.color === 'RED'
                       ? 'text-red-700 dark:text-red-300'
                       : card.color === 'BLUE'
                       ? 'text-blue-700 dark:text-blue-300'
                       : card.color === 'ASSASSIN'
-                      ? 'text-red-400 dark:text-red-600'
+                      ? 'text-red-700 dark:text-red-400'
                       : 'text-ink-muted'
                   }`}
                 >
