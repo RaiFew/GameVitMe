@@ -15,9 +15,19 @@ import { Card } from '../components/ui/Card';
 import { Users, Shield, ArrowRight } from 'lucide-react';
 import { useUserSettingsStore } from '../stores/userSettingsStore';
 
+/** The games a host can switch a room between, matching the create-room list. */
+const GAME_NAMES: Record<string, string> = {
+  spyfall: 'Spyfall',
+  werewolf: 'Werewolf',
+  salem: 'Salem 1692',
+  codenames: 'Codenames',
+  'rock-paper-scissors': 'Rock Paper Scissors',
+  'number-grid': 'Number Grid',
+};
+
 export function LobbyPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
-  const { room, setReady, kickPlayer, updateSettings, leaveRoom, actionError, clearActionError } = useRoom();
+  const { room, setReady, kickPlayer, updateSettings, changeGame, leaveRoom, actionError, clearActionError } = useRoom();
   const { user } = useAuth();
   const { socket } = useSocket();
   const navigate = useNavigate();
@@ -231,6 +241,29 @@ export function LobbyPage() {
           <Button variant="secondary" size="sm" onClick={() => setShowInvite(true)} className="flex-1 md:flex-initial text-xs">
             Invite Friends
           </Button>
+          {isHost && (
+            <select
+              value={room.gameType}
+              onChange={(e) => {
+                const next = e.target.value;
+                if (next === room.gameType) return;
+                // Swapping the game clears every game-specific setting, so this
+                // is not something to do by accident.
+                if (window.confirm(`Change this room to ${GAME_NAMES[next] || next}?\nThis clears the current game's settings and everyone's ready state.`)) {
+                  changeGame(next);
+                } else {
+                  e.target.value = room.gameType;
+                }
+              }}
+              className="flex-1 md:flex-initial text-xs font-mono border border-rule rounded-xs bg-canvas px-2.5 py-1 cursor-pointer"
+            >
+              {Object.entries(GAME_NAMES).map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          )}
           <Button
             variant="danger"
             size="sm"

@@ -148,6 +148,9 @@ export function useRoom() {
   const transferHost = (newHostId: string) =>
     runAction('room:transfer_host', { roomId: room!.id, newHostId });
 
+  const changeGame = (gameType: string) =>
+    runAction('room:change_game', { roomId: room!.id, gameType });
+
   const updateSettings = (settings: any) =>
     runAction('room:update_settings', { roomId: room!.id, settings }, () => {
       setRoom(room ? ({ ...room, settings: { ...room.settings, ...settings } } as any) : room);
@@ -164,5 +167,6 @@ export function useRoom() {
     kickPlayer,
     transferHost,
     updateSettings,
+    changeGame,
   };
 }

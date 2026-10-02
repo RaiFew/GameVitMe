@@ -432,6 +432,14 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
       return;
     }
 
+    // Returning everyone to the lobby destroys the round, so it is the host's
+    // call. This handler had no ownership check at all: any seated player could
+    // kill a game in progress for everyone else.
+    if (room.hostId !== user.id) {
+      if (callback) callback({ error: 'Only the Host can return the room to the lobby' });
+      return;
+    }
+
     // Destroy runner
     if ((room as any).gameRunner) {
       ((room as any).gameRunner as RoomRunner).destroy();
@@ -443,6 +451,11 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
     room.players.forEach((p) => {
       p.isReady = false;
     });
+
+    // `connected` is deliberately left alone. It tracks whether a socket is
+    // live, and rewriting it here would report absent players as present —
+    // `broadcastPlayerViews` would then try to emit to seats nobody is sitting
+    // at. A player who comes back is restored by `reconnectPlayer` on connect.
 
     // Notify room that we are back in lobby
     io.to(`room:${room.id}`).emit('room:state', room);

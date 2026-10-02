@@ -3,6 +3,7 @@ import { roomManager } from '../../rooms/room-manager.js';
 import { updateRoomDefaultRolesIfUncustomized, calculateDefaultRoleCounts } from '../../rooms/role-defaults.js';
 import { hasValidRoomInvite } from '../../services/invitations.js';
 import { validateNumberGridSettings } from '../../rooms/settings-validation.js';
+import { GameRegistry } from '@party/game-engine';
 
 export const registerRoomHandlers = (io: Server, socket: Socket) => {
   const user = socket.data.user;
@@ -304,6 +305,109 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
     } else {
       if (callback) callback({ error: 'Player not found in room' });
     }
+  });
+
+  // ─── Change Game in Lobby ───────────────────────────────────────
+  /**
+   * Everything the lobby card for one game can write. Switching games has to
+   * clear these or the new game starts on the old game's configuration — a
+   * Number Grid room that becomes Spyfall still carrying `gameSettings` is
+   * harmless, but a room that becomes Number Grid would keep Codenames' word
+   * file and RPS' `rpsTargetScore` in a settings blob nothing reads.
+   *
+   * Anything not listed survives, so `name`, `maxPlayers` and `isPrivate` — the
+   * parts that describe the room rather than the game — are left alone.
+   */
+  const GAME_SPECIFIC_SETTINGS = [
+    'gameSettings',
+    'hostMode',
+    'roundDurationSeconds',
+    'codenamesGameMode',
+    'codenamesWordFileId',
+    'codenamesWordSource',
+    'rpsGameMode',
+    'rpsRoundDurationSeconds',
+    'rpsTargetScore',
+    'roleCounts',
+    'roleAssignmentMode',
+    'isRoleConfigurationCustomized',
+    'werewolfTieRule',
+  ];
+
+  socket.on('room:change_game', (payload, callback) => {
+    const { roomId, gameType } = payload || {};
+    const room = roomId ? roomManager.getRoom(roomId) : undefined;
+
+    if (!room || room.hostId !== user.id) {
+      if (callback) callback({ error: 'Only the Host can change the game' });
+      return;
+    }
+
+    // The runner holds live round state. Swapping the game out from under it
+    // would leave two sources of truth, so a running round has to be ended
+    // deliberately first.
+    if (room.status === 'playing') {
+      if (callback) callback({ error: 'Return the room to the lobby before changing the game' });
+      return;
+    }
+
+    const gameDef = GameRegistry.getInstance().get(gameType);
+    if (!gameDef) {
+      if (callback) callback({ error: `Unknown game "${gameType}"` });
+      return;
+    }
+
+    if (gameType === room.gameType) {
+      if (callback) callback({ error: 'The room is already set to that game' });
+      return;
+    }
+
+    // A definition's `minPlayers` is its *loosest* mode. Codenames declares 2
+    // for its two-player co-op variant but classic play needs 4, so trusting
+    // `minPlayers` alone would let a host switch into a lobby that cannot start.
+    // `game:start` applies the same split a moment later.
+    const MIN_SEATED: Record<string, number> = { codenames: 4 };
+    const minSeated = MIN_SEATED[gameType] ?? gameDef.minPlayers;
+
+    // The roster is carried over, not reset, so a room that has grown past a
+    // smaller game's limit is refused here rather than at start time. Kicking
+    // players is the host's way down.
+    const seated = room.players.length;
+    if (seated < minSeated) {
+      if (callback) {
+        callback({
+          error: `${gameDef.name} needs at least ${minSeated} players — ${seated} in the room.`,
+        });
+      }
+      return;
+    }
+    if (seated > gameDef.maxPlayers) {
+      if (callback) {
+        callback({
+          error: `${gameDef.name} allows at most ${gameDef.maxPlayers} players — ${seated} in the room.`,
+        });
+      }
+      return;
+    }
+
+    const nextSettings: Record<string, unknown> = { ...(room.settings || {}) };
+    for (const key of GAME_SPECIFIC_SETTINGS) delete nextSettings[key];
+
+    room.gameType = gameType;
+    room.settings = nextSettings as typeof room.settings;
+    // Werewolf and Salem are always run with a moderator, whatever the previous
+    // game had selected.
+    if (gameType === 'werewolf' || gameType === 'salem') {
+      room.settings = { ...room.settings, hostMode: true };
+    }
+    updateRoomDefaultRolesIfUncustomized(room);
+    room.players.forEach((p) => {
+      p.isReady = false;
+    });
+
+    io.to(`room:${room.id}`).emit('room:state', room);
+    io.to(`room:${room.id}`).emit('room:updated', room);
+    if (callback) callback({ success: true, room });
   });
 
   // ─── Update Settings ────────────────────────────────────────────
