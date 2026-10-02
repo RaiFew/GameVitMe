@@ -314,6 +314,13 @@ claim.
 
 Sockets join `room:<roomId>` and `user:<userId>`.
 
+**Transports.** The client pins `transports: ['polling', 'websocket']` and starts
+on polling. This is not a default worth trusting: the Cloudflare proxy in front of
+`api.frostespresso.site` completes a WebSocket handshake and then delivers
+nothing (§10 #13), so a connection that opens with an upgrade is silently deaf.
+`socketService.recycle()` drops the engine and re-handshakes, which is the only
+recovery from that state.
+
 **Room:** in — `create`, `join`, `leave`, `ready`, `kick`, `transfer_host`,
 `update_settings`. Out — `created`, `joined`, `state`, `updated`,
 `player_joined`, `player_left`, `player_ready`, `player_kicked`, `kicked_out`,
@@ -400,6 +407,12 @@ No schema change, no new route, no new page.
 | 5 | **Expected number assumed `+1` arithmetic.** Chaos boards hold arbitrary values, so "next number" was undefined. | Per-round `numberSequence` plus an `expectedIndex` cursor. Also replaced an O(n) `indexOf` lookup that could drift from the board. |
 | 6 | **Socket handlers registered after an `await`.** The client treats a socket as usable on `connect`, so a first emit reached a socket with no listener and was dropped — room join failed on mobile. | Handlers register synchronously before any `await`. |
 | 7 | **Dead re-export collision.** `moves/index.ts` re-exported names that `index.ts` also re-exported via `export *`. | Removed. |
+| 8 | **Abandoned rooms were never freed.** The socket `disconnect` handler only touched presence, so closing a tab left the room and its player marked `connected: true` in memory for the full 2-hour TTL — and `leaveRoom` refused to destroy a room whose status was `playing`, so a mid-game room everyone had dropped from was never destroyed at all. `room:leave` only fires on an explicit button click, never on navigation. | `disconnect` now calls `roomManager.markDisconnected`, which flips the seat to disconnected but **keeps** it, so a refresh rejoins as the same seat rather than a new one at the end of the row. A room with nobody connected gets `emptySince` stamped, and the 5-minute sweep reclaims it after 10 minutes. |
+| 9 | **`game:sync` scanned every room in memory.** The fallback when no `roomId` was supplied looped over `(roomManager as any).rooms.values()` and `.some()`-ed each room's players — synchronously, on every page refresh and reconnect. Bug 8 let dead rooms pile up, so this grew over time and blocked the event loop. That is the "server gets laggy" symptom. | Added a `playerId → roomId` index to `RoomManager`; the fallback is now `getRoomByPlayer()`. |
+| 10 | **Lobby actions failed silently.** `setReady`, `updateSettings`, `kickPlayer` and `transferHost` in `useRoom` emitted and discarded the ack, depending entirely on the server's `room:state` broadcast to change the screen. On a slow or dropped connection that broadcast never arrived, so the buttons did nothing at all and the lobby looked frozen. | Each action applies its change locally, refuses to emit on a disconnected socket, and surfaces the ack error in the lobby. Also fixed `roomStore.updatePlayer`, which matched on `p.userId` — a field `PlayerState` does not have, so it matched nothing and no optimistic update could ever apply. |
+| 11 | **Joins leaked listeners and failed early.** `room:state` and `room:error` were attached *after* the emit and removed only on the error path, so every join attempt left handlers on the shared socket — a stale `room:state` handler would call `setRoom` for a room the user had already left. The 6s deadline also fired while the join was still in flight, reporting a failure for a room that appeared moments later. | Listeners attach before the emit and are torn down on every exit path. Deadline raised to 15s. |
+| 12 | **Joins hung forever against a slow database.** The private-room path awaited `hasValidRoomInvite` with no bound; if the pool was saturated the handler never answered, so the client gave up on its own timer with a generic "request timed out". | The wait is bounded and returns a real, actionable error instead of silence. |
+| 13 | **Cloudflare accepted WebSocket upgrades it never wired up.** Measured against `api.frostespresso.site`: a socket.io connection whose *first* request is a WebSocket upgrade completes the handshake and fires `connect`, then drops every emit — **0/3** such connections ever delivered an ack, against **8/8** that started on polling. Raw polling GETs through the same proxy intermittently returned 502. Because socket.io reconnects on the last-used transport, one bad upgrade could strand a client on the dead transport permanently, which is why "still can't join" persisted across the server-side fixes. | Transport order pinned to start on polling (`transports: ['polling', 'websocket']`), and a join timeout now recycles the engine for a fresh handshake and retries once, so only a second failure reaches the user. |
 
 ---
 
@@ -435,6 +448,19 @@ No schema change, no new route, no new page.
    periodic job.
 6. **Ranked runs have no dedicated exit.** After a run, "Return to Lobby"
    returns to a one-player lobby rather than back to `/ranking`.
+7. **Leaving `/lobby/[code]` by navigating away never tells the server.** `room:leave`
+   only fires from the explicit Disband/Leave buttons, so following a link out of
+   the lobby keeps the socket connected and the player seated. The 10-minute
+   abandoned-room sweep is now the safety net for this case. A client-side emit
+   on `LobbyPage` unmount would close it properly, but React StrictMode's
+   double-mount would eject the user from their own lobby, so it needs a
+   deliberate fix rather than a silent one.
+8. **`VITE_WS_URL` in the deployed web build is unverified.** The Cloudflare
+   transport problem in §10 #13 was found by probing `api.frostespresso.site`
+   directly; `app.frostespresso.site` was unreachable from the machine used for
+   that investigation, so the URL the shipped bundle actually connects to has not
+   been confirmed to be the API host. If it points anywhere else that is a
+   separate failure.
 
 ---
 

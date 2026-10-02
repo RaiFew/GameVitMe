@@ -24,6 +24,7 @@
    - [ปัญหาที่ 7: OAuth `state_mismatch` Error](#ปัญหาที่-7-oauth-state_mismatch-error)
    - [ปัญหาที่ 8: Better Auth `internal_server_error` จาก Missing Relations ใน Drizzle](#ปัญหาที่-8-better-auth-internal_server_error-จาก-missing-relations-ใน-drizzle)
    - [ปัญหาที่ 9: Database Schema Drift บน Supabase (คอลัมน์ขาดและ NOT NULL Constraint)](#ปัญหาที่-9-database-schema-drift-บน-supabase-คอลัมน์ขาดและ-not-null-constraint)
+   - [ปัญหาที่ 10: เข้าห้องไม่ได้ และ Lobby ค้าง ("Room join request timed out")](#ปัญหาที่-10-เข้าห้องไม่ได้-และ-lobby-ค้าง-room-join-request-timed-out)
 5. [ตารางสรุป: วิธีที่เวิร์ค vs วิธีที่ไม่เวิร์ค (Solutions Comparison Matrix)](#5-ตารางสรุป-วิธีที่เวิร์ค-vs-วิธีที่ไม่เวิร์ค)
 6. [บันทึกปัญหาค้างส่ง (Recorded Issue - Pending Resolution)](#6-บันทึกปัญหาค้างส่ง-recorded-issue---pending-resolution)
 
@@ -344,6 +345,19 @@ d:\ProjectGameWeb\
   - ปลดล็อก `DROP NOT NULL` ให้กับคอลัมน์ `provider` และ `provider_account_id`
   - อัปเดต Unique Constraint ให้มาผูกกับ `(provider_id, account_id)`
 
+### ปัญหาที่ 10: ห้องค้างและเข้าห้องไม่ได้ ("Room join request timed out")
+* **อาการ:** ขึ้นข้อความ `Room join request timed out` และเมื่อมีคนเข้าห้องแล้ว หน้า Lobby ของคนอื่นจะค้าง กด Ready / Settings / Start ไม่มีอะไรเกิดขึ้น
+* **สาเหตุ:** เป็น **หลายชั้นรวมกัน** ไม่ใช่จุดเดียว
+  1. **ห้องที่ไม่มีใครเล่นไม่เคยถูกเก็บกวาด:** `disconnect` handler เรียกแค่ `presence.userDisconnected` ไม่ได้แตะห้องเลย ปิดแท็บแล้วห้องยังค้างใน memory ครบ 2 ชั่วโมง และ `leaveRoom` ปฏิเสธที่จะลบห้องที่ `status === 'playing'` ด้วย
+  2. **`game:sync` สแกนทุกห้องใน memory:** เป็นลูป `O(rooms × players)` แบบ synchronous ทุกครั้งที่รีเฟรชหน้า ยิ่งห้องที่ตายสะสมเยอะ (ข้อ 1) ยิ่งช้าลง นี่คืออาการ "server lag"
+  3. **ปุ่มใน Lobby ทำงานแบบเงียบ:** `setReady` / `updateSettings` emit แล้วทิ้ง ack ทิ้ง ไม่มี optimistic update เลย ถ้า server ไม่ broadcast `room:state` กลับมา ปุ่มก็ไม่มีอะไรเกิดขึ้นเลย
+  4. **Cloudflare รับ WebSocket handshake แต่ไม่ได้เดินสายให้จริง:** วัดจาก `api.frostespresso.site` จริง — การเชื่อมต่อที่เปิดด้วย WebSocket ตัวแรก **0/3** ไม่เคยได้ ack สักครั้ง (แต่ `connect` ยัง fire ปกติ ดูเหมือนเชื่อมต่ออยู่) เทียบกับการเริ่มที่ polling **8/8** สำเร็จ
+* **วิธีแก้ที่เวิร์ค:**
+  - `disconnect` เรียก `roomManager.markDisconnected()` ซึ่งทำเครื่องหมายว่าหลุดแต่**ยังเก็บที่นั่งไว้** (refresh แล้วกลับมาที่ที่เดิม ไม่ใช่โต๊ะท้ายแถว) และห้องที่ไม่มีใครต่อ socket เลยจะถูก sweep ทิ้งใน 10 นาที
+  - เพิ่ม index `playerId → roomId` แทนการสแกนทุกห้อง
+  - ปุ่มใน Lobby อัปเดตสถานะในเครื่องทันที พร้อมแสดง error จาก ack
+  - ฝั่ง client บังคับ `transports: ['polling', 'websocket']` เริ่มที่ polling และถ้า join timeout ให้ recycle engine แล้วลองใหม่ 1 ครั้ง
+
 ---
 
 ## 5. ตารางสรุป: วิธีที่เวิร์ค vs วิธีที่ไม่เวิร์ค
@@ -359,10 +373,20 @@ d:\ProjectGameWeb\
 | **OAuth `state_mismatch`** | เซ็ตคุกกี้ซ้ำๆ ทีละตัวใน Fastify | รวมคุกกี้เป็น Array และเปิด `account.skipStateCookieCheck: true` |
 | **Drizzle Relation Error** | คิวรี Raw SQL แทน Drizzle | เพิ่ม `accountsRelations` ให้ตาราง `accounts` รู้จักความสัมพันธ์กับ `users` |
 | **Database Schema Drift** | นั่ง Drop Database ทั้งหมดแล้วเริ่มใหม่ | สร้างและรันสคริปต์ `migrate-better-auth.ts` เพื่อ ALTER ตารางเดิมอย่างปลอดภัย |
+| **เข้าห้องไม่ได้ / Lobby ค้าง** | แก้โค้ดฝั่ง server อย่างเดียว (แต่ Cloudflare ไม่ได้ส่ง packet ให้) | บังคับให้ client เริ่มด้วย `polling` และ recycle connection เมื่อ join timeout |
+| **ห้องค้างใน memory** | รอให้ TTL 2 ชั่วโมงหมดอายุเอง | `disconnect` เรียก `markDisconnected` + sweep ห้องที่ไม่มีคนเล่นทิ้งทุก 10 นาที |
 
 ---
 
 ## 6. บันทึกปัญหาค้างส่ง (Recorded Issue - Pending Resolution)
+
+> **สถานะ: แก้แล้ว (Resolved)** — ปัญหาล็อกอิน Google แล้วยังไม่ขึ้นสถานะในหน้าเว็บ
+> แก้ได้ด้วย **แนวทางที่ 2 (Custom Domain)** ตามที่เสนอไว้ด้านล่าง: ย้ายไปใช้
+> `app.frostespresso.site` (Vercel) + `api.frostespresso.site` (Railway) เมื่อ 2026-09-27
+> ทำให้ทั้งสองโดเมนอยู่ใน registrable domain เดียวกัน คุกกี้จึงกลายเป็น first-party
+> และเบราว์เซอร์ไม่บล็อกอีกต่อไป ไม่ต้องใช้ `partitioned: true` (ซึ่งเคยเป็นตัวทำให้ล็อกอินพัง)
+> รายละเอียดการตั้งค่าและ gotcha อยู่ที่ `PROJECT.md` §10 และไฟล์ `.claude` memory
+> `project_custom_domain.md` — ข้างล่างนี้เก็บบันทึกการวิเคราะห์เดิมไว้เป็นประวัติ
 
 ### อาการของปัญหา (Symptom):
 > **"เมื่อผู้ใช้กดล็อกอินด้วย Google สำเร็จแล้ว เบราว์เซอร์เด้งกลับมาที่หน้าเว็บหลัก (`https://game-vit-me-web.vercel.app`) ได้แล้ว แต่ในหน้าเว็บยังไม่แสดงสถานะว่าล็อกอินสำเร็จ และยังแสดงปุ่มให้เข้าสู่ระบบใหม่"**
