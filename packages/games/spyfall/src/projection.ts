@@ -60,6 +60,7 @@ export function projectPlayerView(
     // Host has 'Host' role; Spy has 'Spy' role
     myRole: isHost ? 'Host' : isSpy ? 'Spy' : (state.playerRoles[playerId] ?? 'Player'),
     allLocations: state.allLocations,
+    locationSource: state.locationSource,
     currentQuestionerId: state.currentQuestionerId,
     currentAnswererId: state.currentAnswererId,
     previousQuestionerId: state.previousQuestionerId,

@@ -12,6 +12,7 @@ import friendRoutes from './routes/friend.routes.js';
 import invitationRoutes from './routes/invitation.routes.js';
 import roomRoutes from './routes/room.routes.js';
 import codenamesRoutes from './routes/codenames.routes.js';
+import spyfallRoutes from './routes/spyfall.routes.js';
 import rankingRoutes from './routes/ranking.routes.js';
 
 import { GameRegistry } from '@party/game-engine';
@@ -55,6 +56,7 @@ async function bootstrap() {
   await fastify.register(invitationRoutes);
   await fastify.register(roomRoutes);
   await fastify.register(codenamesRoutes);
+  await fastify.register(spyfallRoutes);
   await fastify.register(rankingRoutes);
 
   // Initialize Socket.io

@@ -6,6 +6,8 @@ import { gameSessions, rooms } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { getCodenamesWordFile } from '../../routes/codenames.routes.js';
+import { getSpyfallLocationSets } from '../../routes/spyfall.routes.js';
+import { MIN_SPYFALL_LOCATIONS } from '@party/spyfall';
 import { clampCodenamesTimer } from '../../rooms/settings-validation.js';
 import { isRankedVariant } from '@party/number-grid';
 import type { RankedRunResult } from '@party/number-grid';
@@ -310,6 +312,45 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
         (settings as any).guessTimeSeconds = clampCodenamesTimer(roomSettings.codenamesGuessTimeSeconds, 600);
         if (wordPoolSnapshot) {
           (settings as any).wordPoolSnapshot = wordPoolSnapshot;
+        }
+      }
+
+      if (room.gameType === 'spyfall') {
+        const locationSource = (roomSettings.spyfallLocationSource || 'DEFAULT') as 'DEFAULT' | 'CUSTOM';
+        const fileIds = Array.isArray(roomSettings.spyfallLocationFileIds)
+          ? (roomSettings.spyfallLocationFileIds as string[]).slice(0, 3)
+          : [];
+        // Every enabled set is merged into one pool rather than one winning:
+        // the host picks which of their sets are on, and all of them are used.
+        let locationPoolSnapshot: { id: string; name: string; roles: string[] }[] | undefined;
+
+        if (locationSource === 'CUSTOM' && fileIds.length > 0) {
+          try {
+            const sets = await getSpyfallLocationSets(fileIds, room.hostId);
+            const merged = sets.flatMap((s) => s.locations).filter((l) => l && l.name && l.roles?.length >= 2);
+            // The same floor `setup()` applies, so a set that shrank between the
+            // lobby and the start still degrades to the built-ins.
+            if (merged.length >= MIN_SPYFALL_LOCATIONS) {
+              const seen = new Set<string>();
+              locationPoolSnapshot = merged.filter((l) => {
+                const key = l.name.toUpperCase();
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              });
+            } else {
+              console.warn(
+                `[GameHandler] Custom location pool has ${merged.length} locations, falling back to built-in locations`
+              );
+            }
+          } catch (err) {
+            console.warn('[GameHandler] Error loading custom location sets:', err);
+          }
+        }
+
+        (settings as any).locationSource = locationSource;
+        if (locationPoolSnapshot) {
+          (settings as any).locationPoolSnapshot = locationPoolSnapshot;
         }
       }
 

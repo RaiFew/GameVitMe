@@ -3,6 +3,7 @@ import { shuffle } from '@party/game-engine';
 import type { SpyfallMasterState, SpyfallPlayerView, SpyfallSettings } from './state.js';
 import { SpyfallPhase, DEFAULT_SPYFALL_SETTINGS } from './state.js';
 import { LOCATIONS } from './data/locations.js';
+import { MIN_SPYFALL_LOCATIONS } from './data/location-file-parser.js';
 import { validateSpyfallMove, processSpyfallMove } from './moves.js';
 import { projectPlayerView } from './projection.js';
 
@@ -53,6 +54,17 @@ export const spyfallGame: GameDefinition<
       max: 16,
       description: 'Number of locations shown in the reference grid',
     },
+    {
+      key: 'locationSource',
+      label: 'Location Set',
+      type: 'select',
+      default: 'DEFAULT',
+      options: [
+        { label: 'Built-in locations', value: 'DEFAULT' },
+        { label: 'My uploaded location sets', value: 'CUSTOM' },
+      ],
+      description: 'Custom sets replace the built-in list for this round',
+    },
   ] satisfies GameSettingsField[],
 
   setup(ctx: GameContext, settings: SpyfallSettings): SpyfallMasterState {
@@ -66,11 +78,21 @@ export const spyfallGame: GameDefinition<
       : playerIds;
     const activePlayerIds = playingPlayerIds.length > 0 ? playingPlayerIds : playerIds;
 
+    // A custom set replaces the built-in list wholesale rather than adding to
+    // it -- the built-ins stay untouched in `LOCATIONS`, and a too-short upload
+    // falls back to them rather than producing a grid nobody can fill.
+    const customPool = Array.isArray(settings.locationPoolSnapshot)
+      ? settings.locationPoolSnapshot.filter((l) => l && l.name && l.roles?.length >= 2)
+      : null;
+    const pool =
+      customPool && customPool.length >= MIN_SPYFALL_LOCATIONS ? customPool : LOCATIONS;
+    const usingCustom = pool !== LOCATIONS;
+
     // Shuffle and select locations for the reference list
-    const shuffledLocations = shuffle(LOCATIONS, ctx.random);
+    const shuffledLocations = shuffle(pool, ctx.random);
     const selectedLocations = shuffledLocations.slice(
       0,
-      Math.min(settings.locationCount || 16, LOCATIONS.length),
+      Math.min(settings.locationCount || 16, pool.length),
     );
 
     // Pick one secret location for this round
@@ -112,6 +134,7 @@ export const spyfallGame: GameDefinition<
       hostPlayerId: settings.hostPlayerId || playerIds[0]!,
       selectedLocation: roundLocation.name,
       selectedLocationId: roundLocation.id,
+      locationSource: usingCustom ? 'CUSTOM' : 'DEFAULT',
       spyPlayerId,
       playerRoles,
       allLocations: selectedLocations.map((l) => l.name).sort(),
@@ -224,3 +247,11 @@ export type {
 } from './state.js';
 export { SpyfallPhase, SpyfallMoveType, DEFAULT_SPYFALL_SETTINGS } from './state.js';
 export { LOCATIONS, getAllLocationNames } from './data/locations.js';
+export type { LocationData } from './data/locations.js';
+export {
+  parseLocationFileContent,
+  MIN_SPYFALL_LOCATIONS,
+  MAX_SPYFALL_LOCATIONS,
+  MAX_LOCATION_ROLES,
+} from './data/location-file-parser.js';
+export type { LocationFileParseResult } from './data/location-file-parser.js';

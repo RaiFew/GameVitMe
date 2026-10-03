@@ -327,6 +327,8 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
     'codenamesWordSource',
     'codenamesClueTimeSeconds',
     'codenamesGuessTimeSeconds',
+    'spyfallLocationSource',
+    'spyfallLocationFileIds',
     'rpsGameMode',
     'rpsRoundDurationSeconds',
     'rpsTargetScore',

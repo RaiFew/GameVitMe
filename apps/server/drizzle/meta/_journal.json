@@ -22,6 +22,13 @@
       "when": 1789560000000,
       "tag": "0002_rankings",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789646400000,
+      "tag": "0003_spyfall_location_sets",
+      "breakpoints": true
     }
   ]
 }

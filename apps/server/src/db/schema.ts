@@ -291,3 +291,19 @@ export const codenamesWordFiles = pgTable('codenames_word_files', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+export const spyfallLocationSets = pgTable('spyfall_location_sets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ownerId: text('owner_id').notNull(),
+  name: text('name').notNull(),
+  originalFileName: text('original_file_name').notNull(),
+  format: text('format').notNull(), // 'CSV' | 'TXT'
+  // Each entry carries its own roles -- an uploaded location has no shared role
+  // pool, so the roles travel with the name rather than being looked up.
+  locations: jsonb('locations')
+    .$type<{ id: string; name: string; roles: string[] }[]>()
+    .notNull(),
+  locationCount: integer('location_count').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});

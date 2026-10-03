@@ -178,6 +178,9 @@ export function SpyfallGame({ playerView, onAction, onReturnLobby, onPlayAgain }
           <div className="lg:w-80 shrink-0">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-ink-muted block mb-2">
               Locations Reference
+              {playerView.locationSource === 'CUSTOM' && (
+                <span className="text-ink-faint normal-case"> — custom set</span>
+              )}
             </span>
             <LocationGrid locations={playerView.allLocations} />
           </div>

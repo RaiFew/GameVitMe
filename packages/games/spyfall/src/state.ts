@@ -30,6 +30,8 @@ export interface SpyfallMasterState {
   hostPlayerId: string;
   selectedLocation: string;
   selectedLocationId: string;
+  /** Whether this round drew from an uploaded set or the built-in list. */
+  locationSource: 'DEFAULT' | 'CUSTOM';
   spyPlayerId: string;
   playerRoles: Record<string, string>;
   allLocations: string[];
@@ -79,6 +81,8 @@ export interface SpyfallPlayerView {
   location: string | null;
   myRole: string | null;
   allLocations: string[];
+  /** Whether this round's locations came from an uploaded set. */
+  locationSource: 'DEFAULT' | 'CUSTOM';
   currentQuestionerId: string | null;
   currentAnswererId: string | null;
   previousQuestionerId: string | null;
@@ -107,12 +111,21 @@ export interface SpyfallSettings {
   hostPlayerId?: string;
   roundDurationSeconds: number;
   locationCount: number;
+  locationSource?: 'DEFAULT' | 'CUSTOM';
+  locationFileId?: string;
+  /**
+   * Resolved server-side from the enabled custom sets. A replacement for the
+   * built-in list, not an addition to it: the built-ins are only read when this
+   * is absent, so an upload can never modify or remove them.
+   */
+  locationPoolSnapshot?: { id: string; name: string; roles: string[] }[];
 }
 
 export const DEFAULT_SPYFALL_SETTINGS: SpyfallSettings = {
   hostMode: true,
   roundDurationSeconds: 480, // 8 minutes
   locationCount: 16,
+  locationSource: 'DEFAULT',
 };
 
 // ─── Move Types ────────────────────────────────────────────────

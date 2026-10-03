@@ -9,6 +9,7 @@ import { InviteFriends } from '../components/lobby/InviteFriends';
 import { RoleConfigurationCard } from '../components/lobby/RoleConfigurationCard';
 import { CodenamesWordSourceCard } from '../components/lobby/CodenamesWordSourceCard';
 import { CodenamesTimerSettingsCard } from '../components/lobby/CodenamesTimerSettingsCard';
+import { SpyfallLocationCard } from '../components/lobby/SpyfallLocationCard';
 import { RPSSettingsCard } from '../components/lobby/RPSSettingsCard';
 import { NumberGridSettingsCard } from '../components/lobby/NumberGridSettingsCard';
 import { Button } from '../components/ui/Button';
@@ -89,6 +90,7 @@ export function LobbyPage() {
   const isRPSDuel = isRPS && rpsGameMode === 'DUEL';
 
   const isNumberGrid = room.gameType === 'number-grid';
+  const isSpyfall = room.gameType === 'spyfall';
 
   const isHostForced = room.gameType === 'werewolf' || room.gameType === 'salem';
   const isHostMode = isCodenames || isNumberGrid ? false : isRPS ? !!room.settings?.hostMode : (isHostForced || room.settings?.hostMode !== false);
@@ -471,6 +473,15 @@ export function LobbyPage() {
           {/* Codenames Spymaster / Operative turn timers */}
           {isCodenames && (
             <CodenamesTimerSettingsCard
+              isHost={isHost}
+              settings={room.settings as any}
+              onUpdateSettings={updateSettings}
+            />
+          )}
+
+          {/* Spyfall custom location sets */}
+          {isSpyfall && (
+            <SpyfallLocationCard
               isHost={isHost}
               settings={room.settings as any}
               onUpdateSettings={updateSettings}
