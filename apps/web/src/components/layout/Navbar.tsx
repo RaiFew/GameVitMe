@@ -1,5 +1,6 @@
 ﻿import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { useAuth } from '../../hooks/useAuth';
 import { useThemeStore } from '../../stores/themeStore';
 import { useT, useLangStore } from '../../stores/langStore';
 import { Sun, Moon, Menu, X, Gamepad2, Users, User, LogOut } from 'lucide-react';
@@ -8,7 +9,11 @@ import { Button } from '../ui/Button';
 import { NotificationBell } from '../notifications/NotificationBell';
 
 export default function Navbar() {
-  const { isAuthenticated, clearUser, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
+  // logout, not the store's clearUser: a real Google session lives in a cookie the
+  // server still honours, so clearing local state alone signs the visitor straight
+  // back in on the next load.
+  const { logout } = useAuth();
   const { resolvedTheme, toggleTheme } = useThemeStore();
   const t = useT();
   const { lang, toggleLang } = useLangStore();
@@ -93,7 +98,7 @@ export default function Navbar() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={clearUser}
+                onClick={logout}
                 className="text-xs py-1.5 px-3 h-8"
               >
                 {t('nav.signOut')}
@@ -169,7 +174,7 @@ export default function Navbar() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    clearUser();
+                    logout();
                     setMobileMenuOpen(false);
                   }}
                   className="text-xs"
