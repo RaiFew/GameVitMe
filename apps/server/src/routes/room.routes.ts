@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { requireAuth } from '../auth/middleware.js';
 import { roomManager } from '../rooms/room-manager.js';
 import { GameRegistry } from '@party/game-engine';
+import { persistRoom } from '../rooms/persist-room.js';
 import { z } from 'zod';
 
 const roomRoutes: FastifyPluginAsync = async (fastify) => {
@@ -60,6 +61,10 @@ const roomRoutes: FastifyPluginAsync = async (fastify) => {
         username: request.user.username || request.user.name || 'Player',
         displayName: request.user.displayName || request.user.name || 'Player',
       });
+
+      // Rooms live in memory, but game_invitations.room_id is a foreign key, so an
+      // invitation cannot be written without a matching row.
+      await persistRoom(room);
 
       return {
         code: room.code,

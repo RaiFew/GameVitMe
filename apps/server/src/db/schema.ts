@@ -120,7 +120,12 @@ export const gameInvitations = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     roomId: uuid('room_id').notNull().references(() => rooms.id, { onDelete: 'cascade' }),
     inviterId: uuid('inviter_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-    inviteeId: uuid('invitee_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    inviteeId: uuid('invitee_id').references(() => users.id, { onDelete: 'cascade' }),
+    // A link invitation carries an unguessable token and no invitee: who holds
+    // the token is unknown until somebody opens the link. Claiming one inserts
+    // an ordinary ACCEPTED row for that user, which is what hasValidRoomInvite
+    // already reads, so private-room access needs no new path.
+    token: text('token'),
     gameType: text('game_type').notNull(),
     status: invitationStatusEnum('status').default('PENDING').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -134,6 +139,9 @@ export const gameInvitations = pgTable(
     unqPending: uniqueIndex('game_invitations_pending_unq')
       .on(t.roomId, t.inviteeId)
       .where(sql`${t.status} = 'PENDING'`),
+    unqToken: uniqueIndex('game_invitations_token_unq')
+      .on(t.token)
+      .where(sql`${t.token} IS NOT NULL`),
   }),
 );
 

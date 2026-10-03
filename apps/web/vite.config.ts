@@ -20,12 +20,15 @@ export default defineConfig({
     host: true, // Listen on all local IP addresses (0.0.0.0)
     port: 3000,
     proxy: {
+      // 127.0.0.1 rather than localhost: Node resolves the name to both ::1 and
+      // 127.0.0.1 and connect() fails on the pair with ENOBUFS, which hangs every
+      // proxied request instead of erroring.
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://127.0.0.1:3001',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'http://localhost:3001',
+        target: 'http://127.0.0.1:3001',
         ws: true,
       },
     },

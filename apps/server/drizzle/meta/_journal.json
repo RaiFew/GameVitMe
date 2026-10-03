@@ -29,6 +29,13 @@
       "when": 1789646400000,
       "tag": "0003_spyfall_location_sets",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789732800000,
+      "tag": "0004_invitation_links",
+      "breakpoints": true
     }
   ]
 }

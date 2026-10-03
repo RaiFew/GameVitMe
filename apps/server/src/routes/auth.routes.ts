@@ -56,6 +56,19 @@ export async function redeemHandoffCode(
   };
 }
 
+/**
+ * `next` rides along through the OAuth round trip so the visitor lands back where
+ * they were headed. It arrives from the query string, so it is untrusted: only a
+ * same-site absolute path is allowed through, or this becomes an open redirect
+ * that hands a phishing page a trusted-looking link.
+ */
+function safeNextPath(raw: unknown): string | null {
+  if (typeof raw !== 'string' || !raw.startsWith('/')) return null;
+  // `//evil.com` and `/\evil.com` are protocol-relative URLs to a browser.
+  if (raw.startsWith('//') || raw.startsWith('/\\')) return null;
+  return raw;
+}
+
 const authRoutes: FastifyPluginAsync = async (fastify) => {
   // OAuth landing pad. Reached as a top-level navigation on the API domain, so the
   // session cookie is first-party here even when the browser blocks third-party
@@ -66,22 +79,27 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.code(500).send('VITE_APP_URL is not configured');
     }
 
+    const query = request.query as any;
+    const next = safeNextPath(query?.next);
+    const withNext = (url: string) =>
+      next ? `${url}${url.includes('?') ? '&' : '?'}next=${encodeURIComponent(next)}` : url;
+
     try {
       const session: any = await auth.api.getSession({
         headers: fromNodeHeaders(request.headers),
       });
       if (!session?.session?.token) {
-        return reply.redirect(`${appUrl}/?error=no_session`, 302);
+        return reply.redirect(withNext(`${appUrl}/?error=no_session`), 302);
       }
 
       // Must be a UUID: verifications.id is a uuid column, and Postgres rejects
       // non-uuid strings even in an equality comparison.
       const code = await issueHandoffCode(session.session.token);
 
-      return reply.redirect(`${appUrl}/?code=${encodeURIComponent(code)}`, 302);
+      return reply.redirect(withNext(`${appUrl}/?code=${encodeURIComponent(code)}`), 302);
     } catch (err) {
       console.warn('[auth] /auth/finish handoff failed:', err);
-      return reply.redirect(`${appUrl}/?error=handoff_failed`, 302);
+      return reply.redirect(withNext(`${appUrl}/?error=handoff_failed`), 302);
     }
   });
 

@@ -3,13 +3,14 @@ import { roomManager } from '../../rooms/room-manager.js';
 import { updateRoomDefaultRolesIfUncustomized, calculateDefaultRoleCounts } from '../../rooms/role-defaults.js';
 import { hasValidRoomInvite } from '../../services/invitations.js';
 import { validateNumberGridSettings } from '../../rooms/settings-validation.js';
+import { persistRoom } from '../../rooms/persist-room.js';
 import { GameRegistry } from '@party/game-engine';
 
 export const registerRoomHandlers = (io: Server, socket: Socket) => {
   const user = socket.data.user;
 
   // ─── Room Creation ──────────────────────────────────────────────
-  socket.on('room:create', (payload, callback) => {
+  socket.on('room:create', async (payload, callback) => {
     const { gameId, gameType, name, maxPlayers, isPrivate, hostMode, roundDurationSeconds } = payload || {};
     const effectiveGameType = gameId || gameType || 'spyfall';
     const effectiveName = name?.trim() || `${user?.displayName || 'Player'}'s Room`;
@@ -42,6 +43,8 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
       const result = roomManager.joinRoom(room.id, user);
       const roomData = result ? result.room : room;
       updateRoomDefaultRolesIfUncustomized(roomData);
+      // After the settings above, so the persisted snapshot is the real one.
+      await persistRoom(roomData);
 
       socket.join(`room:${room.id}`);
       socket.data.roomId = room.id;

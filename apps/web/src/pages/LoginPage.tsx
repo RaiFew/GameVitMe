@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth, takePendingRedirect } from '../hooks/useAuth';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -14,10 +14,14 @@ export default function LoginPage() {
   const t = useT();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fromLocation = (location.state as any)?.from;
-  const redirectTarget = fromLocation
-    ? `${fromLocation.pathname || ''}${fromLocation.search || ''}`
-    : '/dashboard';
+  // A ProtectedRoute bounce puts the destination on location.state; the Google
+  // round trip puts it in sessionStorage, because that redirect is a full page
+  // load through the API domain and React state does not survive it. Read once:
+  // takePendingRedirect clears, so a second render would fall back to the default.
+  const [redirectTarget] = useState(() => {
+    const from = (location.state as any)?.from;
+    return (from && `${from.pathname || ''}${from.search || ''}`) || takePendingRedirect() || '/dashboard';
+  });
 
   if (isAuthenticated) {
     return <Navigate to={redirectTarget} replace />;
@@ -74,7 +78,7 @@ export default function LoginPage() {
 
         <Button
           variant="secondary"
-          onClick={login}
+          onClick={() => login(redirectTarget)}
           type="button"
           className="w-full flex items-center justify-center gap-2 text-xs"
         >

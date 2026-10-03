@@ -3,6 +3,27 @@ import { useAuthStore } from '../stores/authStore';
 import { api } from '../lib/api';
 
 /**
+ * Where to send the user once they are authenticated. Survives the Google
+ * redirect, which is a full page load through the API domain.
+ */
+export const PENDING_REDIRECT_KEY = 'auth:next';
+
+/** Reads and clears the pending destination. One-shot by design. */
+export function takePendingRedirect(): string | null {
+  const next = sessionStorage.getItem(PENDING_REDIRECT_KEY);
+  if (!next) return null;
+  sessionStorage.removeItem(PENDING_REDIRECT_KEY);
+  return next;
+}
+
+/** Same-origin absolute paths only -- never let a redirect leave the app. */
+function safeNextPath(next: string | undefined | null): string | null {
+  if (!next || !next.startsWith('/')) return null;
+  if (next.startsWith('//') || next.startsWith('/\\')) return null;
+  return next;
+}
+
+/**
  * Redeems the one-time code left in the URL by the API domain after Google login.
  * Must be mounted at the app root: it depends on `?code=` surviving the redirect,
  * and pages like HomePage never call useAuth, so a page-level hook would miss it.
@@ -15,7 +36,13 @@ export function useAuthHandoff() {
     const code = url.searchParams.get('code');
     if (!code) return;
 
+    // The destination survived the OAuth round trip as `next`; stash it so the
+    // app can send the freshly-authenticated visitor where they were headed.
+    const next = url.searchParams.get('next');
+    if (next) sessionStorage.setItem(PENDING_REDIRECT_KEY, next);
+
     url.searchParams.delete('code');
+    url.searchParams.delete('next');
     window.history.replaceState({}, '', url.toString());
 
     api.post<{ user: any; token: string }>('/api/auth/handoff', { code })
@@ -64,18 +91,24 @@ export function useAuth() {
     };
   }, []);
 
-  const login = async () => {
+  const login = async (redirectTo?: string) => {
     try {
       const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
       if (!apiBase && window.location.hostname !== 'localhost') {
         alert('ยังไม่ได้เชื่อมต่อกับ Backend: ไม่พบค่า VITE_API_URL ในระบบ\nกรุณาเพิ่ม VITE_API_URL ใน Vercel แล้วกด Redeploy 1 ครั้งครับ');
         return;
       }
+      const next = safeNextPath(redirectTo);
+      if (next) sessionStorage.setItem(PENDING_REDIRECT_KEY, next);
+
       const res = await api.post<{ url?: string }>('/api/auth/sign-in/social', {
         provider: 'google',
         // Lands on the API domain on purpose: the session cookie is only readable
-        // there. It hands back a code we exchange for the token.
-        callbackURL: `${apiBase || window.location.origin}/auth/finish`,
+        // there. It hands back a code we exchange for the token, and `next` is
+        // echoed back so an invite link is not lost across the redirect.
+        callbackURL: next
+          ? `${apiBase || window.location.origin}/auth/finish?next=${encodeURIComponent(next)}`
+          : `${apiBase || window.location.origin}/auth/finish`,
       });
       const redirectUrl = res?.url;
       if (redirectUrl) {

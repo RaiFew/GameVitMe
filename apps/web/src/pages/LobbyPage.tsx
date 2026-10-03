@@ -566,7 +566,7 @@ export function LobbyPage() {
             <h3 className="text-xs font-mono uppercase tracking-widest font-bold text-ink-muted mb-4">
               Scan / Join Code
             </h3>
-            <QRCodeDisplay roomCode={roomCode || room.code || ''} />
+            <QRCodeDisplay roomCode={roomCode || room.code || ''} canMintLink={isHost} />
           </Card>
 
           {/* Timer Settings in Host Mode */}
