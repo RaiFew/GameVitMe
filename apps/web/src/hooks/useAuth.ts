@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { api } from '../lib/api';
 
@@ -30,6 +31,7 @@ function safeNextPath(next: string | undefined | null): string | null {
  */
 export function useAuthHandoff() {
   const setUser = useAuthStore((s) => s.setUser);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -38,7 +40,9 @@ export function useAuthHandoff() {
 
     // The destination survived the OAuth round trip as `next`; stash it so the
     // app can send the freshly-authenticated visitor where they were headed.
-    const next = url.searchParams.get('next');
+    // Re-validated here because this value arrives from the URL, not from our own
+    // login() call: a hand-crafted link could otherwise store an off-site target.
+    const next = safeNextPath(url.searchParams.get('next'));
     if (next) sessionStorage.setItem(PENDING_REDIRECT_KEY, next);
 
     url.searchParams.delete('code');
@@ -47,10 +51,16 @@ export function useAuthHandoff() {
 
     api.post<{ user: any; token: string }>('/api/auth/handoff', { code })
       .then((res) => {
-        if (res?.user) setUser(res.user, res.token);
+        if (!res?.user) return;
+        setUser(res.user, res.token);
+        // Arriving here already authenticated, so nothing routes through the login
+        // form that would otherwise consume the stashed destination. Without this
+        // the visitor lands on Home and the invite they came for is lost again.
+        const dest = takePendingRedirect();
+        if (dest) navigate(dest, { replace: true });
       })
       .catch((err) => console.error('Auth handoff failed:', err));
-  }, [setUser]);
+  }, [setUser, navigate]);
 }
 
 export function useAuth() {
