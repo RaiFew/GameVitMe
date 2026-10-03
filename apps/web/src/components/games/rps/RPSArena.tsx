@@ -101,6 +101,8 @@ export function RPSArena({
         <span className="text-[10px] font-mono text-ink-faint">
           {gameMode === 'BATTLE_ROYALE'
             ? `${players.filter((p) => p.isAlive).length} Survivors Remaining`
+            : gameMode === 'TOURNAMENT'
+            ? 'Lives to Zero'
             : 'Race to Target Points'}
         </span>
       </div>
@@ -168,7 +170,11 @@ export function RPSArena({
 
               {/* Score / Status */}
               <div className="mt-1 flex items-center gap-1">
-                {gameMode !== 'BATTLE_ROYALE' ? (
+                {gameMode === 'TOURNAMENT' ? (
+                  <span className="text-[10px] font-mono font-bold text-ink-muted">
+                    {player.lives} {player.lives === 1 ? 'life' : 'lives'}
+                  </span>
+                ) : gameMode !== 'BATTLE_ROYALE' ? (
                   <span className="text-[10px] font-mono font-bold text-ink-muted">
                     {player.score} pts
                   </span>

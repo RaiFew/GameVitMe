@@ -90,7 +90,17 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
     const isCodenamesTwoPlayer = isCodenames && codenamesGameMode === 'TWO_PLAYER';
 
     const isRPS = room.gameType === 'rock-paper-scissors';
-    const rpsGameMode = ((room.settings as any)?.rpsGameMode || (room.players.length === 2 ? 'DUEL' : 'BATTLE_ROYALE')) as 'DUEL' | 'BATTLE_ROYALE' | 'POINTS_RACE';
+    // The host sits out in Host Mode, so the mode default has to count fighters,
+    // not seats -- otherwise a 1-host-plus-1-fighter room picks BATTLE_ROYALE.
+    const rpsFighterCount = hostMode
+      ? room.players.filter((p) => p.id !== room.hostId).length
+      : room.players.length;
+    const rpsGameMode = ((room.settings as any)?.rpsGameMode ||
+      (rpsFighterCount === 2 ? 'DUEL' : 'BATTLE_ROYALE')) as
+      | 'DUEL'
+      | 'BATTLE_ROYALE'
+      | 'POINTS_RACE'
+      | 'TOURNAMENT';
     const isRPSDuel = isRPS && rpsGameMode === 'DUEL';
 
     if (isCodenamesTwoPlayer) {
@@ -361,6 +371,9 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
           typeof roomSettings.rpsRoundDurationSeconds === 'number'
             ? roomSettings.rpsRoundDurationSeconds
             : 10;
+        const lives = Number(roomSettings.rpsLivesPerMatch);
+        (settings as any).livesPerMatch =
+          Number.isFinite(lives) ? Math.min(5, Math.max(1, Math.round(lives))) : 3;
       }
 
       runner.setup(settings);

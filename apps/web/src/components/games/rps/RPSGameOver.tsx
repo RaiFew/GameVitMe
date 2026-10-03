@@ -78,7 +78,7 @@ export function RPSGameOver({
           <div className="col-span-2 sm:col-span-1 p-2 rounded-xs bg-canvas-sunk border border-rule">
             <span className="text-[9px] font-mono text-ink-muted uppercase block">Game Format</span>
             <span className="text-sm font-black font-mono text-ink">
-              {gameMode === 'DUEL' ? '1v1 Duel' : gameMode === 'BATTLE_ROYALE' ? 'Battle Royale' : 'Points Race'}
+              {gameMode === 'DUEL' ? '1v1 Duel' : gameMode === 'BATTLE_ROYALE' ? 'Battle Royale' : gameMode === 'TOURNAMENT' ? 'Tournament Bracket' : 'Points Race'}
             </span>
           </div>
         </div>
@@ -130,7 +130,9 @@ export function RPSGameOver({
                 </div>
 
                 <div className="font-mono text-xs font-black text-ink">
-                  {gameMode !== 'BATTLE_ROYALE' ? (
+                  {gameMode === 'TOURNAMENT' ? (
+                    <span>{player.lives} {player.lives === 1 ? 'life' : 'lives'}</span>
+                  ) : gameMode !== 'BATTLE_ROYALE' ? (
                     <span>{player.score} pts</span>
                   ) : (
                     <span className={player.isAlive ? 'text-emerald-500' : 'text-ink-faint'}>

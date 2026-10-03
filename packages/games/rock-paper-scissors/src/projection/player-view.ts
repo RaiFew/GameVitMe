@@ -38,6 +38,7 @@ export function projectRPSPlayerView(
       choiceHistory: [...p.choiceHistory],
       isHost: false,
       canPlay: true,
+      lives: p.lives,
     });
   }
 
@@ -56,6 +57,7 @@ export function projectRPSPlayerView(
       choiceHistory: [],
       isHost: true,
       canPlay: false,
+      lives: 0,
     };
   } else {
     me = playerList.find((p) => p.id === playerId) || {
@@ -70,6 +72,7 @@ export function projectRPSPlayerView(
       choiceHistory: [],
       isHost: false,
       canPlay: false,
+      lives: 0,
     };
   }
 
@@ -113,6 +116,23 @@ export function projectRPSPlayerView(
     lastRoundOutcome: state.lastRoundOutcome,
     winnerIds: state.winnerIds,
     winReason: state.winReason,
+    // Nothing secret lives in the bracket -- who is in which match is public --
+    // but an in-flight leg's choices are, so the live match is masked below.
+    bracket: state.bracket
+      ? {
+          ...state.bracket,
+          rounds: state.bracket.rounds.map((r) =>
+            r.map((m) => ({
+              ...m,
+              legs: m.legs.map((leg) => ({
+                ...leg,
+                choices: isSecretPhase && m.status === 'LIVE' ? {} : leg.choices,
+              })),
+            }))
+          ),
+        }
+      : undefined,
+    currentMatchId: state.currentMatchId,
     stats: {
       totalRounds: state.history.length,
       mostCommonWeapon,

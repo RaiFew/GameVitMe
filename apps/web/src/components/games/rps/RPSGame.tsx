@@ -5,6 +5,7 @@ import { RPSChoiceSelector } from './RPSChoiceSelector';
 import { RPSRoundSummary } from './RPSRoundSummary';
 import { RPSGameOver } from './RPSGameOver';
 import { RPSHostScreen } from './RPSHostScreen';
+import { RPSBracket } from './RPSBracket';
 import { Clock } from 'lucide-react';
 
 interface Props {
@@ -87,6 +88,21 @@ export function RPSGame({
   const isEliminated = gameMode === 'BATTLE_ROYALE' && !me.isAlive;
   const eliminatedIds = lastRoundOutcome?.eliminatedIds || [];
 
+  // In a bracket only the two fighters of the live match are on stage; everyone
+  // else is a spectator until their match comes up.
+  const liveMatch = playerView.bracket?.rounds
+    .flatMap((r) => r)
+    .find((m) => m.id === playerView.currentMatchId);
+  const fighterIds = liveMatch
+    ? [liveMatch.playerAId, liveMatch.playerBId].filter((id): id is string => !!id)
+    : [];
+  const isTournament = gameMode === 'TOURNAMENT';
+  const arenaPlayers = isTournament
+    ? players.filter((p) => fighterIds.includes(p.id))
+    : players;
+  const amFighting = isTournament && fighterIds.includes(me.id);
+  const pointsMode = gameMode === 'DUEL' || gameMode === 'POINTS_RACE';
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl space-y-6">
       {/* Top Match HUD */}
@@ -98,6 +114,8 @@ export function RPSGame({
                 ? '1v1 Duel'
                 : gameMode === 'BATTLE_ROYALE'
                 ? 'Battle Royale'
+                : isTournament
+                ? 'Tournament'
                 : 'Points Race'}
             </span>
             <span className="text-xs font-mono font-bold text-ink-muted">
@@ -111,9 +129,15 @@ export function RPSGame({
 
         {/* Right HUD Stats */}
         <div className="flex items-center gap-3">
-          {gameMode !== 'BATTLE_ROYALE' && (
+          {pointsMode && (
             <div className="px-3 py-1 bg-canvas-sunk border border-rule rounded-xs text-xs font-mono font-bold text-ink">
               First to {targetScore} pts
+            </div>
+          )}
+
+          {isTournament && (
+            <div className="px-3 py-1 bg-canvas-sunk border border-rule rounded-xs text-xs font-mono font-bold text-ink">
+              {me.lives} {me.lives === 1 ? 'life' : 'lives'}
             </div>
           )}
 
@@ -132,11 +156,13 @@ export function RPSGame({
         </div>
       </div>
 
+      {isTournament && <RPSBracket playerView={playerView} />}
+
       {/* Main Arena */}
       <RPSArena
         gameMode={gameMode}
         phase={phase}
-        players={players}
+        players={arenaPlayers}
         myId={me.id}
         winnerIds={lastRoundOutcome ? lastRoundOutcome.winnerIds : winnerIds}
         eliminatedIds={eliminatedIds}
@@ -163,6 +189,16 @@ export function RPSGame({
               </h3>
               <p className="text-xs font-mono text-ink-faint">
                 Spectating remaining players in this Battle Royale showdown...
+              </p>
+            </div>
+          ) : isTournament && !amFighting ? (
+            <div className="p-6 bg-canvas-sunk border border-rule rounded-xs text-center space-y-1">
+              <span className="text-2xl">⏳</span>
+              <h3 className="text-sm font-black uppercase text-ink-muted">
+                Not your match yet
+              </h3>
+              <p className="text-xs font-mono text-ink-faint">
+                Watching the current bout — you throw when your name comes up.
               </p>
             </div>
           ) : (

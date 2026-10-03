@@ -332,6 +332,7 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
     'rpsGameMode',
     'rpsRoundDurationSeconds',
     'rpsTargetScore',
+    'rpsLivesPerMatch',
     'roleCounts',
     'roleAssignmentMode',
     'isRoleConfigurationCustomized',

@@ -17,10 +17,17 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
   const timerSeconds: number = typeof settings?.rpsRoundDurationSeconds === 'number' ? settings.rpsRoundDurationSeconds : 10;
 
   const isDuelInvalid = currentMode === 'DUEL' && playingCount !== 2;
+  const livesPerMatch: number = Number(settings?.rpsLivesPerMatch) || 3;
+  const isTournament = currentMode === 'TOURNAMENT';
 
   const handleModeSelect = (mode: RPSGameMode) => {
     if (!isHost) return;
     onUpdateSettings({ rpsGameMode: mode });
+  };
+
+  const handleLivesSelect = (lives: number) => {
+    if (!isHost) return;
+    onUpdateSettings({ rpsLivesPerMatch: lives });
   };
 
   const handleScoreSelect = (score: number) => {
@@ -57,7 +64,13 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
             </span>
           )}
           <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-xs border border-rule bg-canvas-sunk text-ink">
-            {currentMode === 'DUEL' ? '1v1 Duel' : currentMode === 'BATTLE_ROYALE' ? 'Battle Royale' : 'Points Race'}
+            {currentMode === 'DUEL'
+              ? '1v1 Duel'
+              : currentMode === 'BATTLE_ROYALE'
+                ? 'Battle Royale'
+                : currentMode === 'TOURNAMENT'
+                  ? 'Tournament'
+                  : 'Points Race'}
           </span>
         </div>
       </div>
@@ -150,7 +163,7 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
         <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold block">
           Game Mode
         </label>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           {/* Duel */}
           <button
             type="button"
@@ -210,11 +223,60 @@ export function RPSSettingsCard({ isHost, playerCount, settings, onUpdateSetting
               Every round win grants +1 point. First to target wins!
             </p>
           </button>
+
+          {/* Tournament */}
+          <button
+            type="button"
+            disabled={!isHost}
+            onClick={() => handleModeSelect('TOURNAMENT')}
+            className={`p-3 border rounded-xs text-left transition-all flex flex-col justify-between ${
+              isTournament
+                ? 'border-rule-strong bg-canvas-sunk ring-2 ring-ink'
+                : 'border-rule hover:border-ink/40 bg-canvas'
+            } ${!isHost ? 'opacity-75 cursor-default' : 'cursor-pointer'}`}
+          >
+            <div className="flex items-center justify-between w-full mb-1">
+              <span className="text-xs font-black uppercase text-ink">Tournament</span>
+              <span className="text-sm">🏆</span>
+            </div>
+            <p className="text-[10px] font-mono text-ink-muted">
+              Single-elimination bracket, one match at a time. Odd entrants get a bye.
+            </p>
+          </button>
         </div>
       </div>
 
+      {/* Lives per match (Tournament only) */}
+      {isTournament && (
+        <div className="space-y-2 pt-2 border-t border-rule">
+          <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold block">
+            Lives per Match
+          </label>
+          <div className="flex gap-2">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                type="button"
+                disabled={!isHost}
+                onClick={() => handleLivesSelect(n)}
+                className={`flex-1 py-1.5 px-2 text-xs font-mono font-bold rounded-xs border transition-all ${
+                  livesPerMatch === n
+                    ? 'border-rule-strong bg-ink text-canvas'
+                    : 'border-rule hover:border-ink/40 bg-canvas-sunk text-ink'
+                } ${!isHost ? 'cursor-default opacity-80' : 'cursor-pointer'}`}
+              >
+                {n} {n === 1 ? 'life' : 'lives'}
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] font-mono text-ink-muted">
+            Lives reset at the start of every match, so the final is played on equal footing.
+          </p>
+        </div>
+      )}
+
       {/* Target Score (for Duel or Points Race) */}
-      {currentMode !== 'BATTLE_ROYALE' && (
+      {(currentMode === 'DUEL' || currentMode === 'POINTS_RACE') && (
         <div className="space-y-2 pt-2 border-t border-rule">
           <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold block">
             Target Points to Win

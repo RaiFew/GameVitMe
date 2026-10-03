@@ -1,5 +1,6 @@
 import type { RPSPlayerView, RPSChoice } from '@party/rock-paper-scissors';
 import { RPSFightingScreen } from './RPSFightingScreen';
+import { RPSBracket } from './RPSBracket';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { Tv, Trophy, RotateCcw, ArrowLeft, Users, ShieldAlert } from 'lucide-react';
@@ -39,7 +40,11 @@ export function RPSHostScreen({
     lastRoundOutcome,
     winnerIds,
     winReason,
+    bracket,
   } = playerView;
+
+  const nameOf = (id: string) =>
+    players.find((p) => p.id === id)?.displayName ?? 'Player';
 
   // 1v1 Mode uses the dedicated Fighting Game Arcade HUD
   if (gameMode === 'DUEL' && players.length === 2) {
@@ -68,7 +73,7 @@ export function RPSHostScreen({
               TV HOST SCREEN
             </span>
             <span className="text-xs font-mono font-bold text-ink-muted uppercase">
-              {gameMode === 'BATTLE_ROYALE' ? 'Battle Royale Survival' : 'Points Race'} • Round {roundNumber}
+              {gameMode === 'BATTLE_ROYALE' ? 'Battle Royale Survival' : gameMode === 'TOURNAMENT' ? 'Tournament Bracket' : 'Points Race'} • Round {roundNumber}
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-ink">
@@ -82,6 +87,12 @@ export function RPSHostScreen({
               <Users className="w-3.5 h-3.5" />
               <span>{alivePlayers.length} / {players.length} Survivors</span>
             </div>
+          ) : gameMode === 'TOURNAMENT' ? (
+            <div className="px-3 py-1 bg-canvas-sunk border border-rule rounded-xs text-xs font-mono font-bold text-ink">
+              {bracket?.championId
+                ? `Champion: ${nameOf(bracket.championId)}`
+                : `Round ${bracket ? bracket.currentRoundIndex + 1 : 1} of ${bracket?.rounds.length ?? 1}`}
+            </div>
           ) : (
             <div className="px-3 py-1 bg-canvas-sunk border border-rule rounded-xs text-xs font-mono font-bold text-ink">
               First to {targetScore} pts
@@ -89,6 +100,8 @@ export function RPSHostScreen({
           )}
         </div>
       </div>
+
+      {gameMode === 'TOURNAMENT' && <RPSBracket playerView={playerView} />}
 
       {/* Dynamic Outcome Banner */}
       {!isChoosing && lastRoundOutcome && (
@@ -210,7 +223,11 @@ export function RPSHostScreen({
 
                 {/* Score or Status */}
                 <div className="mt-2 pt-1 border-t border-rule w-full flex items-center justify-center gap-1 font-mono text-[10px] font-bold">
-                  {gameMode !== 'BATTLE_ROYALE' ? (
+                  {gameMode === 'TOURNAMENT' ? (
+                    <span className="text-ink">
+                      Lives: <strong className="text-ink">{player.lives}</strong>
+                    </span>
+                  ) : gameMode !== 'BATTLE_ROYALE' ? (
                     <span className="text-ink">
                       Score: <strong className="text-ink">{player.score}</strong>
                     </span>

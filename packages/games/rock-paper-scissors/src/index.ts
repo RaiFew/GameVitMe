@@ -19,10 +19,17 @@ import {
   executeRoundResolution,
   startNextRound,
 } from './moves/index.js';
+import {
+  buildFirstRound,
+  currentMatchPlayers,
+  resolveByes,
+  startNextMatch,
+} from './engine/tournament.js';
 import { projectRPSPlayerView } from './projection/player-view.js';
 
 export * from './types/index.js';
 export * from './engine/resolver.js';
+export * from './engine/tournament.js';
 export * from './moves/index.js';
 export * from './projection/player-view.js';
 
@@ -57,8 +64,18 @@ export const rockPaperScissorsGame: GameDefinition<
         { label: 'Duel (1v1 First to N Points)', value: 'DUEL' },
         { label: 'Battle Royale (Survival Elimination)', value: 'BATTLE_ROYALE' },
         { label: 'Points Race (First to Target Score)', value: 'POINTS_RACE' },
+        { label: 'Tournament (Single Elimination Bracket)', value: 'TOURNAMENT' },
       ],
       description: 'Choose the battle format for Rock Paper Scissors',
+    },
+    {
+      key: 'livesPerMatch',
+      label: 'Lives per Match',
+      type: 'number',
+      default: 3,
+      min: 1,
+      max: 5,
+      description: 'Tournament only: legs you can lose before dropping out',
     },
     {
       key: 'targetScore',
@@ -110,6 +127,7 @@ export const rockPaperScissorsGame: GameDefinition<
     }
 
     const targetScore = Math.max(1, Number(settings.targetScore) || 3);
+    const livesPerMatch = Math.min(5, Math.max(1, Number(settings.livesPerMatch) || 3));
     const roundDurationSeconds = Number(settings.roundDurationSeconds) ?? 10;
     const durationMs = roundDurationSeconds > 0 ? roundDurationSeconds * 1000 : 0;
     const roundExpiresAt = durationMs > 0 ? Date.now() + durationMs : null;
@@ -128,20 +146,18 @@ export const rockPaperScissorsGame: GameDefinition<
         currentChoice: null,
         choiceHistory: [],
         roundStatus: 'PENDING',
+        lives: livesPerMatch,
       };
     }
 
-    if (durationMs > 0) {
-      ctx.scheduleTimer(durationMs, 'CHOOSING_TIMEOUT');
-    }
-
-    return {
+    const base: RPSMasterState = {
       gameMode,
       phase: 'CHOOSING',
       roundNumber: 1,
       targetScore,
       roundDurationSeconds,
       roundExpiresAt,
+      livesPerMatch,
       hostMode,
       hostPlayerId,
       players,
@@ -150,6 +166,24 @@ export const rockPaperScissorsGame: GameDefinition<
       lastRoundOutcome: null,
       winnerIds: [],
     };
+
+    // A tournament with fewer than two entrants has no match to play, so it
+    // stays an ordinary CHOOSING round rather than opening a bye against nobody.
+    if (gameMode !== 'TOURNAMENT' || playerOrder.length < 2) {
+      if (durationMs > 0) ctx.scheduleTimer(durationMs, 'CHOOSING_TIMEOUT');
+      return base;
+    }
+
+    const firstRound = buildFirstRound(playerOrder, 0);
+    // Byes settle up front so the first real match is the only one marked LIVE.
+    resolveByes(firstRound);
+    const started = startNextMatch({
+      ...base,
+      bracket: { rounds: [firstRound], currentRoundIndex: 0, championId: null },
+    });
+
+    if (durationMs > 0) ctx.scheduleTimer(durationMs, 'CHOOSING_TIMEOUT');
+    return started;
   },
 
   getCurrentPhase(state: RPSMasterState): string {
@@ -214,7 +248,14 @@ export const rockPaperScissorsGame: GameDefinition<
       for (const id of state.playerOrder) {
         const p = updatedPlayers[id];
         if (!p) continue;
-        const isActive = state.gameMode === 'BATTLE_ROYALE' ? p.isAlive : true;
+        // Only the live match's fighters get an auto-pick; auto-throwing for a
+        // player who is not in this match would decide a match they are not in.
+        const isActive =
+          state.gameMode === 'BATTLE_ROYALE'
+            ? p.isAlive
+            : state.gameMode === 'TOURNAMENT'
+              ? currentMatchPlayers(state).includes(id)
+              : true;
         if (isActive && p.currentChoice === null) {
           const randomIndex = Math.floor(ctx.random() * CHOICES.length);
           const autoChoice: RPSChoice = CHOICES[randomIndex] || 'ROCK';
