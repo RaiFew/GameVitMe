@@ -3,14 +3,19 @@ import { useRoomStore } from '../stores/roomStore';
 import { useGameStore } from '../stores/gameStore';
 import { useAuthStore } from '../stores/authStore';
 import { useSocket } from './useSocket';
+import { socketService } from '../lib/socket';
 import type { RoomState } from '@party/shared-types';
 import { useNavigate } from 'react-router-dom';
+
+/** How long to wait for the server to acknowledge a `room:sync` before retrying. */
+const SYNC_ACK_TIMEOUT_MS = 5000;
 
 export function useRoom() {
   const { socket, isConnected } = useSocket();
   const { room, setRoom, clearRoom, updatePlayer } = useRoomStore();
   const navigate = useNavigate();
   const [actionError, setActionError] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!socket) return;
@@ -79,14 +84,46 @@ export function useRoom() {
    * mounted with nothing to render. Neither page emitted anything to recover,
    * so both sat on a "Synchronizing…" spinner indefinitely. Ask the server
    * once which room this player holds a seat in.
+   *
+   * The ack used to be discarded, which made a dropped emit indistinguishable
+   * from a successful one: the socket can report itself connected and still be
+   * deaf, and then the page spins with nothing to show for it. Acknowledge every
+   * attempt, and when the room turns out to be genuinely gone, say so instead of
+   * spinning forever.
    */
   useEffect(() => {
     if (!socket) return;
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const attempt = (triesLeft: number) => {
+      if (cancelled || useRoomStore.getState().room) return;
+
+      timer = setTimeout(() => {
+        if (cancelled) return;
+        if (useRoomStore.getState().room) return;
+        if (triesLeft > 0) {
+          // No ack at all: the emit went nowhere. Handshake again from scratch and
+          // ask once more, which is what rescues a half-open connection.
+          socketService.recycle();
+          attempt(triesLeft - 1);
+        } else {
+          setSyncError('Could not reach the room. Check your connection and try again.');
+        }
+      }, SYNC_ACK_TIMEOUT_MS);
+
+      socket.emit('room:sync', {}, (res: any) => {
+        if (timer) clearTimeout(timer);
+        timer = null;
+        if (cancelled || useRoomStore.getState().room) return;
+        if (res?.success || res?.room) return;
+        setSyncError(res?.error || 'Could not reach the room.');
+      });
+    };
 
     const sync = () => {
-      if (cancelled || useRoomStore.getState().room) return;
-      socket.emit('room:sync', {}, () => {});
+      setSyncError(null);
+      attempt(2);
     };
 
     sync();
@@ -94,9 +131,16 @@ export function useRoom() {
 
     return () => {
       cancelled = true;
+      if (timer) clearTimeout(timer);
       socket.off('connect', sync);
     };
   }, [socket]);
+
+  /** Re-runs the recovery above by hand after the user gives up on waiting. */
+  const retrySync = () => {
+    setSyncError(null);
+    socket?.emit('room:sync', {}, () => {});
+  };
 
   /**
    * Every lobby action used to fire and forget. On a slow or dropped
@@ -160,6 +204,8 @@ export function useRoom() {
     room,
     isConnected,
     actionError,
+    syncError,
+    retrySync,
     clearActionError: () => setActionError(null),
     joinRoom,
     leaveRoom,

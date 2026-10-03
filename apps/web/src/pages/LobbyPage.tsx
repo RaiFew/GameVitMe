@@ -29,7 +29,7 @@ const GAME_NAMES: Record<string, string> = {
 
 export function LobbyPage() {
   const { roomCode } = useParams<{ roomCode: string }>();
-  const { room, setReady, kickPlayer, updateSettings, changeGame, leaveRoom, actionError, clearActionError } = useRoom();
+  const { room, setReady, kickPlayer, updateSettings, changeGame, leaveRoom, actionError, clearActionError, syncError, retrySync } = useRoom();
   const { user } = useAuth();
   const { socket } = useSocket();
   const navigate = useNavigate();
@@ -74,8 +74,22 @@ export function LobbyPage() {
   if (!room || !user) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-rule-strong border-t-transparent mb-4" />
-        <p className="text-ink-muted font-mono text-xs uppercase tracking-wider">Synchronizing room state...</p>
+        {syncError ? (
+          <>
+            <p className="text-ink font-mono text-xs uppercase tracking-wider mb-4">{syncError}</p>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={retrySync} className="text-xs">Retry</Button>
+              <Button size="sm" variant="secondary" onClick={() => navigate('/dashboard')} className="text-xs">
+                Back to Dashboard
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-rule-strong border-t-transparent mb-4" />
+            <p className="text-ink-muted font-mono text-xs uppercase tracking-wider">Synchronizing room state...</p>
+          </>
+        )}
       </div>
     );
   }
