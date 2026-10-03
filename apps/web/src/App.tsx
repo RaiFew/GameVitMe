@@ -7,7 +7,6 @@ import { ProfilePage } from './pages/ProfilePage';
 import { FriendsPage } from './pages/FriendsPage';
 import { CreateRoomPage } from './pages/CreateRoomPage';
 import { JoinRoomPage } from './pages/JoinRoomPage';
-import { JoinInvitePage } from './pages/JoinInvitePage';
 import { LobbyPage } from './pages/LobbyPage';
 import { GamePage } from './pages/GamePage';
 import HomePage from './pages/HomePage';
@@ -49,8 +48,6 @@ export function App() {
           <Route path="/games" element={<GamesPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/join" element={<JoinRoomPage />} />
-          {/* Ahead of /join/:roomCode: a link invite is not a room code. */}
-          <Route path="/join/invite/:token" element={<JoinInvitePage />} />
           <Route path="/join/:roomCode" element={<JoinRoomPage />} />
           <Route path="/ranking" element={<RankingPage />} />
           <Route path="/ranked" element={<ProtectedRoute><RankedPage /></ProtectedRoute>} />

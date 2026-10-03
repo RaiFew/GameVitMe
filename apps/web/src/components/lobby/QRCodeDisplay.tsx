@@ -3,14 +3,13 @@ import { Copy, Check, Eye, EyeOff } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { useUserSettingsStore } from '../../stores/userSettingsStore';
-import { api } from '../../lib/api';
 
 export function QRCodeDisplay({ roomCode, canMintLink }: { roomCode: string; canMintLink: boolean }) {
   const streamerMode = useUserSettingsStore((s) => s.streamerMode);
   const [copied, setCopied] = useState(false);
   const [showCode, setShowCode] = useState(!streamerMode);
-  const [linkState, setLinkState] = useState<'idle' | 'busy' | 'done' | 'error'>('idle');
-  const joinUrl = `${window.location.origin}/dashboard?join=${roomCode}`;
+  const [linkCopied, setLinkCopied] = useState(false);
+  const joinUrl = `${window.location.origin}/lobby/${roomCode}`;
 
   useEffect(() => {
     if (streamerMode) {
@@ -24,18 +23,13 @@ export function QRCodeDisplay({ roomCode, canMintLink }: { roomCode: string; can
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Minted on demand rather than on mount: the token is a 24h bearer credential,
-  // so it should not exist for every room the host ever opens.
+  // A plain link to the lobby, not a minted token: the room code is already the
+  // capability, and a visitor who opens this while logged out is sent through
+  // login and lands back here.
   const copyInviteLink = async () => {
-    setLinkState('busy');
-    try {
-      const res = await api.post<{ token: string }>('/api/invitations/link', { roomCode });
-      await navigator.clipboard.writeText(`${window.location.origin}/join/invite/${res.token}`);
-      setLinkState('done');
-    } catch {
-      setLinkState('error');
-    }
-    setTimeout(() => setLinkState('idle'), 2500);
+    await navigator.clipboard.writeText(joinUrl);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
   };
 
   return (
@@ -92,11 +86,10 @@ export function QRCodeDisplay({ roomCode, canMintLink }: { roomCode: string; can
         variant="outline"
         size="sm"
         onClick={copyInviteLink}
-        disabled={linkState === 'busy'}
         className="mt-3 w-full text-xs"
-        title="Copy a link that lets anyone who opens it into this room"
+        title="Copy a link that takes anyone who opens it straight into this room"
       >
-        {linkState === 'busy' ? 'Minting link...' : linkState === 'done' ? 'Invite Link Copied' : linkState === 'error' ? 'Could not create link' : 'Copy Invite Link'}
+        {linkCopied ? 'Invite Link Copied' : 'Copy Invite Link'}
       </Button>
       )}
     </div>

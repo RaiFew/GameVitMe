@@ -71,25 +71,21 @@ export function LobbyPage() {
     }
   }, [room?.status, roomCode, navigate]);
 
+  // A pasted link is a request to join, not just a request to look. `useRoom`
+  // only asks the server which room this player already holds a seat in, so
+  // once it reports there is none, hand the code to the dashboard's join flow
+  // rather than sitting on an error the visitor can do nothing with.
+  useEffect(() => {
+    if (syncError && roomCode) {
+      navigate(`/dashboard?join=${encodeURIComponent(roomCode)}`, { replace: true });
+    }
+  }, [syncError, roomCode, navigate]);
+
   if (!room || !user) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-        {syncError ? (
-          <>
-            <p className="text-ink font-mono text-xs uppercase tracking-wider mb-4">{syncError}</p>
-            <div className="flex gap-2">
-              <Button size="sm" onClick={retrySync} className="text-xs">Retry</Button>
-              <Button size="sm" variant="secondary" onClick={() => navigate('/dashboard')} className="text-xs">
-                Back to Dashboard
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-rule-strong border-t-transparent mb-4" />
-            <p className="text-ink-muted font-mono text-xs uppercase tracking-wider">Synchronizing room state...</p>
-          </>
-        )}
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-rule-strong border-t-transparent mb-4" />
+        <p className="text-ink-muted font-mono text-xs uppercase tracking-wider">Synchronizing room state...</p>
       </div>
     );
   }

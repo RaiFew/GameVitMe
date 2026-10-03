@@ -4,12 +4,6 @@ import { and, eq, gt, or, lt } from 'drizzle-orm';
 
 export const INVITATION_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
-/** A shared link is meant to be circulated, so it lives longer than a DM invite. */
-export const LINK_INVITATION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
-
-/** Shape of the 16-byte base64url tokens minted for link invitations. */
-export const TOKEN_RE = /^[A-Za-z0-9_-]{22}$/;
-
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
