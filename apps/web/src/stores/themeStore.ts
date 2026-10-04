@@ -28,9 +28,12 @@ function applyTheme(theme: Theme): 'light' | 'dark' {
 }
 
 const getInitialTheme = (): Theme => {
-  if (typeof window === 'undefined') return 'dark';
+  // 'system', not 'dark': the navbar toggle only ever offers dark/light, so a
+  // hardcoded dark default meant the OS preference below was unreachable — a
+  // phone set to light still opened dark.
+  if (typeof window === 'undefined') return 'system';
   const saved = localStorage.getItem('party_theme') as Theme | null;
-  return saved || 'dark';
+  return saved || 'system';
 };
 
 const initialTheme = getInitialTheme();
