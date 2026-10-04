@@ -33,8 +33,15 @@ export const resolveRequestSession = async (request: FastifyRequest) => {
     let token: string | undefined;
 
     if (cookieHeader) {
+      // `__Secure-` is the production prefix (see defaultCookieAttributes.secure
+      // in auth.ts), and the regex is deliberately unanchored so it matches both
+      // the prefixed and bare cookie names.
       const match = cookieHeader.match(/better-auth\.session_token=([^;]+)/);
-      if (match && match[1]) token = match[1].trim();
+      // Better Auth signs the session cookie: the value is `<token>.<signature>`.
+      // The DB column holds only the token, so the signature has to come off
+      // before the lookup — otherwise every Google login 401s on any route that
+      // uses requireAuth, while dev-login (which writes a bare token) passes.
+      if (match && match[1]) token = match[1].trim().split('.')[0];
     }
     if (!token && authHeader?.startsWith('Bearer ')) {
       token = authHeader.slice(7).trim();
