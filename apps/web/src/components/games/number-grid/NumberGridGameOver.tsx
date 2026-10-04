@@ -4,6 +4,7 @@ import { Trophy, RotateCcw, Home, Skull, Award } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { api } from '../../../lib/api';
+import { hasHp } from './HealthDisplay';
 
 interface NumberGridGameOverProps {
   playerView: NumberGridPlayerView;
@@ -211,9 +212,9 @@ export function NumberGridGameOver({
                     <span className="text-[11px] text-ink-muted">
                       {p.eliminated ? (
                         <span className="text-red-500 font-bold">Eliminated</span>
-                      ) : (
+                      ) : hasHp(p.maxHp) ? (
                         `HP: ${Math.max(0, p.hp)}/${p.maxHp}`
-                      )}
+                      ) : null}
                     </span>
                     {isWin && (
                       <span className="text-[9px] font-black uppercase bg-amber-500 text-black px-1.5 py-0.5 rounded-xs">

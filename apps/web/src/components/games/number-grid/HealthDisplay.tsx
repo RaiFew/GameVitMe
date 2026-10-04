@@ -6,7 +6,16 @@ interface HealthDisplayProps {
   isEliminated?: boolean;
 }
 
+/**
+ * Ranked Time has no lives, and the engine says so with a huge maxHp sentinel
+ * rather than a separate flag. Real HP is clamped to 10 in the engine's setup,
+ * so anything larger is the sentinel — and rendering one heart per life would
+ * blow the array up and take the whole game screen down with it.
+ */
+export const hasHp = (maxHp: number) => maxHp > 0 && maxHp <= 10;
+
 export function HealthDisplay({ hp, maxHp, isEliminated = false }: HealthDisplayProps) {
+  if (!hasHp(maxHp)) return null;
   const safeHp = Math.max(0, hp);
   const safeMaxHp = Math.max(1, maxHp);
 

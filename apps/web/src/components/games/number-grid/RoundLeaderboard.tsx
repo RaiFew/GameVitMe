@@ -1,5 +1,6 @@
 import type { OpponentSummary } from '@party/number-grid';
 import { Skull, CheckCircle2, User } from 'lucide-react';
+import { hasHp } from './HealthDisplay';
 
 interface RoundLeaderboardProps {
   opponents: OpponentSummary[];
@@ -76,9 +77,11 @@ export function RoundLeaderboard({ opponents, totalNumbers }: RoundLeaderboardPr
                   >
                     {opp.displayName}
                   </span>
-                  <span className="text-[10px] text-ink-muted font-normal">
-                    HP: {Math.max(0, opp.hp)}/{opp.maxHp}
-                  </span>
+                  {hasHp(opp.maxHp) && (
+                    <span className="text-[10px] text-ink-muted font-normal">
+                      HP: {Math.max(0, opp.hp)}/{opp.maxHp}
+                    </span>
+                  )}
                 </div>
               </div>
 

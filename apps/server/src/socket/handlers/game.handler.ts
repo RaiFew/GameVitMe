@@ -32,7 +32,8 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
   const user = socket.data.user;
 
   socket.on('game:start', async (payload, callback) => {
-    const { roomId, roundDurationSeconds: customDuration, settings: startSettings } = payload || {};
+    const { roomId, roundDurationSeconds: customDuration, settings: startSettings, variant } =
+      payload || {};
     const room = roomManager.getRoom(roomId);
 
     if (!room || !room.gameType) {
@@ -51,7 +52,14 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
     // A ranked run is an ordinary run in an ordinary room: same room, same
     // runner, same click handling, same reconnect path. The only differences
     // are the server-owned variant and the requirement to be a real account.
-    const requestedVariant = (room.settings as any)?.gameSettings?.variant as string | undefined;
+    const roomVariant = (room.settings as any)?.gameSettings?.variant as string | undefined;
+    // A ranked variant cannot be written into room settings: that path is the
+    // host's, and the settings validator refuses RANKED_* precisely so a normal
+    // room cannot be steered into a scored mode. So it travels here instead,
+    // where the auth and solo gates below already sit. Ignored unless it really
+    // is a ranked variant, so this cannot become a back door into one.
+    const requestedVariant =
+      isRankedVariant(variant) ? variant : roomVariant;
     const isRanked = room.gameType === 'number-grid' && isRankedVariant(requestedVariant);
     if (isRanked) {
       // `socket.data.user` is not an identity: the gateway falls back to
@@ -261,6 +269,11 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
         typeof roomSettings.gameSettings === 'object' && roomSettings.gameSettings !== null
           ? roomSettings.gameSettings
           : {};
+      // A ranked variant never made it into room settings, so put it on the
+      // engine's settings here — after the auth and solo gates that guard it.
+      if (requestedVariant && requestedVariant !== roomVariant) {
+        customGameSettings.variant = requestedVariant;
+      }
       // Apply updated duration if specified by host
       const durationSeconds = Number(
         customDuration || startSettings?.roundDurationSeconds || roomSettings.roundDurationSeconds

@@ -93,22 +93,21 @@ export function RankedPage() {
 
         // The variant is the only thing the client states. Everything the run
         // is actually scored on is decided server-side when it starts.
+        //
+        // It rides along on `game:start` rather than `room:update_settings`:
+        // that is the host's settings path and it refuses RANKED_* by design, so
+        // writing it there failed, the error was discarded, and every ranked
+        // mode quietly started a Standard game.
         socket.emit(
-          'room:update_settings',
-          { roomId: room.room.id, settings: { gameSettings: { variant } } },
-          () => {
-            socket.emit(
-              'game:start',
-              { roomId: room.room.id },
-              (res: any) => {
-                if (res?.error) {
-                  setStarting(null);
-                  setError(res.error);
-                  return;
-                }
-                navigate(`/game/${room.roomCode}`);
-              }
-            );
+          'game:start',
+          { roomId: room.room.id, variant },
+          (res: any) => {
+            if (res?.error) {
+              setStarting(null);
+              setError(res.error);
+              return;
+            }
+            navigate(`/game/${room.roomCode}`);
           }
         );
       }
