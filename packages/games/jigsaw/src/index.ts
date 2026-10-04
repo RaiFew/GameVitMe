@@ -11,6 +11,7 @@ import {
   type JigsawMasterState,
   type JigsawPieceState,
   type JigsawPlayerView,
+  type JigsawRot,
   type JigsawSettings,
 } from './types/index.js';
 import { computeGridLayout } from './engine/grid-layout.js';
@@ -21,6 +22,7 @@ import { projectJigsawPlayerView } from './projection/player-view.js';
 export * from './types/index.js';
 export * from './engine/edges.js';
 export { computeGridLayout, tabAmplitude } from './engine/grid-layout.js';
+export { clusterOf } from './engine/clusters.js';
 
 export const DEFAULT_JIGSAW_SETTINGS: JigsawSettings = {
   imageId: null,
@@ -80,7 +82,19 @@ export const jigsawGame: GameDefinition<
 
     const pieces: Record<string, JigsawPieceState> = {};
     cells.forEach((cell, i) => {
-      pieces[`p${i}`] = { id: `p${i}`, ...cell, zone: 'TRAY', at: null, locked: false, placedByPlayerId: null, placedAtMs: null };
+      pieces[`p${i}`] = {
+        id: `p${i}`,
+        ...cell,
+        zone: 'TRAY',
+        at: null,
+        // Drawn from the same stream as the shuffle, and only after it, so the
+        // turn a piece starts on cannot be read off its id or its place in the
+        // tray — a rotation derived from the cell would hand over the answer.
+        rot: Math.floor(ctx.random() * 4) as JigsawRot,
+        solved: false,
+        placedByPlayerId: null,
+        placedAtMs: null,
+      };
     });
 
     return {
@@ -102,7 +116,7 @@ export const jigsawGame: GameDefinition<
           },
         ])
       ),
-      lockedCount: 0,
+      solvedCount: 0,
       history: [],
       startedAtMs: null,
       finishedAtMs: null,

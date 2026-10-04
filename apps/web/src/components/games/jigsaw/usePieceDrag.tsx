@@ -23,6 +23,7 @@ interface GhostState {
 
 interface DragState {
   id: string;
+  rot: number;
   x0: number;
   y0: number;
   offX: number;
@@ -39,6 +40,9 @@ interface Options {
   onDrop: (pieceId: string, target: DropTarget) => void;
   /** A gesture that never left the threshold — used to send a piece back to the tray. */
   onTap: (pieceId: string) => void;
+  /** Fires the moment a piece is grabbed, before any threshold — this is what
+   *  the rotate button acts on, since a touch user cannot right-click. */
+  onGrab?: (pieceId: string) => void;
 }
 
 /**
@@ -59,6 +63,7 @@ export function usePieceDrag({
   imageHeight,
   onDrop,
   onTap,
+  onGrab,
 }: Options) {
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const drag = useRef<DragState | null>(null);
@@ -87,13 +92,15 @@ export function usePieceDrag({
     return { zone: 'TRAY' };
   }, []);
 
-  const onPointerDown = useCallback((e: React.PointerEvent, id: string, src: SrcRect) => {
+  const onPointerDown = useCallback((e: React.PointerEvent, id: string, src: SrcRect, rot = 0) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     const el = e.currentTarget as HTMLElement;
     el.setPointerCapture(e.pointerId);
     const rect = el.getBoundingClientRect();
+    onGrab?.(id);
     drag.current = {
       id,
+      rot,
       x0: e.clientX,
       y0: e.clientY,
       offX: e.clientX - rect.left,
@@ -101,7 +108,7 @@ export function usePieceDrag({
       armed: false,
     };
     setGhost({ id, src, width: rect.width, height: rect.height, scale: rect.width / src.w });
-  }, []);
+  }, [onGrab]);
 
   const onPointerMove = useCallback((e: React.PointerEvent, id: string, src: SrcRect) => {
     const d = drag.current;
@@ -114,7 +121,11 @@ export function usePieceDrag({
     }
     e.preventDefault();
     const el = ghostRef.current;
-    if (el) el.style.transform = `translate3d(${e.clientX - d.offX}px, ${e.clientY - d.offY}px, 0)`;
+    // Turned here, not in JSX: this is the only thing written per frame, and a
+    // re-render would reset the position to 0,0 mid-drag.
+    if (el) {
+      el.style.transform = `translate3d(${e.clientX - d.offX}px, ${e.clientY - d.offY}px, 0) rotate(${90 * d.rot}deg)`;
+    }
   }, []);
 
   const endDrag = useCallback(

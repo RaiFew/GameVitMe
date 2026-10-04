@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { JigsawPlayerView } from '@party/jigsaw';
 import { api } from '../../../lib/api';
 import { Button } from '../../ui/Button';
@@ -15,12 +15,15 @@ interface Props {
 }
 
 export function JigsawGame({ playerView, onAction, onReturnLobby, onPlayAgain }: Props) {
-  const { phase, imageId, imageWidth, imageHeight, cols, rows, edgeSeed, pieces, lockedCount, totalToLock, canUndo, me } =
+  const { phase, imageId, imageWidth, imageHeight, cols, rows, edgeSeed, pieces, solvedCount, totalToSolve, canUndo, me } =
     playerView;
 
   const [imageSrc, setImageSrc] = useState('');
   const [imageError, setImageError] = useState('');
   const [showOriginal, setShowOriginal] = useState(false);
+  // The piece the rotate button acts on. A touch user cannot right-click, so
+  // this is how rotation reaches phones: grab a piece, then turn it.
+  const [held, setHeld] = useState<string | null>(null);
 
   useEffect(() => {
     if (!imageId) {
@@ -40,7 +43,7 @@ export function JigsawGame({ playerView, onAction, onReturnLobby, onPlayAgain }:
   }, [imageId]);
 
   const list = useMemo(() => Object.values(pieces), [pieces]);
-  const trayPieces = list.filter((p) => p.zone === 'TRAY' && !p.locked);
+  const trayPieces = list.filter((p) => p.zone === 'TRAY');
 
   // The clock is the score, so it has to move between broadcasts too. It cannot
   // read `serverNow` directly: that is a snapshot frozen at the last broadcast,
@@ -73,6 +76,22 @@ export function JigsawGame({ playerView, onAction, onReturnLobby, onPlayAgain }:
     if (pieces[pieceId]?.zone === 'BOARD') onAction('PLACE_PIECE', { pieceId, zone: 'TRAY' });
   };
 
+  const rotate = (pieceId: string) => onAction('ROTATE_PIECE', { pieceId });
+
+  const handleRotate = useCallback(
+    (e: React.MouseEvent, pieceId: string) => {
+      e.preventDefault();
+      setHeld(pieceId);
+      rotate(pieceId);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onAction]
+  );
+
+  const rotateHeld = useCallback(() => {
+    if (held) rotate(held);
+  }, [held, onAction]);
+
   const { onPointerDown, onPointerMove, endDrag, ghostNode } = usePieceDrag({
     cols,
     rows,
@@ -81,7 +100,19 @@ export function JigsawGame({ playerView, onAction, onReturnLobby, onPlayAgain }:
     imageHeight,
     onDrop: handleDrop,
     onTap: handleTap,
+    onGrab: setHeld,
   });
+
+  // R turns the piece you last touched. The board holds keyboard focus only when
+  // it is in use, so the listener is scoped to this screen rather than global.
+  useEffect(() => {
+    if (phase !== 'PLAYING') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'r' || e.key === 'R') rotateHeld();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [phase, rotateHeld]);
 
   if (phase === 'COMPLETED') {
     return (
@@ -100,11 +131,21 @@ export function JigsawGame({ playerView, onAction, onReturnLobby, onPlayAgain }:
       <div className="w-full flex items-center justify-between gap-2 border-b border-rule pb-2">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-xs border border-rule-strong bg-ink text-canvas">
-            {lockedCount}/{totalToLock}
+            {solvedCount}/{totalToSolve}
           </span>
           <span className="text-xs font-bold text-ink-muted">
             {cols}×{rows}
           </span>
+          {phase === 'PLAYING' && held && (
+            <Button
+              data-jigsaw-rotate
+              variant="secondary"
+              onClick={rotateHeld}
+              className="text-[10px] font-bold uppercase tracking-wider py-1 px-2"
+            >
+              Rotate
+            </Button>
+          )}
           {phase === 'PLAYING' && (
             <Button
               data-jigsaw-undo
@@ -174,6 +215,7 @@ export function JigsawGame({ playerView, onAction, onReturnLobby, onPlayAgain }:
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={endDrag}
+            onRotate={handleRotate}
           />
           <PieceTray
             pieces={trayPieces}
@@ -183,9 +225,11 @@ export function JigsawGame({ playerView, onAction, onReturnLobby, onPlayAgain }:
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={endDrag}
+            onRotate={handleRotate}
           />
           <p className="text-[10px] font-mono text-ink-faint text-center">
-            Drag pieces onto the board. Tap one on the board to send it back.
+            Drag pieces onto the board. Tap one on the board to send it back. Right-click or press
+            R to turn one. Solved pieces move as a group.
           </p>
         </>
       )}

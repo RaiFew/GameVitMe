@@ -6,6 +6,11 @@ import type { JigsawMasterState, JigsawPieceView, JigsawPlayerView } from '../ty
  * Strips the solution. `row` and `col` exist only in master state — the client
  * learns where a piece *is* from `at: { r, c }`, never where it belongs.
  *
+ * Cluster membership is deliberately absent too, and for the same reason: a
+ * piece is clustered exactly when it is solved, so shipping the membership list
+ * would ship the answer for every piece in it. The client grabs one piece; the
+ * server decides what follows.
+ *
  * What does go out per piece is its jigsaw outline and its patch of the picture.
  * Neither is optional: an outline cannot be built without the piece's cell, and
  * a real jigsaw piece shows you its own face. A client holding these can
@@ -30,7 +35,8 @@ export function projectJigsawPlayerView(
       id: p.id,
       zone: p.zone,
       at: p.at,
-      locked: p.locked,
+      rot: p.rot,
+      solved: p.solved,
       placedByPlayerId: p.placedByPlayerId,
       edges: pieceEdgesFor(boundaries, p.row, p.col, state.rows, state.cols),
       src: { x: p.col * cellW, y: p.row * cellH, w: cellW, h: cellH },
@@ -53,8 +59,8 @@ export function projectJigsawPlayerView(
       piecesPlaced: p.piecesPlaced,
       isReady: p.isReady,
     })),
-    lockedCount: state.lockedCount,
-    totalToLock: state.cols * state.rows,
+    solvedCount: state.solvedCount,
+    totalToSolve: state.cols * state.rows,
     canUndo: findUndoable(state, playerId) !== null,
     me: state.players[playerId] ?? null,
     serverNow: now,

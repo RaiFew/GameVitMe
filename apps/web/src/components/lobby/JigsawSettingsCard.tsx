@@ -20,7 +20,11 @@ const DIFFICULTIES: { id: JigsawDifficulty; label: string; note: string }[] = [
   { id: 'NORMAL', label: 'Normal', note: '24 pieces' },
   { id: 'HARD', label: 'Hard', note: '48 pieces' },
   { id: 'EXPERT', label: 'Expert', note: '96 pieces' },
+  { id: 'MASTER', label: 'Master', note: '192 pieces' },
 ];
+
+/** Below this a phone cannot aim at a cell, so the tier is not offered. */
+const TOO_FINE_FOR_A_PHONE: JigsawDifficulty[] = ['EXPERT', 'MASTER'];
 
 export function JigsawSettingsCard({ isHost, settings, onUpdateSettings }: Props) {
   // Everything the engine reads comes from `room.settings.gameSettings`, the same
@@ -163,14 +167,18 @@ export function JigsawSettingsCard({ isHost, settings, onUpdateSettings }: Props
         </div>
         <div className="flex flex-wrap gap-1.5">
           {DIFFICULTIES.map((d) => {
-            const blocked = narrow && d.id === 'EXPERT';
+            const blocked = narrow && TOO_FINE_FOR_A_PHONE.includes(d.id);
             return (
               <button
                 key={d.id}
                 type="button"
                 disabled={!isHost || blocked}
                 onClick={() => update({ difficulty: d.id })}
-                title={blocked ? '96 pieces is not playable on a phone — 32px cells' : undefined}
+                title={
+                  blocked
+                    ? `${PIECES_BY_DIFFICULTY[d.id]} pieces is not playable on a phone — cells land under a fingertip`
+                    : undefined
+                }
                 className={`flex-1 min-w-[4.5rem] py-1.5 px-2 rounded-xs border transition-all ${
                   difficulty === d.id
                     ? 'border-rule-strong bg-ink text-canvas'

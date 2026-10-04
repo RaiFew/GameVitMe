@@ -20,6 +20,14 @@ describe('validateJigsawSettings', () => {
     assert.equal(r.settings.pieceCount, PIECES_BY_DIFFICULTY.EASY);
   });
 
+  test('the Master tier is accepted and resolves to 192', () => {
+    const r = validateJigsawSettings({ difficulty: 'MASTER' });
+    assert.ok(r.ok);
+    assert.equal(r.settings.pieceCount, 192);
+    // The picker would offer a tier the engine then cannot slice if these drifted.
+    assert.equal(PIECES_BY_DIFFICULTY.MASTER, 192);
+  });
+
   test('accepts a uuid image id and an explicit clear', () => {
     const r = validateJigsawSettings({ imageId: UUID });
     assert.ok(r.ok);

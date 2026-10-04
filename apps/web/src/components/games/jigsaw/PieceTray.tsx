@@ -7,9 +7,10 @@ interface Props {
   imageSrc: string;
   imageWidth: number;
   imageHeight: number;
-  onPointerDown: (e: React.PointerEvent, id: string, src: SrcRect) => void;
+  onPointerDown: (e: React.PointerEvent, id: string, src: SrcRect, rot: number) => void;
   onPointerMove: (e: React.PointerEvent, id: string, src: SrcRect) => void;
   onPointerUp: (e: React.PointerEvent) => void;
+  onRotate: (e: React.MouseEvent, id: string) => void;
 }
 
 /** Shrinks as the tray empties, so a nearly-solved puzzle does not scroll. */
@@ -23,6 +24,7 @@ export function PieceTray({
   onPointerDown,
   onPointerMove,
   onPointerUp,
+  onRotate,
 }: Props) {
   if (pieces.length === 0) {
     return (
@@ -46,11 +48,12 @@ export function PieceTray({
             viewBox={pieceViewBox(p)}
             width={size}
             height={size}
-            className="text-ink/30 cursor-grab active:cursor-grabbing touch-none shrink-0"
-            onPointerDown={(e) => onPointerDown(e, p.id, p.src)}
+            className="text-ink/30 cursor-grab active:cursor-grabbing touch-none shrink-0 overflow-visible"
+            onPointerDown={(e) => onPointerDown(e, p.id, p.src, p.rot)}
             onPointerMove={(e) => onPointerMove(e, p.id, p.src)}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
+            onContextMenu={(e) => onRotate(e, p.id)}
           >
             <JigsawPiece
               piece={p}

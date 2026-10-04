@@ -1,10 +1,11 @@
-export type JigsawDifficulty = 'EASY' | 'NORMAL' | 'HARD' | 'EXPERT';
+export type JigsawDifficulty = 'EASY' | 'NORMAL' | 'HARD' | 'EXPERT' | 'MASTER';
 
 export const PIECES_BY_DIFFICULTY: Record<JigsawDifficulty, number> = {
   EASY: 12,
   NORMAL: 24,
   HARD: 48,
   EXPERT: 96,
+  MASTER: 192,
 };
 
 import type { PieceEdges } from '../engine/edges.js';
@@ -12,6 +13,9 @@ import type { PieceEdges } from '../engine/edges.js';
 export type JigsawPhase = 'READY' | 'PLAYING' | 'COMPLETED';
 
 export type JigsawZone = 'TRAY' | 'BOARD';
+
+/** Quarter turns clockwise. `0` is the piece's own orientation. */
+export type JigsawRot = 0 | 1 | 2 | 3;
 
 /**
  * MASTER ONLY. `row`/`col` is the piece's home cell in the solved picture and is
@@ -26,7 +30,13 @@ export interface JigsawPieceState {
   col: number;
   zone: JigsawZone;
   at: { r: number; c: number } | null;
-  locked: boolean;
+  rot: JigsawRot;
+  /**
+   * Home cell AND unrotated. Not terminal: the piece can be picked up again, so
+   * this flag goes on and off. Renamed from `locked` because it once promised a
+   * guarantee it no longer can.
+   */
+  solved: boolean;
   placedByPlayerId: string | null;
   placedAtMs: number | null;
 }
@@ -57,14 +67,16 @@ export interface JigsawPosition {
 }
 
 /**
- * One undoable placement. MASTER ONLY — `previous` is the answer to "where did
- * this piece come from", which is exactly what a client needs to reconstruct it.
+ * One undoable move. MASTER ONLY — `previous` is the answer to "where did these
+ * pieces come from", which is exactly what a client needs to reconstruct them.
  * Only the derived `canUndo` flag goes out.
+ *
+ * A move carries every piece it touched, not one: dragging a solved cluster
+ * moves all of it, and an undo that put the grabbed piece back alone would tear
+ * the cluster in half.
  */
 export interface JigsawHistoryEntry {
-  pieceId: string;
-  previous: JigsawPosition;
-  next: JigsawPosition;
+  moved: { pieceId: string; previous: JigsawPosition; next: JigsawPosition }[];
   playerId: string;
   timestamp: number;
   actionType: 'PLACE_PIECE';
@@ -81,12 +93,12 @@ export interface JigsawMasterState {
   players: Record<string, JigsawPlayerState>;
   /**
    * Newest last. An entry is dropped the moment it stops being undoable — when
-   * its piece locks, or when the piece moves again — so the tail of this array
-   * is always the live undo stack. ponytail: capped at HISTORY_LIMIT; a room
-   * that needs deeper undo than that wants a redo log, not a bigger array.
+   * any of its pieces moves again — so the tail of this array is always the live
+   * undo stack. ponytail: capped at HISTORY_LIMIT; a room that needs deeper undo
+   * than that wants a redo log, not a bigger array.
    */
   history: JigsawHistoryEntry[];
-  lockedCount: number;
+  solvedCount: number;
   startedAtMs: number | null;
   finishedAtMs: number | null;
   result: { elapsedMs: number; piecesByPlayer: Record<string, number> } | null;
@@ -97,7 +109,8 @@ export interface JigsawPieceView {
   zone: JigsawZone;
   /** Where it currently sits. Deliberately `r`/`c`, not `row`/`col`. */
   at: { r: number; c: number } | null;
-  locked: boolean;
+  rot: JigsawRot;
+  solved: boolean;
   placedByPlayerId: string | null;
   /** Shape only — see the note on the projection. */
   edges: PieceEdges;
@@ -122,9 +135,9 @@ export interface JigsawPlayerView {
   /** Same for every player, by construction: tray order is the numeric part of the id. */
   pieces: Record<string, JigsawPieceView>;
   players: { playerId: string; displayName: string; piecesPlaced: number; isReady: boolean }[];
-  lockedCount: number;
-  totalToLock: number;
-  /** True when this player has a placement of their own still undoable. */
+  solvedCount: number;
+  totalToSolve: number;
+  /** True when this player has a move of their own still undoable. */
   canUndo: boolean;
   me: JigsawPlayerState | null;
   /** Server clock, so elapsed time never depends on a client's own. */

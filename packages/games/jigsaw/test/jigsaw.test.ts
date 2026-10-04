@@ -12,6 +12,7 @@ import {
   pieceEdgesFor,
   tabAmplitude,
   traySlotOf,
+  clusterOf,
   PIECES_BY_DIFFICULTY,
 } from '../src/index.js';
 import type { JigsawMasterState } from '../src/types/index.js';
@@ -23,12 +24,18 @@ const PLAYERS: GamePlayer[] = [
 
 const IMAGE = { imageWidth: 1600, imageHeight: 900, pieceCount: 12 };
 
-function harness(seedRand = 0.5): GameContext {
+/**
+ * Deterministic PRNG. A constant `random` would hand every piece the same
+ * starting rotation, and a piece can only solve at `rot === 0` — so a constant
+ * stream makes the puzzle impossible and every "solved" assertion vacuous.
+ */
+function harness(seed = 12345): GameContext {
+  let n = seed;
   return {
     roomId: 'room-jigsaw',
     gameSessionId: 'session-jigsaw',
     players: PLAYERS,
-    random: () => seedRand,
+    random: () => ((n = (n * 9301 + 49297) % 233280) / 233280),
     broadcast: () => {},
     emitToPlayer: () => {},
     scheduleTimer: () => {},
@@ -47,6 +54,15 @@ function move(state: JigsawMasterState, ctx: GameContext, playerId: string, type
   const r = jigsawGame.processMove(state, m, ctx);
   assert.ok(r.success && r.newState);
   return r.newState;
+}
+
+/** Turns a piece until it is the right way up. A piece only solves at `rot === 0`. */
+function unrotate(state: JigsawMasterState, ctx: GameContext, pieceId: string, by = 'ana'): JigsawMasterState {
+  let s = state;
+  const turns = (4 - s.pieces[pieceId]!.rot) % 4;
+  for (let i = 0; i < turns; i++) s = move(s, ctx, by, 'ROTATE_PIECE', { pieceId });
+  assert.equal(s.pieces[pieceId]!.rot, 0);
+  return s;
 }
 
 function beginPlaying(ctx = harness()): { ctx: GameContext; state: JigsawMasterState } {
@@ -79,6 +95,14 @@ describe('computeGridLayout', () => {
       for (const n of Object.values(PIECES_BY_DIFFICULTY)) {
         assert.equal(computeGridLayout(w, h, n).cols * computeGridLayout(w, h, n).rows, n);
       }
+    }
+  });
+
+  test('the Master tier is a real 192, not an approximation', () => {
+    assert.equal(PIECES_BY_DIFFICULTY.MASTER, 192);
+    for (const [w, h] of [[1600, 900], [1000, 1000], [900, 1600], [4000, 300]]) {
+      const { cols, rows } = computeGridLayout(w, h, 192);
+      assert.equal(cols * rows, 192, `${w}x${h} must cut exactly 192`);
     }
   });
 });
@@ -253,6 +277,21 @@ describe('setup', () => {
     const isIdentity = ids.every((p, i) => p.row === Math.floor(i / state.cols) && p.col === i % state.cols);
     assert.ok(!isIdentity, 'p<i> must NOT be cell <i>, or the view leaks the solution');
   });
+
+  test('pieces start turned, and not in a pattern the id reveals', () => {
+    const state = start();
+    const rots = new Set(Object.values(state.pieces).map((p) => p.rot));
+    assert.ok(rots.size > 1, 'every piece must not start the same way up');
+    for (const p of Object.values(state.pieces)) {
+      assert.ok(p.rot >= 0 && p.rot <= 3 && Number.isInteger(p.rot));
+    }
+    // A turn derived from the cell would let a client read the solution off the
+    // id, so a different shuffle must not hand the same cell the same turn.
+    const other = start(harness(777));
+    const turnOf = (s: JigsawMasterState, row: number, col: number) =>
+      Object.values(s.pieces).find((p) => p.row === row && p.col === col)!.rot;
+    assert.notEqual(turnOf(state, 0, 0), turnOf(other, 0, 0));
+  });
 });
 
 describe('anti-leak projection', () => {
@@ -295,44 +334,82 @@ describe('READY_UP', () => {
 });
 
 describe('PLACE_PIECE', () => {
-  test('a correct drop locks; a wrong drop moves without locking', () => {
+  /** Places a piece and leaves it unrotated, so it can actually solve. */
+  const placeSolved = (s: JigsawMasterState, ctx: GameContext, p: JigsawMasterState['pieces'][string], by = 'ana') => {
+    const turned = unrotate(s, ctx, p.id, by);
+    return move(turned, ctx, by, 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', row: p.row, col: p.col });
+  };
+
+  test('a correct drop solves; a wrong drop moves without solving', () => {
     const { ctx, state } = beginPlaying();
     const target = Object.values(state.pieces).find((p) => p.row === 2 && p.col === 3)!;
 
     let s = move(state, ctx, 'ana', 'PLACE_PIECE', { pieceId: target.id, zone: 'BOARD', row: 1, col: 1 });
     assert.equal(s.pieces[target.id].zone, 'BOARD');
-    assert.equal(s.pieces[target.id].locked, false);
+    assert.equal(s.pieces[target.id].solved, false);
     assert.deepEqual(s.pieces[target.id].at, { r: 1, c: 1 });
-    assert.equal(s.lockedCount, 0);
+    assert.equal(s.solvedCount, 0);
 
-    s = move(s, ctx, 'ana', 'PLACE_PIECE', { pieceId: target.id, zone: 'BOARD', row: target.row, col: target.col });
-    assert.equal(s.pieces[target.id].locked, true);
-    assert.equal(s.lockedCount, 1);
+    s = placeSolved(s, ctx, target);
+    assert.equal(s.pieces[target.id].solved, true);
+    assert.equal(s.pieces[target.id].rot, 0);
+    assert.equal(s.solvedCount, 1);
     assert.equal(s.players.ana.piecesPlaced, 1);
   });
 
-  test('back to the tray un-moves an unlocked piece but never un-locks one', () => {
+  test('back to the tray un-solves the piece', () => {
     const { ctx, state } = beginPlaying();
     const p = Object.values(state.pieces).find((x) => !(x.row === 0 && x.col === 0))!;
     const wrong = { row: p.row === 0 ? 1 : 0, col: p.col === 0 ? 1 : 0 };
 
     let s = move(state, ctx, 'ana', 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', ...wrong });
-    assert.equal(s.pieces[p.id].locked, false);
+    assert.equal(s.pieces[p.id].solved, false);
+    s = placeSolved(s, ctx, p);
+    assert.equal(s.solvedCount, 1);
+
     s = move(s, ctx, 'bo', 'PLACE_PIECE', { pieceId: p.id, zone: 'TRAY' });
     assert.equal(s.pieces[p.id].zone, 'TRAY');
     assert.equal(s.pieces[p.id].at, null);
-    assert.equal(s.lockedCount, 0);
+    assert.equal(s.pieces[p.id].solved, false);
+    assert.equal(s.solvedCount, 0);
   });
 
-  test('rejects: locked piece, out-of-range cell, non-integer, unknown piece, bad zone, wrong phase', () => {
+  test('a solved piece can be picked up again — the count goes back down', () => {
+    const { ctx, state } = beginPlaying();
+    const p = Object.values(state.pieces).find((x) => x.row === 0 && x.col === 0)!;
+    const s = placeSolved(state, ctx, p);
+    assert.equal(s.solvedCount, 1);
+
+    const moved = move(s, ctx, 'bo', 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', row: 2, col: 2 });
+    assert.equal(moved.pieces[p.id].solved, false);
+    assert.equal(moved.solvedCount, 0);
+    assert.deepEqual(moved.pieces[p.id].at, { r: 2, c: 2 });
+    // The piece still counts for whoever placed it. Re-solving is not re-scoring.
+    assert.equal(moved.players.ana.piecesPlaced, 1);
+
+    const back = move(moved, ctx, 'bo', 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', row: p.row, col: p.col });
+    assert.equal(back.solvedCount, 1, 'solving twice is still one solved piece');
+    assert.equal(back.players.bo.piecesPlaced, 1);
+  });
+
+  test('a second player taking a solved piece away is not rejected', () => {
+    // The old engine refused this, which is what made a mistaken placement
+    // permanent. Cluster movement depends on it being allowed.
+    const { ctx, state } = beginPlaying();
+    const p = Object.values(state.pieces).find((x) => x.row === 1 && x.col === 1)!;
+    const solved = placeSolved(state, ctx, p);
+    const v = jigsawGame.validateMove(solved, {
+      type: 'PLACE_PIECE', playerId: 'bo', timestamp: 1,
+      payload: { pieceId: p.id, zone: 'BOARD', row: 0, col: 3 },
+    }, ctx);
+    assert.equal(v.valid, true);
+  });
+
+  test('rejects: out-of-range cell, non-integer, unknown piece, bad zone, wrong phase', () => {
     const { ctx, state } = beginPlaying();
     const target = Object.values(state.pieces).find((p) => p.row === 0 && p.col === 0)!;
-    const lockedState = move(state, ctx, 'ana', 'PLACE_PIECE', {
-      pieceId: target.id, zone: 'BOARD', row: 0, col: 0,
-    });
 
     const bad = [
-      [lockedState, { pieceId: target.id, zone: 'BOARD', row: 1, col: 1 }, 'ana'],
       [state, { pieceId: target.id, zone: 'BOARD', row: 99, col: 0 }, 'ana'],
       [state, { pieceId: target.id, zone: 'BOARD', row: -1, col: 0 }, 'ana'],
       [state, { pieceId: target.id, zone: 'BOARD', row: 1.5, col: 0 }, 'ana'],
@@ -347,24 +424,151 @@ describe('PLACE_PIECE', () => {
     }
   });
 
-  test('a second player cannot move a piece the first already locked', () => {
-    const { ctx, state } = beginPlaying();
-    const target = Object.values(state.pieces).find((p) => p.row === 0 && p.col === 0)!;
-    const lockedState = move(state, ctx, 'ana', 'PLACE_PIECE', {
-      pieceId: target.id, zone: 'BOARD', row: 0, col: 0,
-    });
-    const v = jigsawGame.validateMove(lockedState, {
-      type: 'PLACE_PIECE', playerId: 'bo', timestamp: 1,
-      payload: { pieceId: target.id, zone: 'BOARD', row: 2, col: 2 },
-    }, ctx);
-    assert.equal(v.valid, false);
-    assert.equal(lockedState.players.bo.piecesPlaced, 0);
-  });
-
   test('an unknown player cannot move', () => {
     const { ctx, state } = beginPlaying();
     const v = jigsawGame.validateMove(state, { type: 'PLACE_PIECE', playerId: 'ghost', payload: {}, timestamp: 1 }, ctx);
     assert.equal(v.valid, false);
+  });
+});
+
+describe('clusters', () => {
+  /** Solves the pieces whose home cells are in `cells`, in one pass. */
+  const solveCells = (s: JigsawMasterState, ctx: GameContext, cells: [number, number][]) => {
+    let next = s;
+    for (const [row, col] of cells) {
+      const p = Object.values(next.pieces).find((x) => x.row === row && x.col === col)!;
+      next = unrotate(next, ctx, p.id);
+      next = move(next, ctx, 'ana', 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', row, col });
+    }
+    return next;
+  };
+
+  test('orthogonal solved pieces cluster; a diagonal pair does not', () => {
+    const { ctx, state } = beginPlaying();
+    const s = solveCells(state, ctx, [[1, 1], [1, 2]]);
+    const [a, b] = Object.values(s.pieces).filter((p) => p.solved);
+    assert.equal(new Set(clusterOf(s, a.id)).size, 2);
+    assert.deepEqual(new Set(clusterOf(s, b.id)), new Set(clusterOf(s, a.id)));
+
+    const d = solveCells(state, ctx, [[0, 0], [1, 1]]);
+    const [x, y] = Object.values(d.pieces).filter((p) => p.solved);
+    assert.deepEqual(clusterOf(d, x.id), [x.id], 'a shared corner is not a join');
+    assert.deepEqual(clusterOf(d, y.id), [y.id]);
+  });
+
+  test('a rotated piece is out of its cluster', () => {
+    const { ctx, state } = beginPlaying();
+    let s = solveCells(state, ctx, [[1, 1], [1, 2]]);
+    const [a] = Object.values(s.pieces).filter((p) => p.solved && p.at!.c === 1);
+    s = move(s, ctx, 'bo', 'ROTATE_PIECE', { pieceId: a.id });
+    assert.equal(s.pieces[a.id].solved, false);
+    assert.deepEqual(clusterOf(s, a.id), [a.id]);
+    const other = Object.values(s.pieces).find((p) => p.solved)!;
+    assert.deepEqual(clusterOf(s, other.id), [other.id], 'the rest stays together');
+  });
+
+  test('grabbing one piece of a cluster moves the whole cluster', () => {
+    const { ctx, state } = beginPlaying();
+    let s = solveCells(state, ctx, [[1, 1], [1, 2], [2, 1]]);
+    assert.equal(s.solvedCount, 3);
+
+    const grabbed = Object.values(s.pieces).find((p) => p.solved && p.at!.r === 1 && p.at!.c === 1)!;
+    s = move(s, ctx, 'bo', 'PLACE_PIECE', { pieceId: grabbed.id, zone: 'BOARD', row: 0, col: 1 });
+
+    const at = (r: number, c: number) => {
+      const p = Object.values(s.pieces).find((x) => x.at?.r === r && x.at?.c === c)!;
+      return p;
+    };
+    assert.deepEqual(at(0, 1).at, { r: 0, c: 1 });
+    assert.equal(at(0, 1).id, Object.values(s.pieces).find((x) => x.row === 1 && x.col === 1)!.id);
+    assert.equal(at(0, 2).id, Object.values(s.pieces).find((x) => x.row === 1 && x.col === 2)!.id);
+    assert.equal(at(1, 1).id, Object.values(s.pieces).find((x) => x.row === 2 && x.col === 1)!.id);
+    // Shifted a cell up, so nothing in it is home any more.
+    assert.equal(s.solvedCount, 0);
+  });
+
+  test('a cluster that would hang off the board is refused whole', () => {
+    const { ctx, state } = beginPlaying();
+    const s = solveCells(state, ctx, [[0, 0], [1, 0], [2, 0]]);
+    const grabbed = Object.values(s.pieces).find((p) => p.solved && p.at!.r === 1)!;
+    // Dropping the middle piece one row down would push the bottom one off a
+    // 3-row board. Half a cluster has nowhere to go, so the drop is refused.
+    const v = jigsawGame.validateMove(s, {
+      type: 'PLACE_PIECE', playerId: 'bo', timestamp: 1,
+      payload: { pieceId: grabbed.id, zone: 'BOARD', row: 2, col: 0 },
+    }, ctx);
+    assert.equal(v.valid, false, 'half a cluster would have nowhere to go');
+  });
+
+  test('undo puts a whole cluster back at once', () => {
+    const { ctx, state } = beginPlaying();
+    let s = solveCells(state, ctx, [[1, 1], [1, 2]]);
+    const grabbed = Object.values(s.pieces).find((p) => p.solved && p.at!.c === 1)!;
+    const pair = new Set(clusterOf(s, grabbed.id));
+
+    s = move(s, ctx, 'bo', 'PLACE_PIECE', { pieceId: grabbed.id, zone: 'BOARD', row: 0, col: 1 });
+    s = move(s, ctx, 'bo', 'UNDO');
+
+    for (const id of pair) {
+      assert.equal(s.pieces[id].solved, true, `${id} should be solved again`);
+    }
+    assert.equal(s.solvedCount, 2);
+  });
+
+  test('a cluster is never named in a view — membership is the solution', () => {
+    const { ctx, state } = beginPlaying();
+    const s = solveCells(state, ctx, [[1, 1], [1, 2]]);
+    const json = JSON.stringify(jigsawGame.getPlayerView(s, 'ana', ctx));
+    for (const leak of ['cluster', 'members', 'group']) {
+      assert.equal(json.includes(leak), false, `view leaked ${leak}`);
+    }
+  });
+});
+
+describe('ROTATE_PIECE', () => {
+  test('rot cycles 0,1,2,3 and a rotated piece cannot be solved', () => {
+    const { ctx, state } = beginPlaying();
+    const p = Object.values(state.pieces)[0]!;
+    let s = unrotate(state, ctx, p.id);
+    s = move(s, ctx, 'ana', 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', row: p.row, col: p.col });
+    assert.equal(s.pieces[p.id].solved, true, 'home cell, right way up');
+
+    // Three quarter turns: home cell, wrong way up, never solved.
+    for (let i = 1; i <= 3; i++) {
+      s = move(s, ctx, 'ana', 'ROTATE_PIECE', { pieceId: p.id });
+      assert.equal(s.pieces[p.id].rot, i);
+      assert.equal(s.pieces[p.id].solved, false, 'at its home cell but turned is not solved');
+    }
+    assert.equal(s.solvedCount, 0);
+    s = move(s, ctx, 'ana', 'ROTATE_PIECE', { pieceId: p.id });
+    assert.equal(s.pieces[p.id].rot, 0);
+    assert.equal(s.pieces[p.id].solved, true, 'turning it back re-solves it where it stands');
+    assert.equal(s.solvedCount, 1);
+  });
+
+  test('rotating a piece out of a cluster unsolves it and drops the count', () => {
+    const { ctx, state } = beginPlaying();
+    let s = state;
+    for (const [row, col] of [[1, 1], [1, 2]]) {
+      const p = Object.values(s.pieces).find((x) => x.row === row && x.col === col)!;
+      s = unrotate(s, ctx, p.id);
+      s = move(s, ctx, 'ana', 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', row, col });
+    }
+    assert.equal(s.solvedCount, 2);
+
+    const a = Object.values(s.pieces).find((p) => p.solved && p.at!.c === 1)!;
+    s = move(s, ctx, 'ana', 'ROTATE_PIECE', { pieceId: a.id });
+    assert.equal(s.solvedCount, 1);
+    assert.equal(s.pieces[a.id].solved, false);
+  });
+
+  test('rotation is refused before the clock starts, and for an unknown piece', () => {
+    const ctx = harness();
+    const state = start(ctx);
+    const p = Object.values(state.pieces)[0]!;
+    assert.equal(jigsawGame.validateMove(state, { type: 'ROTATE_PIECE', playerId: 'ana', payload: { pieceId: p.id }, timestamp: 1 }, ctx).valid, false);
+    const { ctx: c2, state: playing } = beginPlaying(ctx);
+    assert.equal(jigsawGame.validateMove(playing, { type: 'ROTATE_PIECE', playerId: 'ana', payload: { pieceId: 'pZZ' }, timestamp: 1 }, c2).valid, false);
   });
 });
 
@@ -387,16 +591,19 @@ describe('UNDO', () => {
     assert.equal(s.history.length, 0);
   });
 
-  test('undo cannot un-lock a correctly-placed piece', () => {
+  test('undo takes back a correctly-placed piece — solving is no longer a dead end', () => {
     const { ctx, state } = beginPlaying();
     const p = Object.values(state.pieces).find((x) => x.row === 1 && x.col === 1)!;
-    const locked = move(state, ctx, 'ana', 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', row: 1, col: 1 });
-    assert.equal(locked.pieces[p.id].locked, true);
+    let s = move(state, ctx, 'ana', 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', row: 0, col: 0 });
+    s = unrotate(s, ctx, p.id);
+    s = move(s, ctx, 'ana', 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', row: 1, col: 1 });
+    assert.equal(s.pieces[p.id].solved, true);
+    assert.equal(s.solvedCount, 1);
 
-    const v = jigsawGame.validateMove(locked, { type: 'UNDO', playerId: 'ana', timestamp: 1 }, ctx);
-    assert.equal(v.valid, false);
-    const r = jigsawGame.processMove(locked, { type: 'UNDO', playerId: 'ana', timestamp: 1 }, ctx);
-    assert.equal(r.success, false);
+    s = move(s, ctx, 'ana', 'UNDO');
+    assert.deepEqual(s.pieces[p.id].at, { r: 0, c: 0 }, 'back to where the mistake was');
+    assert.equal(s.pieces[p.id].solved, false);
+    assert.equal(s.solvedCount, 0);
   });
 
   test('undo is per-player: one player cannot take back another player\'s move', () => {
@@ -465,11 +672,12 @@ describe('completion', () => {
 
     for (const p of Object.values(state.pieces)) {
       if (state.phase !== 'PLAYING') break;
+      state = unrotate(state, ctx, p.id);
       state = move(state, ctx, 'ana', 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', row: p.row, col: p.col });
     }
 
     assert.equal(state.phase, 'COMPLETED');
-    assert.equal(state.lockedCount, 12);
+    assert.equal(state.solvedCount, 12);
     assert.ok(state.finishedAtMs! >= started);
     assert.ok(state.result);
     assert.equal(state.result!.elapsedMs, state.finishedAtMs! - state.startedAtMs!);

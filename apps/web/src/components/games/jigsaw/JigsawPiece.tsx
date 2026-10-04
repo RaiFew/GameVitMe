@@ -34,8 +34,15 @@ export const JigsawPiece = memo(function JigsawPiece({
     [piece.edges, piece.src.w, piece.src.h, amp]
   );
 
+  // Quarter turns, about the middle of the body. The body sits at `[amp, amp]`
+  // in both the board's `<g>` and the tray's viewBox, so this one transform
+  // serves both and needs no per-parent adjustment. `computeGridLayout` returns
+  // near-square cells, so a 90° turn lands in about the same box.
+  const cx = amp + piece.src.w / 2;
+  const cy = amp + piece.src.h / 2;
+
   return (
-    <>
+    <g transform={piece.rot ? `rotate(${90 * piece.rot} ${cx} ${cy})` : undefined}>
       <clipPath id={clipId}>
         <path d={d} />
       </clipPath>
@@ -49,7 +56,7 @@ export const JigsawPiece = memo(function JigsawPiece({
         clipPath={`url(#${clipId})`}
       />
       <path d={d} fill="none" stroke="currentColor" strokeWidth={amp * 0.14} />
-    </>
+    </g>
   );
 });
 

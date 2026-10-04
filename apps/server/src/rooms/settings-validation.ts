@@ -141,7 +141,7 @@ export function validateJigsawSettings(
 
       case 'difficulty': {
         if (typeof value !== 'string' || !(value in PIECES_BY_DIFFICULTY)) {
-          return { ok: false, error: 'Difficulty must be Easy, Normal, Hard or Expert.' };
+          return { ok: false, error: 'Difficulty must be Easy, Normal, Hard, Expert or Master.' };
         }
         out.difficulty = value;
         out.pieceCount = PIECES_BY_DIFFICULTY[value as JigsawDifficulty];
