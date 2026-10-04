@@ -144,7 +144,7 @@ export function usePieceDrag({
   const ghostNode = ghost ? (
     <div
       ref={ghostRef}
-      className="fixed top-0 left-0 pointer-events-none z-50 opacity-90 rounded-xs shadow-lg ring-1 ring-black/30"
+      className="fixed top-0 left-0 pointer-events-none z-50 opacity-90 rounded-xs shadow-lg ring-2 ring-black/60"
       style={{
         width: ghost.width,
         height: ghost.height,

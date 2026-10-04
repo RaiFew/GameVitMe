@@ -55,7 +55,13 @@ export const JigsawPiece = memo(function JigsawPiece({
         preserveAspectRatio="none"
         clipPath={`url(#${clipId})`}
       />
-      <path d={d} fill="none" stroke="currentColor" strokeWidth={amp * 0.14} />
+      {/* Outline is drawn twice, light halo under a dark stroke. A single
+          currentColor tint went invisible wherever the photo matched it —
+          near-white sky swallowed a 30%-white stroke in dark mode — so the
+          piece had no readable edge at all. Hard colours are independent of
+          both the picture and the theme. */}
+      <path d={d} fill="none" stroke="#ffffff" strokeWidth={amp * 0.32} />
+      <path d={d} fill="none" stroke="#000000" strokeWidth={amp * 0.14} />
     </g>
   );
 });

@@ -48,7 +48,7 @@ export function PieceTray({
             viewBox={pieceViewBox(p)}
             width={size}
             height={size}
-            className="text-ink/30 cursor-grab active:cursor-grabbing touch-none shrink-0 overflow-visible"
+            className="cursor-grab active:cursor-grabbing touch-none shrink-0 overflow-visible"
             onPointerDown={(e) => onPointerDown(e, p.id, p.src, p.rot)}
             onPointerMove={(e) => onPointerMove(e, p.id, p.src)}
             onPointerUp={onPointerUp}
