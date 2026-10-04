@@ -63,6 +63,13 @@ const FEATURED_GAMES = [
     players: '1–20 Players',
     descriptionKey: 'games.descJigsaw',
   },
+  {
+    id: 'music-quiz',
+    name: 'Music Quiz',
+    categoryKey: 'games.catMusicQuiz',
+    players: '2–20 Players',
+    descriptionKey: 'games.descMusicQuiz',
+  },
 ] as const;
 
 interface JoinFormProps {

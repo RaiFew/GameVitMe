@@ -15,6 +15,7 @@ export default defineConfig({
       '@party/salem': path.resolve(__dirname, '../../packages/games/salem/src/index.ts'),
       '@party/spyfall': path.resolve(__dirname, '../../packages/games/spyfall/src/index.ts'),
       '@party/jigsaw': path.resolve(__dirname, '../../packages/games/jigsaw/src/index.ts'),
+      '@party/music-quiz': path.resolve(__dirname, '../../packages/games/music-quiz/src/index.ts'),
     },
   },
   server: {

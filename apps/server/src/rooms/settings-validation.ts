@@ -157,6 +157,72 @@ export function validateJigsawSettings(
 }
 
 /**
+ * Music Quiz. Same trust boundary as the two above: a hostile `query` would be
+ * interpolated straight into a provider URL, and an out-of-range `answerSeconds`
+ * would sit in the view as a deadline the engine does not honour.
+ *
+ * `pool` is deliberately absent. It is server-authored at `game:start` from the
+ * provider search, and because unknown keys are dropped rather than rejected, a
+ * client that posts one simply has it discarded — which is exactly what a client
+ * would be trying to do by inventing its own songs.
+ */
+export function validateMusicQuizSettings(
+  patch: Record<string, unknown>
+): { ok: true; settings: Record<string, unknown> } | { ok: false; error: string } {
+  const out: Record<string, unknown> = {};
+
+  for (const key of Object.keys(patch)) {
+    const value = patch[key];
+
+    switch (key) {
+      case 'query': {
+        if (value === undefined || value === null) continue;
+        if (typeof value !== 'string') {
+          return { ok: false, error: 'The search must be plain text.' };
+        }
+        const q = value.trim();
+        if (q.length > 80) return { ok: false, error: 'That search is too long.' };
+        out.query = q;
+        break;
+      }
+
+      case 'questionType': {
+        if (value !== 'TITLE' && value !== 'ARTIST' && value !== 'BOTH') {
+          return { ok: false, error: 'A question must ask for a title, an artist, or both.' };
+        }
+        out.questionType = value;
+        break;
+      }
+
+      case 'rounds':
+        out.rounds = clamp(value, 1, 50, 10);
+        break;
+
+      case 'excerptSeconds':
+        out.excerptSeconds = clamp(value, 5, 30, 10);
+        break;
+
+      case 'answerSeconds':
+        out.answerSeconds = clamp(value, 5, 60, 20);
+        break;
+
+      case 'revealSeconds':
+        out.revealSeconds = clamp(value, 2, 30, 6);
+        break;
+
+      case 'maxPoints':
+        out.maxPoints = clamp(value, 100, 5000, 1000);
+        break;
+
+      default:
+        continue;
+    }
+  }
+
+  return { ok: true, settings: out };
+}
+
+/**
  * Codenames turn timers. 0 means the host turned the timer off, which is a real
  * setting rather than a missing one, so the floor is 0 rather than 1 and the
  * clamped result is always a number the engine can divide into milliseconds.

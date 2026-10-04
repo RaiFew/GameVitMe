@@ -87,6 +87,16 @@ export function GamesPage() {
     descriptionKey: 'games.descJigsaw',
     status: 'Ready to play',
     },
+    {
+    id: 'music-quiz',
+    name: 'Music Quiz',
+    category: 'Co-op & Puzzle',
+    categoryKey: 'games.catMusicQuiz',
+    players: '2–20 Players',
+    duration: '5–15 Min',
+    descriptionKey: 'games.descMusicQuiz',
+    status: 'Ready to play',
+    },
   ] as const;
 
   return (

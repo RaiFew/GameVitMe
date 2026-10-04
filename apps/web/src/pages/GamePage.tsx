@@ -19,6 +19,8 @@ import { NumberGridGame } from '../components/games/number-grid/NumberGridGame';
 import type { NumberGridPlayerView } from '@party/number-grid';
 import { JigsawGame } from '../components/games/jigsaw/JigsawGame';
 import type { JigsawPlayerView } from '@party/jigsaw';
+import { MusicQuizGame } from '../components/games/music-quiz/MusicQuizGame';
+import type { MusicQuizPlayerView } from '@party/music-quiz';
 
 export function GamePage() {
   const { roomCode } = useParams<{ roomCode: string }>();
@@ -205,6 +207,13 @@ export function GamePage() {
       ) : room.gameType === 'jigsaw' ? (
         <JigsawGame
           playerView={playerView as JigsawPlayerView}
+          onAction={handleAction}
+          onReturnLobby={handleReturnLobby}
+          onPlayAgain={handlePlayAgain}
+        />
+      ) : room.gameType === 'music-quiz' ? (
+        <MusicQuizGame
+          playerView={playerView as MusicQuizPlayerView}
           onAction={handleAction}
           onReturnLobby={handleReturnLobby}
           onPlayAgain={handlePlayAgain}

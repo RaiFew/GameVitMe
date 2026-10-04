@@ -19,6 +19,7 @@ export function CreateRoomPage() {
     { id: 'rock-paper-scissors', name: 'Rock Paper Scissors' },
     { id: 'number-grid', name: 'Number Grid' },
     { id: 'jigsaw', name: 'Jigsaw Puzzle' },
+    { id: 'music-quiz', name: 'Music Quiz' },
   ]);
   const [selectedGame, setSelectedGame] = useState(initialGame);
   const [roomName, setRoomName] = useState('');
@@ -33,14 +34,15 @@ export function CreateRoomPage() {
   const isRPS = selectedGame === 'rock-paper-scissors';
   const isNumberGrid = selectedGame === 'number-grid';
   const isJigsaw = selectedGame === 'jigsaw';
+  const isMusicQuiz = selectedGame === 'music-quiz';
 
   useEffect(() => {
     if (isHostForced) {
       setHostMode('HOST');
-    } else if (isCodenames || isNumberGrid || isJigsaw) {
+    } else if (isCodenames || isNumberGrid || isJigsaw || isMusicQuiz) {
       setHostMode('NO_HOST');
     }
-  }, [selectedGame, isHostForced, isCodenames, isNumberGrid, isJigsaw]);
+  }, [selectedGame, isHostForced, isCodenames, isNumberGrid, isJigsaw, isMusicQuiz]);
 
   const { socket, isConnected } = useSocket();
   const { setRoom } = useRoomStore();
@@ -80,13 +82,15 @@ export function CreateRoomPage() {
         ? 'RPS Battle Arena'
         : targetGame === 'jigsaw'
         ? 'Jigsaw Table'
+        : targetGame === 'music-quiz'
+        ? 'Music Quiz Night'
         : 'My Party Room');
     const clampedPlayers = targetGame === 'number-grid' || targetGame === 'jigsaw'
       ? Math.min(Math.max(maxPlayers, 1), 20)
       : targetGame === 'codenames' || targetGame === 'rock-paper-scissors'
       ? Math.min(Math.max(maxPlayers, 2), 20)
       : Math.min(Math.max(maxPlayers, 4), 12);
-    const isHostMode = isHostForced ? true : targetGame === 'codenames' || targetGame === 'number-grid' || targetGame === 'jigsaw' ? false : hostMode === 'HOST';
+    const isHostMode = isHostForced ? true : targetGame === 'codenames' || targetGame === 'number-grid' || targetGame === 'jigsaw' || targetGame === 'music-quiz' ? false : hostMode === 'HOST';
 
     let resolved = false;
 
@@ -180,7 +184,7 @@ export function CreateRoomPage() {
             >
               {games.map((game) => (
                 <option key={game.id} value={game.id}>
-                  {game.name} ({game.id === 'number-grid' || game.id === 'jigsaw' ? '1–20' : game.id === 'codenames' || game.id === 'rock-paper-scissors' ? '2–20' : '4–12'} Players)
+                  {game.name} ({game.id === 'number-grid' || game.id === 'jigsaw' ? '1–20' : game.id === 'codenames' || game.id === 'rock-paper-scissors' || game.id === 'music-quiz' ? '2–20' : '4–12'} Players)
                 </option>
               ))}
             </select>

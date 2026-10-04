@@ -13,6 +13,7 @@ import { SpyfallLocationCard } from '../components/lobby/SpyfallLocationCard';
 import { RPSSettingsCard } from '../components/lobby/RPSSettingsCard';
 import { NumberGridSettingsCard } from '../components/lobby/NumberGridSettingsCard';
 import { JigsawSettingsCard } from '../components/lobby/JigsawSettingsCard';
+import { MusicQuizSettingsCard } from '../components/lobby/MusicQuizSettingsCard';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Users, Shield, ArrowRight } from 'lucide-react';
@@ -27,6 +28,7 @@ const GAME_NAMES: Record<string, string> = {
   'rock-paper-scissors': 'Rock Paper Scissors',
   'number-grid': 'Number Grid',
   jigsaw: 'Jigsaw Puzzle',
+  'music-quiz': 'Music Quiz',
 };
 
 export function LobbyPage() {
@@ -103,12 +105,13 @@ export function LobbyPage() {
 
   const isNumberGrid = room.gameType === 'number-grid';
   const isJigsaw = room.gameType === 'jigsaw';
+  const isMusicQuiz = room.gameType === 'music-quiz';
   const isSpyfall = room.gameType === 'spyfall';
 
   const isHostForced = room.gameType === 'werewolf' || room.gameType === 'salem';
-  const isHostMode = isCodenames || isNumberGrid || isJigsaw ? false : isRPS ? !!room.settings?.hostMode : (isHostForced || room.settings?.hostMode !== false);
+  const isHostMode = isCodenames || isNumberGrid || isJigsaw || isMusicQuiz ? false : isRPS ? !!room.settings?.hostMode : (isHostForced || room.settings?.hostMode !== false);
   const playingPlayers = isHostMode ? players.filter((p) => p.id !== room.hostId) : players;
-  const minPlayers = isNumberGrid || isJigsaw ? 1 : isCodenames ? (isCodenamesTwoPlayer ? 2 : 4) : isRPS ? (isHostMode ? 3 : 2) : (isHostMode ? 5 : 4);
+  const minPlayers = isNumberGrid || isJigsaw ? 1 : isMusicQuiz ? 2 : isCodenames ? (isCodenamesTwoPlayer ? 2 : 4) : isRPS ? (isHostMode ? 3 : 2) : (isHostMode ? 5 : 4);
   const enoughPlayers = isNumberGrid || isJigsaw
     ? players.length >= 1
     : isCodenamesTwoPlayer
@@ -219,6 +222,8 @@ export function LobbyPage() {
                   : 'Points Race Mode'
                 : isJigsaw
                 ? 'Co-op Assembly (1 to 20)'
+                : isMusicQuiz
+                ? 'Speed Quiz (2 to 20)'
                 : isHostMode
                 ? 'Host / Screen Mode'
                 : 'No Host Mode'}
@@ -251,6 +256,8 @@ export function LobbyPage() {
               ? 'Number Rush: 1 to 20 players. Click numbers in ascending order under high pressure!'
               : isJigsaw
               ? 'Jigsaw: 1 to 20 players. Everyone assembles the same picture together against the clock.'
+              : isMusicQuiz
+              ? 'Music Quiz: 2 to 20 players. Hear the clip, pick one of four, fastest correct wins.'
               : isHostMode
               ? 'Screen Mode: 1 Screen Host + 4 to 12 active players required (5+ users in room)'
               : '4 to 12 players required to play'}
@@ -541,6 +548,15 @@ export function LobbyPage() {
             />
           )}
 
+          {/* Music Quiz search + question type */}
+          {isMusicQuiz && (
+            <MusicQuizSettingsCard
+              isHost={isHost}
+              settings={room.settings as any}
+              onUpdateSettings={updateSettings}
+            />
+          )}
+
           {/* Action Row */}
           <div className="flex gap-3">
             {(!isHost || !isHostMode) && (
@@ -662,6 +678,8 @@ export function LobbyPage() {
                 ? 'Salem 1692 Overview'
                 : isJigsaw
                 ? 'Jigsaw Overview'
+                : isMusicQuiz
+                ? 'Music Quiz Overview'
                 : 'Spyfall Overview'}
             </h3>
             {isRPS ? (
@@ -694,6 +712,13 @@ export function LobbyPage() {
                 <li>Drag a piece from the tray onto the board. Tap a board piece to send it back.</li>
                 <li>A piece <strong>locks</strong> the moment it lands in its true cell, by anyone.</li>
                 <li>The clock starts when the last player is ready, and the score is the time taken.</li>
+              </ul>
+            ) : isMusicQuiz ? (
+              <ul className="text-xs text-ink-muted space-y-2 list-disc list-inside">
+                <li>A short clip plays. Everyone hears the <strong>same clip at the same moment</strong>.</li>
+                <li>Pick one of <strong>four answers</strong> before the timer runs out.</li>
+                <li>Points scale with speed: answering as the clip starts is worth the most.</li>
+                <li>One answer per question, and the deadline is enforced by the server.</li>
               </ul>
             ) : isRoleGame ? (
               <ul className="text-xs text-ink-muted space-y-2 list-disc list-inside">

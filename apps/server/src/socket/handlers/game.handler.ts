@@ -10,6 +10,8 @@ import { getSpyfallLocationSets } from '../../routes/spyfall.routes.js';
 import { MIN_SPYFALL_LOCATIONS } from '@party/spyfall';
 import { PIECES_BY_DIFFICULTY, type JigsawDifficulty } from '@party/jigsaw';
 import { clampCodenamesTimer } from '../../rooms/settings-validation.js';
+import { buildSongPool, poolSupports } from '../../music-quiz/catalog.js';
+import { MIN_POOL_SIZE } from '@party/music-quiz';
 import { isRankedVariant } from '@party/number-grid';
 import type { RankedRunResult } from '@party/number-grid';
 import { recordRankedResult, resolveRankedUser } from '../../ranking/ranking.service.js';
@@ -146,6 +148,15 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
         const msg = hostMode
           ? 'Number Grid in Host Mode requires 1 Host + at least 1 player (2 users minimum).'
           : 'Number Grid requires at least 1 player to start.';
+        socket.emit('game:action_error', { code: 'NOT_ENOUGH_PLAYERS', message: msg });
+        if (callback) callback({ error: msg });
+        return;
+      }
+    } else if (room.gameType === 'music-quiz') {
+      // A quiz needs someone to guess at, and the host is a player like anyone
+      // else, so the generic gate below — which demands four — cannot apply.
+      if (room.players.length < 2) {
+        const msg = 'Music Quiz needs at least 2 players.';
         socket.emit('game:action_error', { code: 'NOT_ENOUGH_PLAYERS', message: msg });
         if (callback) callback({ error: msg });
         return;
@@ -386,6 +397,36 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
         (settings as any).imageHeight = picture.height;
         (settings as any).difficulty = difficulty;
         (settings as any).pieceCount = PIECES_BY_DIFFICULTY[difficulty];
+      }
+
+      if (room.gameType === 'music-quiz') {
+        // The pool is fetched here, once, and snapshotted into settings exactly
+        // as codenames snapshots its word list: what the host searched for and
+        // what the provider returned now both belong to this run, and editing
+        // the lobby card afterwards must not change the questions.
+        const gs = (roomSettings.gameSettings || {}) as Record<string, any>;
+        const built = await buildSongPool(typeof gs.query === 'string' ? gs.query : '');
+
+        if (built.pool.length < MIN_POOL_SIZE) {
+          const msg =
+            `Only ${built.pool.length} playable tracks came back for "${String(gs.query || '').slice(0, 40)}". Try a different artist or genre.`;
+          socket.emit('game:action_error', { code: 'POOL_TOO_SMALL', message: msg });
+          if (callback) callback({ error: msg });
+          return;
+        }
+
+        const wanted =
+          gs.questionType === 'ARTIST' || gs.questionType === 'BOTH' ? gs.questionType : 'TITLE';
+
+        (settings as any).pool = built.pool;
+        (settings as any).query = String(gs.query || '').slice(0, 80);
+        // The pool has the last word on the question type: an artist search puts
+        // one artist in the pool, and an ARTIST question over it would be four
+        // buttons reading the same. The view carries the effective type, so the
+        // UI asks for what is really being asked.
+        (settings as any).questionType = poolSupports(built.pool, wanted)
+          ? wanted
+          : built.questionType;
       }
 
       if (room.gameType === 'spyfall') {

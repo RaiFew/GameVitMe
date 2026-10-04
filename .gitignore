@@ -42,3 +42,4 @@ scratch*
 
 # Claude Code local config
 .claude/
+tmp-e2e/
