@@ -283,14 +283,22 @@ export function NumberGridSettingsCard({
           )}
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {previewRounds.map((size, idx) => (
-            <span
-              key={idx}
-              className="px-1.5 py-1 text-[10px] font-mono border border-rule bg-canvas-sunk text-ink-muted rounded-xs"
-            >
-              R{idx + 1}: {typeof size === 'number' ? `${size}x${size}` : size}
+          {isChaos ? (
+            // Chaos has no ladder to preview — the engine rolls a fresh size every
+            // round, so listing one row per round is nine identical lies.
+            <span className="px-1.5 py-1 text-[10px] font-mono border border-rule bg-canvas-sunk text-ink-muted rounded-xs">
+              Every round: random 2x2-10x10
             </span>
-          ))}
+          ) : (
+            previewRounds.map((size, idx) => (
+              <span
+                key={idx}
+                className="px-1.5 py-1 text-[10px] font-mono border border-rule bg-canvas-sunk text-ink-muted rounded-xs"
+              >
+                R{idx + 1}: {typeof size === 'number' ? `${size}x${size}` : size}
+              </span>
+            ))
+          )}
         </div>
       </div>
 
