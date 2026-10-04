@@ -13,10 +13,10 @@
   },
   "dependencies": {
     "@party/game-engine": "workspace:*",
-    "@party/shared-types": "workspace:*"
+    "@party/shared-types": "workspace:*",
+    "@types/node": "^20.12.7"
   },
   "devDependencies": {
-    "@types/node": "^20.12.7",
     "tsx": "^4.7.2",
     "typescript": "^5.7.0"
   }

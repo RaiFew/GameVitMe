@@ -12,11 +12,11 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@party/shared-types": "workspace:*"
+    "@party/shared-types": "workspace:*",
+    "@types/node": "^20.12.7"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
-    "@types/node": "^20.12.7",
     "tsx": "^4.7.2"
   }
 }

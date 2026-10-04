@@ -199,10 +199,10 @@ importers:
       '@party/shared-types':
         specifier: workspace:*
         version: link:../shared-types
-    devDependencies:
       '@types/node':
         specifier: ^20.12.7
         version: 20.19.43
+    devDependencies:
       tsx:
         specifier: ^4.7.2
         version: 4.23.13
@@ -218,10 +218,10 @@ importers:
       '@party/shared-types':
         specifier: workspace:*
         version: link:../../shared-types
-    devDependencies:
       '@types/node':
         specifier: ^20.12.7
         version: 20.19.43
+    devDependencies:
       tsx:
         specifier: ^4.7.2
         version: 4.23.13
@@ -237,10 +237,10 @@ importers:
       '@party/shared-types':
         specifier: workspace:*
         version: link:../../shared-types
-    devDependencies:
       '@types/node':
         specifier: ^20.12.7
         version: 20.19.43
+    devDependencies:
       tsx:
         specifier: ^4.7.2
         version: 4.23.13
@@ -256,10 +256,10 @@ importers:
       '@party/shared-types':
         specifier: workspace:*
         version: link:../../shared-types
-    devDependencies:
       '@types/node':
         specifier: ^20.12.7
         version: 20.19.43
+    devDependencies:
       tsx:
         specifier: ^4.7.2
         version: 4.23.13
@@ -275,10 +275,10 @@ importers:
       '@party/shared-types':
         specifier: workspace:*
         version: link:../../shared-types
-    devDependencies:
       '@types/node':
         specifier: ^20.12.7
         version: 20.19.43
+    devDependencies:
       tsx:
         specifier: ^4.7.2
         version: 4.23.13
@@ -294,10 +294,10 @@ importers:
       '@party/shared-types':
         specifier: workspace:*
         version: link:../../shared-types
-    devDependencies:
       '@types/node':
         specifier: ^20.12.7
         version: 20.19.43
+    devDependencies:
       tsx:
         specifier: ^4.7.2
         version: 4.23.13
@@ -313,10 +313,10 @@ importers:
       '@party/shared-types':
         specifier: workspace:*
         version: link:../../shared-types
-    devDependencies:
       '@types/node':
         specifier: ^20.12.7
         version: 20.19.43
+    devDependencies:
       tsx:
         specifier: ^4.7.2
         version: 4.23.13
@@ -332,10 +332,10 @@ importers:
       '@party/shared-types':
         specifier: workspace:*
         version: link:../../shared-types
-    devDependencies:
       '@types/node':
         specifier: ^20.12.7
         version: 20.19.43
+    devDependencies:
       tsx:
         specifier: ^4.7.2
         version: 4.23.13
@@ -354,10 +354,10 @@ importers:
       '@party/shared-types':
         specifier: workspace:*
         version: link:../../shared-types
-    devDependencies:
       '@types/node':
         specifier: ^20.12.7
         version: 20.19.43
+    devDependencies:
       tsx:
         specifier: ^4.7.2
         version: 4.23.13
