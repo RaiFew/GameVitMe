@@ -162,10 +162,12 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
         return;
       }
     } else if (room.gameType === 'music-quiz') {
-      // A quiz needs someone to guess at, and the host is a player like anyone
-      // else, so the generic gate below — which demands four — cannot apply.
-      if (room.players.length < 2) {
-        const msg = 'Music Quiz needs at least 2 players.';
+      // One player is a complete quiz — with nobody to race it is a self-set, and
+      // the rounds, scoring and timers are all per-player already. The bound is
+      // therefore zero, and this branch exists only to opt out of the generic
+      // 4-player gate below, which a solo run would otherwise trip.
+      if (room.players.length < 1) {
+        const msg = 'Music Quiz needs at least 1 player.';
         socket.emit('game:action_error', { code: 'NOT_ENOUGH_PLAYERS', message: msg });
         if (callback) callback({ error: msg });
         return;

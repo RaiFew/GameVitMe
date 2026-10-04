@@ -111,7 +111,7 @@ export function LobbyPage() {
   const isHostForced = room.gameType === 'werewolf' || room.gameType === 'salem';
   const isHostMode = isCodenames || isNumberGrid || isJigsaw || isMusicQuiz ? false : isRPS ? !!room.settings?.hostMode : (isHostForced || room.settings?.hostMode !== false);
   const playingPlayers = isHostMode ? players.filter((p) => p.id !== room.hostId) : players;
-  const minPlayers = isNumberGrid || isJigsaw ? 1 : isMusicQuiz ? 2 : isCodenames ? (isCodenamesTwoPlayer ? 2 : 4) : isRPS ? (isHostMode ? 3 : 2) : (isHostMode ? 5 : 4);
+  const minPlayers = isNumberGrid || isJigsaw || isMusicQuiz ? 1 : isCodenames ? (isCodenamesTwoPlayer ? 2 : 4) : isRPS ? (isHostMode ? 3 : 2) : (isHostMode ? 5 : 4);
   const enoughPlayers = isNumberGrid || isJigsaw
     ? players.length >= 1
     : isCodenamesTwoPlayer
@@ -121,7 +121,9 @@ export function LobbyPage() {
     : isRPS
     ? playingPlayers.length >= 2
     : players.length >= minPlayers;
-  const allReady = ((isNumberGrid || isJigsaw) && players.length === 1) || playingPlayers.every((p) => p.isReady);
+  // A solo game has nobody to wait for, so the ready round is skipped outright
+  // rather than waiting on the host's own ack.
+  const allReady = ((isNumberGrid || isJigsaw || isMusicQuiz) && players.length === 1) || playingPlayers.every((p) => p.isReady);
   // The server refuses to start a jigsaw with no picture, so the button says so
   // here rather than bouncing off an error after the click.
   const jigsawImageId = (room.settings as any)?.gameSettings?.imageId || null;
@@ -223,7 +225,7 @@ export function LobbyPage() {
                 : isJigsaw
                 ? 'Co-op Assembly (1 to 20)'
                 : isMusicQuiz
-                ? 'Speed Quiz (2 to 20)'
+                ? 'Speed Quiz (1 to 20)'
                 : isHostMode
                 ? 'Host / Screen Mode'
                 : 'No Host Mode'}
@@ -257,7 +259,7 @@ export function LobbyPage() {
               : isJigsaw
               ? 'Jigsaw: 1 to 20 players. Everyone assembles the same picture together against the clock.'
               : isMusicQuiz
-              ? 'Music Quiz: 2 to 20 players. Hear the clip, pick one of four, fastest correct wins.'
+              ? 'Music Quiz: 1 to 20 players. Hear the clip, pick one of four, fastest correct wins — or play it solo.'
               : isHostMode
               ? 'Screen Mode: 1 Screen Host + 4 to 12 active players required (5+ users in room)'
               : '4 to 12 players required to play'}

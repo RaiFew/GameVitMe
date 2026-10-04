@@ -20,7 +20,7 @@ const QUESTION_PROMPTS = {
 
 export function MusicQuizGame({ playerView, onAction, onReturnLobby, onPlayAgain }: Props) {
   const { phase, choices, roundNumber, totalRounds, revealed, myAnswerIndex, serverNow } = playerView;
-  const { state, error, peaks, needsGesture, play, retry } = useClipPlayer(playerView);
+  const { state, error, peaks, needsGesture, play, retry, volume, setVolume } = useClipPlayer(playerView);
 
   // `serverNow` is frozen at the last broadcast, so the skew is captured once
   // per broadcast and the countdown runs off the local clock from there.
@@ -67,21 +67,40 @@ export function MusicQuizGame({ playerView, onAction, onReturnLobby, onPlayAgain
           </span>
           <span className="text-xs font-bold text-ink-muted">{playerView.myScore} pts</span>
         </div>
-        {phase === 'ANSWERING' && (
-          <span
-            className={`text-sm font-black tabular-nums ${secondsLeft <= 5 ? 'text-red-600 dark:text-red-400' : 'text-ink'}`}
+        <div className="flex items-center gap-3">
+          <label
+            className="flex items-center gap-1.5 text-ink-faint"
+            title="Volume"
+            data-testid="music-quiz-volume"
           >
-            {secondsLeft}s
-          </span>
-        )}
-        {phase === 'REVEAL' && (
-          <span
-            data-testid="music-quiz-reveal-countdown"
-            className="text-sm font-black tabular-nums text-ink"
-          >
-            {Math.ceil(revealLeft / 1000)}
-          </span>
-        )}
+            <Volume2 size={13} />
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={volume}
+              onChange={(e) => setVolume(Number(e.target.value))}
+              aria-label="Volume"
+              className="w-20 accent-ink cursor-pointer"
+            />
+          </label>
+          {phase === 'ANSWERING' && (
+            <span
+              className={`text-sm font-black tabular-nums ${secondsLeft <= 5 ? 'text-red-600 dark:text-red-400' : 'text-ink'}`}
+            >
+              {secondsLeft}s
+            </span>
+          )}
+          {phase === 'REVEAL' && (
+            <span
+              data-testid="music-quiz-reveal-countdown"
+              className="text-sm font-black tabular-nums text-ink"
+            >
+              {Math.ceil(revealLeft / 1000)}
+            </span>
+          )}
+        </div>
       </div>
 
       <Card className="w-full p-5 border border-rule space-y-4">

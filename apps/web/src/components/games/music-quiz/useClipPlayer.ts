@@ -4,6 +4,23 @@ import type { MusicQuizPlayerView } from '@party/music-quiz';
 
 export type ClipState = 'idle' | 'loading' | 'ready' | 'playing' | 'ended' | 'error';
 
+const VOLUME_KEY = 'music-quiz-volume';
+
+/**
+ * How loud this browser wants its music. Local only and never sent to the
+ * server: it is a listening preference, not game state, so it has no business
+ * in the authoritative view. Persisted because a player who turns it down once
+ * should not have to do it again every room.
+ */
+function loadVolume(): number {
+  const stored = localStorage.getItem(VOLUME_KEY);
+  // `Number(null)` is 0 and would sail past isFinite, silently muting a first
+  // visit — so an absent key has to be told apart from a stored zero.
+  if (stored === null) return 0.8;
+  const raw = Number(stored);
+  return Number.isFinite(raw) ? Math.min(1, Math.max(0, raw)) : 0.8;
+}
+
 /**
  * Plays one round's preview, synchronised to the server clock.
  *
@@ -34,6 +51,21 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
   const [peaks, setPeaks] = useState<number[]>([]);
   /** True until the clip is actually playing — this is the TAP TO PLAY button. */
   const [needsGesture, setNeedsGesture] = useState(false);
+  const [volume, setVolumeState] = useState(loadVolume);
+  // The round effect is keyed on the round, not the volume, so it would capture
+  // a stale level; the ref is what each fresh element is created with.
+  const volumeRef = useRef(volume);
+  volumeRef.current = volume;
+
+  const setVolume = useCallback((v: number) => {
+    volumeRef.current = v;
+    setVolumeState(v);
+    localStorage.setItem(VOLUME_KEY, String(v));
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume;
+  }, [volume]);
 
   const audio = view.audio;
   const startAt = view.playbackStartAtMs;
@@ -53,6 +85,7 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
     const el = new Audio();
     el.preload = 'auto';
     audioRef.current = el;
+    el.volume = volumeRef.current;
     setState('loading');
     setError('');
     setNeedsGesture(true);
@@ -164,7 +197,7 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
     // element already replaced returns on the guard above.
   }, [view.phase, view.revealEndsAtMs]);
 
-  return { state, error, peaks, needsGesture, play, retry: () => play(true) };
+  return { state, error, peaks, needsGesture, play, volume, setVolume, retry: () => play(true) };
 }
 
 /** Amplitude only — the bars carry no title, artist or album art, so the

@@ -43,7 +43,9 @@ export const musicQuizGame: GameDefinition<
   id: 'music-quiz',
   name: 'Music Quiz',
   version: '1.0.0',
-  minPlayers: 2,
+  // Rounds, scoring and the timers are per-player, so one player is a complete
+  // game: a solo run is just a quiz nobody else is racing.
+  minPlayers: 1,
   maxPlayers: 20,
   defaultSettings: DEFAULT_MUSIC_QUIZ_SETTINGS,
 

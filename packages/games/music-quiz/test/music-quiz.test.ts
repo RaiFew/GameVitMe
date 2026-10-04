@@ -291,6 +291,43 @@ describe('answering', () => {
   });
 });
 
+describe('solo play', () => {
+  const solo = () => {
+    const ctx = harness();
+    (ctx as unknown as { players: GamePlayer[] }).players = [PLAYERS[0]!];
+    return ctx;
+  };
+
+  test('one player is enough to start', () => {
+    assert.equal(musicQuizGame.minPlayers, 1);
+  });
+
+  test('a solo run answers, reveals and finishes with a score', () => {
+    const ctx = solo();
+    let state = start({}, ctx);
+    assert.equal(state.phase, 'ANSWERING');
+    assert.deepEqual(Object.keys(state.players), ['ana']);
+
+    state = send(state, ctx, 'ana', 'ANSWER', { index: state.round.correctIndex });
+    assert.ok(state.players.ana!.score > 0, 'the correct answer scores');
+
+    // Answer every round: the reveal timer rolls on until the last one ends it.
+    let rounds = 1;
+    while (state.phase !== 'GAME_OVER') {
+      state = send(state, ctx, 'ana', 'ADVANCE');
+      assert.equal(state.phase, 'REVEAL');
+      state = musicQuizGame.onTimerExpired(state, 'reveal_timer', ctx)!.newState!;
+      if (state.phase === 'ANSWERING') {
+        rounds++;
+        state = send(state, ctx, 'ana', 'ANSWER', { index: state.round.correctIndex });
+      }
+    }
+    assert.equal(rounds, 3, 'played every round the settings asked for');
+    assert.deepEqual(state.winnerPlayerIds, ['ana'], 'the only player wins their own quiz');
+    assert.ok(musicQuizGame.checkGameEnd(state)?.isEnded);
+  });
+});
+
 describe('round flow', () => {
   test('ADVANCE is refused while someone has not answered and time is left', () => {
     const ctx = harness();
