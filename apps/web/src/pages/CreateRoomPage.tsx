@@ -78,12 +78,14 @@ export function CreateRoomPage() {
     api.get('/api/games')
       .then((res) => {
         const list = Array.isArray(res) ? res : [];
-        if (list.length > 0) {
-          setGames(list);
-          if (!searchParams.get('game')) {
-            setSelectedGame(list[0].id);
-          }
-        }
+        if (list.length === 0) return;
+        setGames(list);
+        // Reconcile against the list the server actually serves, not against the
+        // URL. A `?game=` the server does not know would otherwise leave the
+        // select holding a value with no matching option, and the browser would
+        // quietly show the first game instead — URL saying jigsaw, box saying
+        // Spyfall, nothing on screen wrong enough to notice.
+        setSelectedGame((cur) => (list.some((g: any) => g.id === cur) ? cur : list[0].id));
       })
       .catch(() => {});
   }, [searchParams]);
