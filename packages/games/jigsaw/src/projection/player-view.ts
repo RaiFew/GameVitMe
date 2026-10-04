@@ -1,4 +1,5 @@
 import { buildBoundaries, pieceEdgesFor, type PieceEdges } from '../engine/edges.js';
+import { findUndoable } from '../moves/process.js';
 import type { JigsawMasterState, JigsawPieceView, JigsawPlayerView } from '../types/index.js';
 
 /**
@@ -54,6 +55,7 @@ export function projectJigsawPlayerView(
     })),
     lockedCount: state.lockedCount,
     totalToLock: state.cols * state.rows,
+    canUndo: findUndoable(state, playerId) !== null,
     me: state.players[playerId] ?? null,
     serverNow: now,
     startedAtMs: state.startedAtMs,

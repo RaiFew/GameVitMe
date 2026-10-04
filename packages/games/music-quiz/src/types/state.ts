@@ -24,7 +24,11 @@ export interface MusicQuizSettings {
   excerptSeconds: number;
   /** How long players have to answer once the clip is audible. */
   answerSeconds: number;
-  /** Seconds the correct answer stays on screen before the next round. */
+  /**
+   * How long the reveal lasts, and therefore how long the clip keeps playing
+   * into it. Fixed rather than host-tunable: the reveal is the answer screen,
+   * and a countdown players can read is the whole point of it.
+   */
   revealSeconds: number;
   maxPoints: number;
   questionType: QuestionType;
@@ -41,8 +45,12 @@ export interface MusicQuizSettings {
 export interface QuizAnswer {
   index: number;
   correct: boolean;
-  /** Milliseconds left on the clock when the move reached the server. */
-  responseMs: number;
+  /**
+   * Milliseconds from the round opening to the moment the move reached the
+   * server. Both ends are server values: the round's own start stamp and the
+   * arrival stamp on the move, so no client clock is involved.
+   */
+  elapsedMs: number;
   points: number;
 }
 
@@ -64,6 +72,12 @@ export interface QuizRound {
   playbackStartAtMs: number;
   questionStartedAtMs: number;
   questionDeadlineMs: number;
+  /**
+   * When the reveal ends, stamped once by the server when the round closed. Null
+   * while ANSWERING. The clip keeps playing until this instant, so every client
+   * stops at the same moment without a second timer of its own.
+   */
+  revealEndsAtMs: number | null;
   answers: Record<string, QuizAnswer>;
   /** The fastest correct answer this round, or null if nobody got it. */
   fastestPlayerId: string | null;
@@ -92,6 +106,8 @@ export interface MusicQuizPlayerView {
   choices: string[];
   playbackStartAtMs: number;
   questionDeadlineMs: number;
+  /** REVEAL only — when the countdown to the next round hits zero. */
+  revealEndsAtMs: number | null;
   /** Enough to fetch the audio and nothing more — never the title. */
   audio: { provider: TrackProvider; providerId: string } | null;
   /** The player's own locked-in answer, so a late re-render can grey the buttons. */
@@ -104,6 +120,17 @@ export interface MusicQuizPlayerView {
     title: string;
     artist: string;
     fastestPlayerId: string | null;
+    /**
+     * One row per player, in leaderboard order, including the players who did
+     * not answer — an unanswered row is a result too.
+     */
+    results: {
+      playerId: string;
+      displayName: string;
+      index: number | null;
+      correct: boolean;
+      points: number;
+    }[];
   } | null;
   winners: string[];
 }

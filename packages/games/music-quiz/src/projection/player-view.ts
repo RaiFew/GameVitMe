@@ -29,6 +29,7 @@ export function projectMusicQuizPlayerView(
     choices: state.round.choices,
     playbackStartAtMs: state.round.playbackStartAtMs,
     questionDeadlineMs: state.round.questionDeadlineMs,
+    revealEndsAtMs: state.round.revealEndsAtMs,
     audio: {
       provider: state.round.track.provider,
       providerId: state.round.track.providerId,
@@ -49,6 +50,20 @@ export function projectMusicQuizPlayerView(
           title: state.round.track.title,
           artist: state.round.track.artist,
           fastestPlayerId: state.round.fastestPlayerId,
+          results: Object.values(state.players)
+            .map((p) => {
+              const a = state.round.answers[p.playerId];
+              return {
+                playerId: p.playerId,
+                displayName: p.displayName,
+                index: a?.index ?? null,
+                correct: a?.correct ?? false,
+                points: a?.points ?? 0,
+              };
+            })
+            // Leaderboard order, so the round result and the standings below it
+            // never disagree about who is ahead.
+            .sort((a, b) => b.points - a.points || a.displayName.localeCompare(b.displayName)),
         }
       : null,
     winners: state.winnerPlayerIds,

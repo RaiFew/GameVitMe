@@ -14,7 +14,7 @@ import type {
   QuizTrack,
 } from './types/index.js';
 import { buildRound } from './engine/quiz.js';
-import { normalizeSettings, scoreAnswer, validateMusicQuizMove } from './moves/index.js';
+import { normalizeSettings, scoreAnswer, validateMusicQuizMove, REVEAL_SECONDS } from './moves/index.js';
 import { projectMusicQuizPlayerView } from './projection/player-view.js';
 
 export * from './types/index.js';
@@ -26,7 +26,7 @@ export const DEFAULT_MUSIC_QUIZ_SETTINGS: MusicQuizSettings = {
   rounds: 10,
   excerptSeconds: 10,
   answerSeconds: 20,
-  revealSeconds: 6,
+  revealSeconds: 5,
   maxPoints: 1000,
   questionType: 'TITLE',
   query: '',
@@ -172,10 +172,14 @@ export const musicQuizGame: GameDefinition<
     if (move.type === 'ANSWER') {
       const index = Number((move.payload as { index: number }).index);
       const correct = index === state.round.correctIndex;
-      const responseMs = Math.max(0, state.round.questionDeadlineMs - move.timestamp);
+      // Elapsed since the round opened, on the server's clock: `move.timestamp`
+      // is stamped on arrival, so a client clock cannot buy a faster answer.
+      // (Passing the time *remaining* here instead would invert the scoring —
+      // the last player to answer would have scored the most.)
+      const elapsedMs = Math.max(0, move.timestamp - state.round.questionStartedAtMs);
       const points = scoreAnswer(
         correct,
-        responseMs,
+        elapsedMs,
         state.settings.maxPoints,
         state.settings.answerSeconds * 1000
       );
@@ -184,12 +188,12 @@ export const musicQuizGame: GameDefinition<
       // `validateMove` already refused a non-player; this only satisfies the
       // indexed access, which cannot know that.
       if (!prev) return { success: false, error: 'You are not in this quiz.', newState: state };
-      const answers = { ...state.round.answers, [move.playerId]: { index, correct, responseMs, points } };
+      const answers = { ...state.round.answers, [move.playerId]: { index, correct, elapsedMs, points } };
       // Fastest correct answer takes the round highlight. A tie keeps whoever
       // got there first; points are already stamped per player either way.
       const fastest = state.round.fastestPlayerId;
       const fastestPlayerId =
-        correct && (fastest === null || responseMs < (answers[fastest]?.responseMs ?? Infinity))
+        correct && (fastest === null || elapsedMs < (answers[fastest]?.elapsedMs ?? Infinity))
           ? move.playerId
           : fastest;
 
@@ -212,8 +216,8 @@ export const musicQuizGame: GameDefinition<
 
     // ADVANCE: open the reveal, which shows the answer and the standings. The
     // answer timer's arming is replaced, since the reveal is on the clock now.
-    ctx.scheduleTimer(state.settings.revealSeconds * 1000, 'reveal_timer');
-    return { success: true, newState: { ...state, phase: 'REVEAL' } };
+    ctx.scheduleTimer(REVEAL_SECONDS * 1000, 'reveal_timer');
+    return { success: true, newState: { ...state, phase: 'REVEAL', round: openReveal(state, now) } };
   },
 
   getPlayerView(state, _playerId, _ctx) {
@@ -238,8 +242,11 @@ export const musicQuizGame: GameDefinition<
   onTimerExpired(state, timerType, ctx): MoveResult<MusicQuizMasterState> {
     if (timerType === 'answer_timer') {
       if (state.phase !== 'ANSWERING') return { success: false, newState: state };
-      ctx.scheduleTimer(state.settings.revealSeconds * 1000, 'reveal_timer');
-      return { success: true, newState: { ...state, phase: 'REVEAL' } };
+      ctx.scheduleTimer(REVEAL_SECONDS * 1000, 'reveal_timer');
+      return {
+        success: true,
+        newState: { ...state, phase: 'REVEAL', round: openReveal(state, Date.now()) },
+      };
     }
 
     if (timerType === 'reveal_timer') {
@@ -272,6 +279,11 @@ export const musicQuizGame: GameDefinition<
   },
 };
 
+/** One stamp, shared by every client, so they all stop the clip at the same instant. */
+function openReveal(state: MusicQuizMasterState, nowMs: number) {
+  return { ...state.round, revealEndsAtMs: nowMs + REVEAL_SECONDS * 1000 };
+}
+
 function finishGame(state: MusicQuizMasterState): MoveResult<MusicQuizMasterState> {
   const scores = Object.values(state.players).map((p) => p.score);
   const top = scores.length ? Math.max(...scores) : 0;
@@ -300,6 +312,7 @@ function emptyRound(nowMs: number, answerSeconds: number) {
     playbackStartAtMs: nowMs,
     questionStartedAtMs: nowMs,
     questionDeadlineMs: nowMs + answerSeconds * 1000,
+    revealEndsAtMs: null,
     answers: {},
     fastestPlayerId: null,
   };

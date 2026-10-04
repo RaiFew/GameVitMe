@@ -51,6 +51,25 @@ export interface JigsawSettings {
   hostPlayerId?: string;
 }
 
+export interface JigsawPosition {
+  zone: JigsawZone;
+  at: { r: number; c: number } | null;
+}
+
+/**
+ * One undoable placement. MASTER ONLY — `previous` is the answer to "where did
+ * this piece come from", which is exactly what a client needs to reconstruct it.
+ * Only the derived `canUndo` flag goes out.
+ */
+export interface JigsawHistoryEntry {
+  pieceId: string;
+  previous: JigsawPosition;
+  next: JigsawPosition;
+  playerId: string;
+  timestamp: number;
+  actionType: 'PLACE_PIECE';
+}
+
 export interface JigsawMasterState {
   phase: JigsawPhase;
   settings: JigsawSettings;
@@ -60,6 +79,13 @@ export interface JigsawMasterState {
   edgeSeed: number;
   pieces: Record<string, JigsawPieceState>;
   players: Record<string, JigsawPlayerState>;
+  /**
+   * Newest last. An entry is dropped the moment it stops being undoable — when
+   * its piece locks, or when the piece moves again — so the tail of this array
+   * is always the live undo stack. ponytail: capped at HISTORY_LIMIT; a room
+   * that needs deeper undo than that wants a redo log, not a bigger array.
+   */
+  history: JigsawHistoryEntry[];
   lockedCount: number;
   startedAtMs: number | null;
   finishedAtMs: number | null;
@@ -98,6 +124,8 @@ export interface JigsawPlayerView {
   players: { playerId: string; displayName: string; piecesPlaced: number; isReady: boolean }[];
   lockedCount: number;
   totalToLock: number;
+  /** True when this player has a placement of their own still undoable. */
+  canUndo: boolean;
   me: JigsawPlayerState | null;
   /** Server clock, so elapsed time never depends on a client's own. */
   serverNow: number;

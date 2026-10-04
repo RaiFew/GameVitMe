@@ -15,11 +15,12 @@ interface Props {
 }
 
 export function JigsawGame({ playerView, onAction, onReturnLobby, onPlayAgain }: Props) {
-  const { phase, imageId, imageWidth, imageHeight, cols, rows, edgeSeed, pieces, lockedCount, totalToLock, me } =
+  const { phase, imageId, imageWidth, imageHeight, cols, rows, edgeSeed, pieces, lockedCount, totalToLock, canUndo, me } =
     playerView;
 
   const [imageSrc, setImageSrc] = useState('');
   const [imageError, setImageError] = useState('');
+  const [showOriginal, setShowOriginal] = useState(false);
 
   useEffect(() => {
     if (!imageId) {
@@ -104,13 +105,49 @@ export function JigsawGame({ playerView, onAction, onReturnLobby, onPlayAgain }:
           <span className="text-xs font-bold text-ink-muted">
             {cols}×{rows}
           </span>
+          {phase === 'PLAYING' && (
+            <Button
+              data-jigsaw-undo
+              variant="secondary"
+              disabled={!canUndo}
+              onClick={() => onAction('UNDO')}
+              className="text-[10px] font-bold uppercase tracking-wider py-1 px-2"
+            >
+              Undo
+            </Button>
+          )}
         </div>
         {phase === 'PLAYING' && (
-          <span className="text-sm font-black tabular-nums text-ink">
-            {formatElapsed(elapsedMs(playerView, skew.current))}
-          </span>
+          <div className="flex items-center gap-3">
+            <button
+              data-jigsaw-original
+              onClick={() => setShowOriginal((v) => !v)}
+              className="text-[10px] font-mono font-bold uppercase tracking-wider text-ink-muted hover:text-ink"
+            >
+              {showOriginal ? 'Hide picture' : 'Show picture'}
+            </button>
+            <span className="text-sm font-black tabular-nums text-ink">
+              {formatElapsed(elapsedMs(playerView, skew.current))}
+            </span>
+          </div>
         )}
       </div>
+
+      {/* Slicing never revokes the original: it is the one thing a player who has
+          lost the thread can check a piece against. Only shown on request, and
+          only over the board — it is a reference, not the puzzle. */}
+      {showOriginal && imageSrc && (
+        <div
+          data-jigsaw-original-view
+          className="w-full max-w-3xl border border-rule rounded-xs bg-canvas-sunk p-2"
+        >
+          <img
+            src={imageSrc}
+            alt="The picture this puzzle was cut from"
+            className="w-full max-h-64 object-contain"
+          />
+        </div>
+      )}
 
       {imageError ? (
         <Card className="p-6 border border-rule text-xs font-mono text-red-600 dark:text-red-400 w-full">

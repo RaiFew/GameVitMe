@@ -7,6 +7,8 @@ import {
   buildRound,
   labelFor,
   scoreAnswer,
+  validateMusicQuizMove,
+  PLAYBACK_LEAD_MS,
   type MusicQuizMasterState,
   type MusicQuizSettings,
   type QuizTrack,
@@ -235,8 +237,9 @@ describe('answering', () => {
   test('a correct answer scores by speed', () => {
     const ctx = harness();
     let state = start();
-    const deadline = state.round.questionDeadlineMs;
-    state = send(state, ctx, 'ana', 'ANSWER', { index: state.round.correctIndex }, deadline - 5000);
+    // Five seconds into a twenty-second window: three quarters of the maximum.
+    state = send(state, ctx, 'ana', 'ANSWER', { index: state.round.correctIndex },
+      state.round.questionStartedAtMs + 5000);
     assert.equal(state.players.ana!.score, 750);
     assert.equal(state.players.ana!.correctCount, 1);
   });
@@ -259,10 +262,14 @@ describe('answering', () => {
   test('the fastest correct answer takes the round', () => {
     const ctx = harness();
     let state = start();
-    const deadline = state.round.questionDeadlineMs;
-    state = send(state, ctx, 'ana', 'ANSWER', { index: state.round.correctIndex }, deadline - 9000);
-    state = send(state, ctx, 'bo', 'ANSWER', { index: state.round.correctIndex }, deadline - 2000);
-    assert.equal(state.round.fastestPlayerId, 'bo');
+    // Ana at five seconds, Bo at twelve. Elapsed time is what counts, so the
+    // later answer cannot borrow the "fastest" label by having more clock left.
+    state = send(state, ctx, 'ana', 'ANSWER', { index: state.round.correctIndex },
+      state.round.questionStartedAtMs + 5000);
+    state = send(state, ctx, 'bo', 'ANSWER', { index: state.round.correctIndex },
+      state.round.questionStartedAtMs + 12000);
+    assert.equal(state.round.fastestPlayerId, 'ana');
+    assert.ok(state.players.ana!.score > state.players.bo!.score);
   });
 
   test('a late answer is refused on the server clock, not the client one', () => {
@@ -322,8 +329,8 @@ describe('round flow', () => {
   test('the last round finishes the game and every tie wins', () => {
     const ctx = harness();
     let state = start({ rounds: 1 });
-    const deadline = state.round.questionDeadlineMs;
-    state = send(state, ctx, 'ana', 'ANSWER', { index: state.round.correctIndex }, deadline - 1000);
+    state = send(state, ctx, 'ana', 'ANSWER', { index: state.round.correctIndex },
+      state.round.questionStartedAtMs + 1000);
     const revealed = musicQuizGame.onTimerExpired(state, 'answer_timer', ctx)!.newState!;
     const over = musicQuizGame.onTimerExpired(revealed, 'reveal_timer', ctx)!.newState!;
     assert.equal(over.phase, 'GAME_OVER');
@@ -369,5 +376,129 @@ describe('settings', () => {
     const ctx = harness();
     const state = start({ answerSeconds: 60 });
     assert.equal(state.round.questionDeadlineMs - state.round.questionStartedAtMs, 60000);
+  });
+});
+
+describe('the shared deadline', () => {
+  test('a late answer is not answered at all, whatever the client believes', () => {
+    const ctx = harness();
+    const s = start({}, ctx);
+    // The move is stamped as arriving long after the deadline. The server's own
+    // clock decides, never `move.timestamp` — so a client that stamps an early
+    // time gets in, and one that stamps a late time still does not.
+    const m: GameMove = {
+      type: 'ANSWER',
+      playerId: 'ana',
+      payload: { index: 0 },
+      timestamp: s.round.questionDeadlineMs + 1,
+    };
+    assert.equal(validateMusicQuizMove(s, m, ctx, s.round.questionDeadlineMs + 1).valid, false);
+    assert.equal(validateMusicQuizMove(s, m, ctx, Date.now()).valid, true);
+  });
+
+  test('speed decides the points, on the arrival stamp', () => {
+    const ctx = harness();
+    const s = start({ maxPoints: 1000, answerSeconds: 10 }, ctx);
+    // The clip becomes audible PLAYBACK_LEAD_MS after the round opens, so that
+    // is the earliest an honest answer can arrive; 10s in is the deadline.
+    const early = send(s, ctx, 'ana', 'ANSWER', { index: s.round.correctIndex },
+      s.round.questionStartedAtMs + PLAYBACK_LEAD_MS);
+    const s2 = start({ maxPoints: 1000, answerSeconds: 10 }, ctx);
+    const late = send(s2, ctx, 'bo', 'ANSWER', { index: s2.round.correctIndex },
+      s2.round.questionDeadlineMs);
+
+    assert.ok(early.round.answers.ana!.points > 800, `fast answer scored ${early.round.answers.ana!.points}`);
+    assert.equal(late.round.answers.bo!.points, 0, 'an answer on the deadline is worth nothing');
+  });
+
+  test('a player who taps late gets no extra time for it', () => {
+    const ctx = harness();
+    const s = start({ answerSeconds: 20 }, ctx);
+    // The deadline is fixed when the round opens. No move, and no amount of
+    // waiting, moves it — there is no field a client could send to change it.
+    assert.equal(s.round.questionDeadlineMs - s.round.questionStartedAtMs, 20000);
+    assert.equal(s.round.playbackStartAtMs - s.round.questionStartedAtMs, PLAYBACK_LEAD_MS);
+  });
+});
+
+describe('the reveal', () => {
+  /** Both players answered, then the round opened. */
+  const answeredRound = () => {
+    const ctx = harness();
+    let s = start({ rounds: 3 }, ctx);
+    s = send(s, ctx, 'ana', 'ANSWER', { index: s.round.correctIndex });
+    s = send(s, ctx, 'bo', 'ANSWER', { index: (s.round.correctIndex + 1) % 4 });
+    return { ctx, s: send(s, ctx, 'ana', 'ADVANCE') };
+  };
+
+  test('it is five seconds long, from one server stamp', () => {
+    const { ctx, s } = answeredRound();
+    assert.equal(s.phase, 'REVEAL');
+    const span = s.round.revealEndsAtMs! - Date.now();
+    assert.ok(span > 3000 && span <= 5000, `reveal window was ${span}ms`);
+    assert.equal(ctx.armed, 'reveal_timer');
+    assert.equal(s.settings.revealSeconds, 5);
+  });
+
+  test('the timer path stamps the same length as the ADVANCE path', () => {
+    const ctx = harness();
+    const s = start({}, ctx);
+    const r = musicQuizGame.onTimerExpired(s, 'answer_timer', ctx);
+    assert.ok(r.success && r.newState);
+    const span = r.newState!.round.revealEndsAtMs! - Date.now();
+    assert.ok(span > 3000 && span <= 5000, `reveal window was ${span}ms`);
+  });
+
+  test('it names every player, including the ones who did not answer', () => {
+    const ctx = harness();
+    let s = start({}, ctx);
+    s = send(s, ctx, 'ana', 'ANSWER', { index: s.round.correctIndex });
+    // Bo never answers; the timer ends the round for everyone.
+    const r = musicQuizGame.onTimerExpired(s, 'answer_timer', ctx);
+    const v = musicQuizGame.getPlayerView(r.newState!, 'ana', ctx);
+    assert.equal(v.revealed!.results.length, 2);
+    const bo = v.revealed!.results.find((x) => x.playerId === 'bo')!;
+    assert.equal(bo.index, null);
+    assert.equal(bo.correct, false);
+    assert.equal(bo.points, 0);
+  });
+
+  test('it carries each player\'s pick, verdict and points', () => {
+    const ctx = harness();
+    const s0 = start({}, ctx);
+    const wrong = (s0.round.correctIndex + 1) % 4;
+    let s = send(s0, ctx, 'ana', 'ANSWER', { index: s0.round.correctIndex },
+      s0.round.questionStartedAtMs + PLAYBACK_LEAD_MS);
+    s = send(s, ctx, 'bo', 'ANSWER', { index: wrong });
+    s = send(s, ctx, 'ana', 'ADVANCE');
+
+    const v = musicQuizGame.getPlayerView(s, 'bo', ctx);
+    const ana = v.revealed!.results.find((r) => r.playerId === 'ana')!;
+    const bo = v.revealed!.results.find((r) => r.playerId === 'bo')!;
+    assert.equal(ana.correct, true);
+    assert.equal(ana.index, v.revealed!.correctIndex);
+    assert.ok(ana.points > 0);
+    assert.equal(bo.correct, false);
+    assert.equal(bo.index, wrong);
+    assert.equal(bo.points, 0);
+  });
+
+  test('nothing can be answered or re-scored once it has opened', () => {
+    const ctx = harness();
+    const { s } = answeredRound();
+    const before = JSON.stringify(musicQuizGame.getPlayerView(s, 'ana', ctx).scoreboard);
+    refuse(s, ctx, 'ana', 'ANSWER', { index: 0 });
+    refuse(s, ctx, 'bo', 'ANSWER', { index: 0 });
+    assert.equal(JSON.stringify(musicQuizGame.getPlayerView(s, 'ana', ctx).scoreboard), before);
+  });
+
+  test('the next round clears the stamp and resets the deadline', () => {
+    const ctx = harness();
+    const { s } = answeredRound();
+    const r = musicQuizGame.onTimerExpired(s, 'reveal_timer', ctx);
+    assert.ok(r.success && r.newState);
+    assert.equal(r.newState!.phase, 'ANSWERING');
+    assert.equal(r.newState!.round.revealEndsAtMs, null);
+    assert.deepEqual(r.newState!.round.answers, {});
   });
 });

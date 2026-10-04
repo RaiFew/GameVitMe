@@ -20,7 +20,6 @@ describe('validateMusicQuizSettings', () => {
       rounds: 9999,
       excerptSeconds: 1,
       answerSeconds: 0,
-      revealSeconds: -3,
       maxPoints: 1e9,
     });
     assert.ok(r.ok);
@@ -28,9 +27,19 @@ describe('validateMusicQuizSettings', () => {
       rounds: 50,
       excerptSeconds: 5,
       answerSeconds: 5,
-      revealSeconds: 2,
       maxPoints: 5000,
     });
+  });
+
+  test('the reveal length is the game\'s, not the host\'s', () => {
+    // The reveal is how long the answer stays up and how long the clip plays on
+    // through it, so it is a constant. The key is accepted — an old client still
+    // sends it — and discarded rather than echoed back into the room settings.
+    for (const v of [-3, 60, 5]) {
+      const r = validateMusicQuizSettings({ revealSeconds: v });
+      assert.ok(r.ok);
+      assert.equal(r.settings.revealSeconds, undefined);
+    }
   });
 
   test('an unknown question type is refused rather than defaulted', () => {

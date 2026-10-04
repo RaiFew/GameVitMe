@@ -207,7 +207,9 @@ export function validateMusicQuizSettings(
         break;
 
       case 'revealSeconds':
-        out.revealSeconds = clamp(value, 2, 30, 6);
+        // Accepted and ignored. The reveal is how long the answer stays up and
+        // how long the clip plays on through it, so it is a constant of the game
+        // rather than a knob — `normalizeSettings` overwrites whatever lands here.
         break;
 
       case 'maxPoints':

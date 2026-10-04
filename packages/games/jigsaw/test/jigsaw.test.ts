@@ -327,6 +327,94 @@ describe('PLACE_PIECE', () => {
   });
 });
 
+describe('UNDO', () => {
+  const wrongCell = (p: JigsawMasterState['pieces'][string]) =>
+    p.row === 2 && p.col === 2 ? { row: 0, col: 0 } : { row: 2, col: 2 };
+
+  test('undo puts a wrongly-placed piece back where it came from', () => {
+    const { ctx, state } = beginPlaying();
+    const p = Object.values(state.pieces).find((x) => x.row === 0 && x.col === 3)!;
+    const cell = wrongCell(p);
+
+    let s = move(state, ctx, 'ana', 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', ...cell });
+    assert.equal(s.pieces[p.id].zone, 'BOARD');
+    assert.equal(s.pieces[p.id].at!.r, cell.row);
+
+    s = move(s, ctx, 'ana', 'UNDO');
+    assert.equal(s.pieces[p.id].zone, 'TRAY');
+    assert.equal(s.pieces[p.id].at, null);
+    assert.equal(s.history.length, 0);
+  });
+
+  test('undo cannot un-lock a correctly-placed piece', () => {
+    const { ctx, state } = beginPlaying();
+    const p = Object.values(state.pieces).find((x) => x.row === 1 && x.col === 1)!;
+    const locked = move(state, ctx, 'ana', 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', row: 1, col: 1 });
+    assert.equal(locked.pieces[p.id].locked, true);
+
+    const v = jigsawGame.validateMove(locked, { type: 'UNDO', playerId: 'ana', timestamp: 1 }, ctx);
+    assert.equal(v.valid, false);
+    const r = jigsawGame.processMove(locked, { type: 'UNDO', playerId: 'ana', timestamp: 1 }, ctx);
+    assert.equal(r.success, false);
+  });
+
+  test('undo is per-player: one player cannot take back another player\'s move', () => {
+    const { ctx, state } = beginPlaying();
+    const p = Object.values(state.pieces).find((x) => x.row === 0 && x.col === 3)!;
+    const cell = wrongCell(p);
+    const s = move(state, ctx, 'ana', 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', ...cell });
+
+    assert.equal(jigsawGame.validateMove(s, { type: 'UNDO', playerId: 'bo', timestamp: 1 }, ctx).valid, false);
+    const boView = jigsawGame.getPlayerView(s, 'bo', ctx);
+    const anaView = jigsawGame.getPlayerView(s, 'ana', ctx);
+    assert.equal(boView.canUndo, false);
+    assert.equal(anaView.canUndo, true);
+  });
+
+  test('undo walks back through the mover\'s own moves, newest first', () => {
+    const { ctx, state } = beginPlaying();
+    const a = Object.values(state.pieces).find((x) => x.row === 0 && x.col === 3)!;
+    const b = Object.values(state.pieces).find((x) => x.row === 2 && x.col === 0)!;
+
+    let s = move(state, ctx, 'ana', 'PLACE_PIECE', { pieceId: a.id, zone: 'BOARD', ...wrongCell(a) });
+    s = move(s, ctx, 'ana', 'PLACE_PIECE', { pieceId: b.id, zone: 'BOARD', ...wrongCell(b) });
+    assert.equal(s.history.length, 2);
+
+    s = move(s, ctx, 'ana', 'UNDO');
+    assert.equal(s.pieces[b.id].zone, 'TRAY', 'the newest move is taken back');
+    assert.equal(s.pieces[a.id].zone, 'BOARD', 'the older one is untouched');
+
+    s = move(s, ctx, 'ana', 'UNDO');
+    assert.equal(s.pieces[a.id].zone, 'TRAY');
+    assert.equal(jigsawGame.validateMove(s, { type: 'UNDO', playerId: 'ana', timestamp: 1 }, ctx).valid, false);
+  });
+
+  test('an entry that is no longer undoable is skipped, not applied wrongly', () => {
+    const { ctx, state } = beginPlaying();
+    const p = Object.values(state.pieces).find((x) => x.row === 0 && x.col === 3)!;
+    // Ana drops it wrong; Bo then picks it up and puts it back in the tray, so
+    // Ana's entry describes a position the piece is no longer in.
+    let s = move(state, ctx, 'ana', 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', ...wrongCell(p) });
+    s = move(s, ctx, 'bo', 'PLACE_PIECE', { pieceId: p.id, zone: 'TRAY' });
+    assert.equal(jigsawGame.validateMove(s, { type: 'UNDO', playerId: 'ana', timestamp: 1 }, ctx).valid, false);
+  });
+
+  test('the history itself never reaches a client', () => {
+    const { ctx, state } = beginPlaying();
+    const p = Object.values(state.pieces).find((x) => x.row === 0 && x.col === 3)!;
+    const s = move(state, ctx, 'ana', 'PLACE_PIECE', { pieceId: p.id, zone: 'BOARD', ...wrongCell(p) });
+    const view = jigsawGame.getPlayerView(s, 'ana', ctx);
+    assert.equal(JSON.stringify(view).includes('history'), false);
+    assert.equal(view.canUndo, true);
+  });
+
+  test('undo is refused before the clock starts', () => {
+    const ctx = harness();
+    const state = start(ctx);
+    assert.equal(jigsawGame.validateMove(state, { type: 'UNDO', playerId: 'ana', timestamp: 1 }, ctx).valid, false);
+  });
+});
+
 describe('completion', () => {
   test('only the completing move ends the game, and the clock starts at READY', () => {
     const ctx = harness();

@@ -20,7 +20,7 @@ const QUESTION_PROMPTS = {
 
 export function MusicQuizGame({ playerView, onAction, onReturnLobby, onPlayAgain }: Props) {
   const { phase, choices, roundNumber, totalRounds, revealed, myAnswerIndex, serverNow } = playerView;
-  const { state, error, peaks, needsGesture, retry } = useClipPlayer(playerView);
+  const { state, error, peaks, needsGesture, play, retry } = useClipPlayer(playerView);
 
   // `serverNow` is frozen at the last broadcast, so the skew is captured once
   // per broadcast and the countdown runs off the local clock from there.
@@ -31,13 +31,17 @@ export function MusicQuizGame({ playerView, onAction, onReturnLobby, onPlayAgain
 
   const [, tick] = useState(0);
   useEffect(() => {
-    if (phase !== 'ANSWERING') return;
+    if (phase === 'GAME_OVER') return;
     const t = setInterval(() => tick((n) => n + 1), 250);
     return () => clearInterval(t);
   }, [phase]);
 
   const msLeft = Math.max(0, playerView.questionDeadlineMs - (Date.now() + skew.current));
   const secondsLeft = Math.ceil(msLeft / 1000);
+  const revealLeft = Math.max(
+    0,
+    (playerView.revealEndsAtMs ?? 0) - (Date.now() + skew.current)
+  );
   const answered = myAnswerIndex !== null;
   const canAdvance = answered || msLeft <= 0;
 
@@ -70,6 +74,14 @@ export function MusicQuizGame({ playerView, onAction, onReturnLobby, onPlayAgain
             {secondsLeft}s
           </span>
         )}
+        {phase === 'REVEAL' && (
+          <span
+            data-testid="music-quiz-reveal-countdown"
+            className="text-sm font-black tabular-nums text-ink"
+          >
+            {Math.ceil(revealLeft / 1000)}
+          </span>
+        )}
       </div>
 
       <Card className="w-full p-5 border border-rule space-y-4">
@@ -85,8 +97,9 @@ export function MusicQuizGame({ playerView, onAction, onReturnLobby, onPlayAgain
           <button
             type="button"
             onClick={retry}
-            disabled={state === 'playing' || state === 'loading'}
+            disabled={phase !== 'ANSWERING' || state === 'playing' || state === 'loading'}
             title="Play from the start"
+            data-testid="music-quiz-replay"
             className="shrink-0 border border-rule rounded-xs p-2 text-ink-muted hover:border-ink/40 hover:text-ink disabled:opacity-40 transition-colors"
           >
             <RefreshCw size={14} />
@@ -104,30 +117,55 @@ export function MusicQuizGame({ playerView, onAction, onReturnLobby, onPlayAgain
           </div>
         )}
 
-        {needsGesture && !error && (
+        {needsGesture && phase === 'ANSWERING' && !error && (
           <Button
             className="w-full text-xs font-bold uppercase"
-            onClick={retry}
+            onClick={() => play()}
+            disabled={state !== 'ready'}
             data-testid="music-quiz-play"
           >
-            <Volume2 size={13} /> Tap to play the clip
+            <Volume2 size={13} />
+            {state === 'loading' ? 'Loading the clip...' : 'Tap to play'}
           </Button>
         )}
 
         {revealed && (
-          <div className="border border-rule rounded-xs bg-canvas-sunk p-3">
-            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
-              {revealed.correctIndex === myAnswerIndex ? 'Correct' : myAnswerIndex === null ? 'No answer' : 'Not this one'}
-            </span>
-            <p className="text-sm font-black text-ink mt-0.5" data-testid="music-quiz-answer">{revealed.title}</p>
-            <p className="text-xs font-mono text-ink-muted">{revealed.artist}</p>
-            {revealed.fastestPlayerId && (
-              <p className="text-[10px] font-mono text-ink-faint mt-1.5">
-                Fastest correct:{' '}
-                {playerView.scoreboard.find((p) => p.playerId === revealed.fastestPlayerId)?.displayName ??
-                  'a player'}
-              </p>
-            )}
+          <div className="border border-rule rounded-xs bg-canvas-sunk p-3 space-y-2">
+            <div>
+              <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
+                {revealed.correctIndex === myAnswerIndex ? 'Correct' : myAnswerIndex === null ? 'No answer' : 'Not this one'}
+              </span>
+              <p className="text-sm font-black text-ink mt-0.5" data-testid="music-quiz-answer">{revealed.title}</p>
+              <p className="text-xs font-mono text-ink-muted">{revealed.artist}</p>
+              {revealed.fastestPlayerId && (
+                <p className="text-[10px] font-mono text-ink-faint mt-1.5">
+                  Fastest correct:{' '}
+                  {playerView.scoreboard.find((p) => p.playerId === revealed.fastestPlayerId)?.displayName ??
+                    'a player'}
+                </p>
+              )}
+            </div>
+
+            <div className="border-t border-rule pt-2 space-y-1" data-testid="music-quiz-reveal-results">
+              {revealed.results.map((r) => (
+                <div key={r.playerId} className="flex items-baseline justify-between gap-2 text-[10px] font-mono">
+                  <span className="text-ink truncate">
+                    {r.displayName}
+                    <span className="text-ink-faint"> — </span>
+                    {r.index === null ? (
+                      <span className="text-ink-faint">no answer</span>
+                    ) : (
+                      <span className={r.correct ? 'text-emerald-600 dark:text-emerald-400' : 'text-ink-muted'}>
+                        {choices[r.index]}
+                      </span>
+                    )}
+                  </span>
+                  <span className={`shrink-0 tabular-nums ${r.correct ? 'text-emerald-600 dark:text-emerald-400' : 'text-ink-faint'}`}>
+                    {r.correct ? `+${r.points}` : '0'}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </Card>
@@ -176,7 +214,7 @@ export function MusicQuizGame({ playerView, onAction, onReturnLobby, onPlayAgain
         )}
         {phase === 'REVEAL' && (
           <p className="text-[10px] font-mono text-ink-faint ml-auto flex items-center gap-1.5">
-            <Music4 size={11} /> Next question shortly...
+            <Music4 size={11} /> Next question in {Math.ceil(revealLeft / 1000)}s
           </p>
         )}
       </div>

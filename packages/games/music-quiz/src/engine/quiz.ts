@@ -65,6 +65,7 @@ export function buildRound(opts: {
     playbackStartAtMs: nowMs + PLAYBACK_LEAD_MS,
     questionStartedAtMs: nowMs,
     questionDeadlineMs: nowMs + answerSeconds * 1000,
+    revealEndsAtMs: null,
     answers: {},
     fastestPlayerId: null,
   };

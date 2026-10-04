@@ -6,6 +6,9 @@ export interface MoveValidation {
   error?: string;
 }
 
+/** How long the answer stays up, and how long the clip plays on into it. */
+export const REVEAL_SECONDS = 5;
+
 function clampInt(value: unknown, min: number, max: number, fallback: number): number {
   const n = Number(value);
   if (!Number.isFinite(n)) return fallback;
@@ -17,7 +20,9 @@ export function normalizeSettings(raw: Partial<MusicQuizSettings>): MusicQuizSet
     rounds: clampInt(raw.rounds, 1, 50, 10),
     excerptSeconds: clampInt(raw.excerptSeconds, 5, 30, 10),
     answerSeconds: clampInt(raw.answerSeconds, 5, 60, 20),
-    revealSeconds: clampInt(raw.revealSeconds, 2, 30, 6),
+    // Not read from the room: the reveal is the answer screen and the clip plays
+    // on through it, so its length is the game's, not the host's.
+    revealSeconds: REVEAL_SECONDS,
     maxPoints: clampInt(raw.maxPoints, 100, 5000, 1000),
     questionType: raw.questionType === 'ARTIST' || raw.questionType === 'BOTH' ? raw.questionType : 'TITLE',
     query: typeof raw.query === 'string' ? raw.query.slice(0, 80) : '',
@@ -33,7 +38,7 @@ export function normalizeSettings(raw: Partial<MusicQuizSettings>): MusicQuizSet
  */
 export function scoreAnswer(
   correct: boolean,
-  responseMs: number,
+  elapsedMs: number,
   maxPoints: number,
   answerWindowMs: number
 ): number {
@@ -41,7 +46,7 @@ export function scoreAnswer(
   // Clamped at both ends rather than trusted: a negative elapsed time would
   // otherwise scale the score above `maxPoints`, and one past the deadline would
   // scale it below zero.
-  const elapsed = Math.min(answerWindowMs, Math.max(0, responseMs));
+  const elapsed = Math.min(answerWindowMs, Math.max(0, elapsedMs));
   return Math.max(0, Math.round(maxPoints * (1 - elapsed / answerWindowMs)));
 }
 

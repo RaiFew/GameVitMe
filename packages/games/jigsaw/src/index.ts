@@ -103,6 +103,7 @@ export const jigsawGame: GameDefinition<
         ])
       ),
       lockedCount: 0,
+      history: [],
       startedAtMs: null,
       finishedAtMs: null,
       result: null,

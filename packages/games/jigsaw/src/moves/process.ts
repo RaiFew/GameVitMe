@@ -1,5 +1,32 @@
 import type { GameContext, GameMove, MoveResult } from '@party/game-engine';
-import type { JigsawMasterState } from '../types/index.js';
+import type { JigsawHistoryEntry, JigsawMasterState, JigsawPosition } from '../types/index.js';
+
+/** ponytail: 100 entries is far more undo depth than anyone presses in a game. */
+const HISTORY_LIMIT = 100;
+
+const samePosition = (a: JigsawPosition, b: JigsawPosition) =>
+  a.zone === b.zone && a.at?.r === b.at?.r && a.at?.c === b.at?.c;
+
+/**
+ * The newest entry of `playerId`'s that still describes the piece's current
+ * position. An entry goes stale the moment its piece locks or moves again, and
+ * restoring past that would teleport a piece over someone else's work — so the
+ * scan skips them rather than guessing.
+ */
+export function findUndoable(
+  state: JigsawMasterState,
+  playerId: string
+): { entry: JigsawHistoryEntry; index: number } | null {
+  for (let i = state.history.length - 1; i >= 0; i--) {
+    const entry = state.history[i]!;
+    if (entry.playerId !== playerId) continue;
+    const piece = state.pieces[entry.pieceId];
+    if (!piece || piece.locked) continue;
+    if (!samePosition({ zone: piece.zone, at: piece.at }, entry.next)) continue;
+    return { entry, index: i };
+  }
+  return null;
+}
 
 export function processJigsawMove(
   state: JigsawMasterState,
@@ -48,9 +75,29 @@ export function processJigsawMove(
       };
       const lockedCount = state.lockedCount + (locked && !piece.locked ? 1 : 0);
 
+      const previous: JigsawPosition = { zone: piece.zone, at: piece.at };
+
+      // A move never records an undo for itself when it locks: locked is
+      // terminal, so a placement that locks has nothing to take back. Any older
+      // entry for the same piece is dropped for the same reason.
+      const history = locked
+        ? state.history.filter((h) => h.pieceId !== piece.id)
+        : [
+            ...state.history.filter((h) => h.pieceId !== piece.id),
+            {
+              pieceId: piece.id,
+              previous,
+              next: { zone: toTray ? ('TRAY' as const) : ('BOARD' as const), at: toTray ? null : { r: row!, c: col! } },
+              playerId: move.playerId,
+              timestamp: now,
+              actionType: 'PLACE_PIECE' as const,
+            },
+          ].slice(-HISTORY_LIMIT);
+
       const next: JigsawMasterState = {
         ...state,
         pieces,
+        history,
         lockedCount,
         players: locked
           ? { ...state.players, [move.playerId]: { ...me, piecesPlaced: me.piecesPlaced + 1 } }
@@ -77,6 +124,28 @@ export function processJigsawMove(
       }
 
       return { success: true, newState: next };
+    }
+
+    case 'UNDO': {
+      // Same scan the validator ran. It cannot have gone stale in between:
+      // processMove is synchronous, so nothing else touched the state.
+      const found = findUndoable(state, move.playerId);
+      if (!found) {
+        return { success: false, error: 'Nothing to undo.' };
+      }
+      const { entry, index } = found;
+      const piece = state.pieces[entry.pieceId]!;
+      return {
+        success: true,
+        newState: {
+          ...state,
+          pieces: {
+            ...state.pieces,
+            [piece.id]: { ...piece, zone: entry.previous.zone, at: entry.previous.at },
+          },
+          history: state.history.filter((_, i) => i !== index),
+        },
+      };
     }
 
     default:

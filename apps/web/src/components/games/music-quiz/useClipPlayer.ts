@@ -7,53 +7,62 @@ export type ClipState = 'idle' | 'loading' | 'ready' | 'playing' | 'ended' | 'er
 /**
  * Plays one round's preview, synchronised to the server clock.
  *
- * The round's `playbackStartAtMs` is an absolute server timestamp, and each
- * client buffers the clip independently, so every client waits for that instant
- * on its own corrected clock rather than playing the moment the file lands. A
- * client that arrives late starts late — there is no attempt to skip ahead,
- * because the excerpt is the same 30 seconds the provider chose.
+ * Three things the naive version got wrong, and this file is mostly about them:
+ *
+ * 1. **Nothing autoplays.** Every mobile browser blocks audio until the user has
+ *    interacted with the page, and a phone that silently shows a dead disc looks
+ *    broken. The round therefore opens on an explicit TAP TO PLAY. The shared
+ *    answer deadline runs from the server's clock regardless, so waiting for the
+ *    tap costs the player nothing but cannot be gamed either.
+ *
+ * 2. **The clip outlives the ANSWERING phase.** The effect is keyed on the
+ *    round, not the phase, so opening the reveal does not tear the element down —
+ *    the music carries on from where it is and stops at `revealEndsAtMs`. It is
+ *    never restarted or seeked during the reveal.
+ *
+ * 3. **Repeated taps cannot stack.** The play path is a single in-flight
+ *    promise; a second tap while the first is resolving is a no-op.
  */
 export function useClipPlayer(view: MusicQuizPlayerView) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const peaksRef = useRef<number[]>([]);
+  const playingRef = useRef<Promise<void> | null>(null);
+  const liveRef = useRef(true);
+  /** Server-minus-local, recaptured on every broadcast like the countdown. */
+  const skewRef = useRef(0);
   const [state, setState] = useState<ClipState>('idle');
   const [error, setError] = useState('');
   const [peaks, setPeaks] = useState<number[]>([]);
+  /** True until the clip is actually playing — this is the TAP TO PLAY button. */
   const [needsGesture, setNeedsGesture] = useState(false);
 
   const audio = view.audio;
   const startAt = view.playbackStartAtMs;
+  const roundNumber = view.roundNumber;
 
   useEffect(() => {
-    if (!audio?.providerId || view.phase !== 'ANSWERING') return;
+    skewRef.current = view.serverNow - Date.now();
+  }, [view.serverNow]);
+
+  // Keyed on the round only. Including `phase` here is what used to stop the
+  // music the instant the reveal opened.
+  useEffect(() => {
+    if (!audio?.providerId) return;
 
     let live = true;
+    liveRef.current = true;
     const el = new Audio();
     el.preload = 'auto';
     audioRef.current = el;
     setState('loading');
     setError('');
-    setNeedsGesture(false);
+    setNeedsGesture(true);
     setPeaks([]);
-    peaksRef.current = [];
 
-    const startTimerRef = { id: null as ReturnType<typeof setTimeout> | null };
-
-    // `serverNow` is a snapshot frozen at the last broadcast, so the skew is
-    // captured once here and the wait is timed on the local clock.
-    const skew = view.serverNow - Date.now();
-    const localAt = (serverMs: number) => serverMs - skew;
-
-    const begin = async () => {
-      try {
-        await el.play();
-        if (!live) return;
-        setState('playing');
-        setNeedsGesture(false);
-      } catch {
-        // Autoplay policies block audio until the page has been interacted with.
-        if (live) setNeedsGesture(true);
-      }
+    el.onended = () => live && setState('ended');
+    el.onerror = () => {
+      if (!live) return;
+      setError('The clip could not be played.');
+      setState('error');
     };
 
     (async () => {
@@ -69,17 +78,10 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
         // the audio still plays.
         el.crossOrigin = 'anonymous';
         void drawPeaks(el)
-          .then((p) => {
-            if (live && p.length) {
-              peaksRef.current = p;
-              setPeaks(p);
-            }
-          })
+          .then((p) => live && p.length && setPeaks(p))
           .catch(() => {});
 
-        const delay = localAt(startAt) - Date.now();
-        if (delay > 0) startTimerRef.id = setTimeout(begin, delay);
-        else await begin();
+        setState('ready');
       } catch (e) {
         if (!live) return;
         setError(e instanceof Error ? e.message : 'The clip could not be loaded.');
@@ -87,39 +89,82 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
       }
     })();
 
-    el.onended = () => live && setState('ended');
-    el.onerror = () => {
-      if (!live) return;
-      setError('The clip could not be played.');
-      setState('error');
-    };
-
     return () => {
       live = false;
-      if (startTimerRef.id) clearTimeout(startTimerRef.id);
+      liveRef.current = false;
       el.pause();
       el.src = '';
       audioRef.current = null;
+      playingRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audio?.provider, audio?.providerId, view.phase, startAt]);
+  }, [audio?.provider, audio?.providerId, roundNumber, startAt]);
 
-  /** The manual path for a browser that blocked autoplay. */
-  const retry = useCallback(async () => {
+  /**
+   * Starts the clip. `fromStart` is the replay button; the first play waits for
+   * the round's scheduled instant so a room is in sync, and never seeks.
+   */
+  const play = useCallback(async (fromStart = false) => {
+    const el = audioRef.current;
+    if (!el || !el.src) return;
+    // A second tap while the first is still resolving must not queue a second
+    // play() — browsers reject it anyway, and it reads as a broken button.
+    if (playingRef.current) return playingRef.current;
+
+    const task = (async () => {
+      if (!fromStart) {
+        const delay = startAt - skewRef.current - Date.now();
+        if (delay > 0) await new Promise((r) => setTimeout(r, delay));
+      }
+      if (fromStart && el.src) el.currentTime = 0;
+      try {
+        await el.play();
+        if (!liveRef.current) return;
+        setState('playing');
+        setNeedsGesture(false);
+      } catch (e) {
+        if (!liveRef.current) return;
+        setError(e instanceof Error ? e.message : 'Playback was blocked.');
+        setState('error');
+      }
+    })();
+
+    playingRef.current = task;
+    await task;
+    playingRef.current = null;
+  }, [startAt]);
+
+  /**
+   * The reveal's own job: let the clip run on and stop it at the instant the
+   * server stamped. Not a second timer per player — one timestamp, one stop.
+   *
+   * `serverNow` is read through a ref rather than listed as a dependency on
+   * purpose. It changes on every broadcast, and a re-run here would clear the
+   * pending stop before it fired — the round-end broadcast lands on the same
+   * instant as the stop, so the clip ran on into the next question.
+   */
+  const serverNowRef = useRef(view.serverNow);
+  serverNowRef.current = view.serverNow;
+
+  useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
-    try {
-      el.currentTime = 0;
-      await el.play();
-      setState('playing');
-      setNeedsGesture(false);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Playback was blocked.');
-      setState('error');
-    }
-  }, []);
 
-  return { state, error, peaks, needsGesture, retry };
+    const stopAt =
+      view.phase === 'REVEAL' ? view.revealEndsAtMs : view.phase === 'GAME_OVER' ? serverNowRef.current : null;
+    if (stopAt == null) return;
+
+    setTimeout(() => {
+      if (audioRef.current !== el) return; // the next round already owns the state
+      el.pause();
+      setState('ended');
+    }, Math.max(0, stopAt - skewRef.current - Date.now()));
+    // Deliberately not cleared on cleanup. The round-end broadcast arrives at
+    // the same instant as this stop, so a cleanup here cancelled the pause and
+    // let the clip run on into the next question. A stray timer that finds the
+    // element already replaced returns on the guard above.
+  }, [view.phase, view.revealEndsAtMs]);
+
+  return { state, error, peaks, needsGesture, play, retry: () => play(true) };
 }
 
 /** Amplitude only — the bars carry no title, artist or album art, so the

@@ -1,5 +1,6 @@
 import type { GameMove } from '@party/game-engine';
 import type { JigsawMasterState } from '../types/index.js';
+import { findUndoable } from './process.js';
 
 export function validateJigsawMove(
   state: JigsawMasterState,
@@ -47,6 +48,19 @@ export function validateJigsawMove(
       }
       if (row < 0 || col < 0 || row >= state.rows || col >= state.cols) {
         return { valid: false, reason: 'That cell is outside the board.' };
+      }
+      return { valid: true };
+    }
+
+    case 'UNDO': {
+      if (state.phase !== 'PLAYING') {
+        return { valid: false, reason: 'The puzzle is not being played yet.' };
+      }
+      // Scoped to the mover on purpose: undoing a placement is undoing your own
+      // mistake, and one player silently reversing another's move in a co-op
+      // puzzle is worse than leaving the mistake in place.
+      if (!findUndoable(state, move.playerId)) {
+        return { valid: false, reason: 'Nothing to undo.' };
       }
       return { valid: true };
     }
