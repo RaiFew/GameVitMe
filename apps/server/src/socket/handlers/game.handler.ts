@@ -13,6 +13,7 @@ import { clampCodenamesTimer } from '../../rooms/settings-validation.js';
 import { buildSongPool, poolSupports } from '../../music-quiz/catalog.js';
 import { MIN_POOL_SIZE } from '@party/music-quiz';
 import { isRankedVariant } from '@party/number-grid';
+import { createTokenBucket, type TokenBucket } from '../rate-limit.js';
 import type { RankedRunResult } from '@party/number-grid';
 import { recordRankedResult, resolveRankedUser } from '../../ranking/ranking.service.js';
 
@@ -23,6 +24,14 @@ import { recordRankedResult, resolveRankedUser } from '../../ranking/ranking.ser
  * nothing here is client-supplied. Guests are re-checked rather than trusted
  * from the start gate, because a run can outlive the session that began it.
  */
+// Keyed by socket so a reconnecting client starts on a fresh budget, and weak so
+// a disconnected socket's bucket is collected with it.
+const moveBuckets = new WeakMap<Socket, TokenBucket>();
+// Burst covers a fast player mashing a codenames grid; the refill is still far
+// above anything a human produces while stopping the shuttle amplification.
+const MOVE_BURST = 40;
+const MOVE_REFILL_PER_SEC = 20;
+
 const persistRankedResult = (userId: string | undefined, summary: unknown) => {
   const rankedResult = (summary as { rankedResult?: RankedRunResult } | undefined)?.rankedResult;
   if (!rankedResult || !userId) return;
@@ -509,6 +518,18 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
 
     if (!room || !runner) {
       if (callback) callback({ error: 'Game not running' });
+      return;
+    }
+
+    let bucket = moveBuckets.get(socket);
+    if (!bucket) {
+      bucket = createTokenBucket(MOVE_BURST, MOVE_REFILL_PER_SEC);
+      moveBuckets.set(socket, bucket);
+    }
+    if (!bucket.take(Date.now())) {
+      const msg = 'Too many moves at once — slow down.';
+      socket.emit('game:action_error', { code: 'RATE_LIMITED', message: msg });
+      if (callback) callback({ error: msg });
       return;
     }
 
