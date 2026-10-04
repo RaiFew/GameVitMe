@@ -1,8 +1,10 @@
 import type { GridSize } from '@party/number-grid';
+import { PIECES_BY_DIFFICULTY, type JigsawDifficulty } from '@party/jigsaw';
 
 const GRID_SIZES = new Set<number>([2, 3, 4, 5, 6, 7, 8, 9, 10]);
 const DIFFICULTY_MODES = new Set(['DEFAULT', 'CUSTOM', 'RANDOM']);
 const DAMAGE_MODES = new Set(['LAST_PLAYER', 'EVERYONE_EXCEPT_FIRST']);
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Normal-room variants only. Ranked variants are server-chosen, so letting a
@@ -108,6 +110,52 @@ export function validateNumberGridSettings(
 
   return { ok: true, settings: out };
 }
+/**
+ * Jigsaw. The same trust boundary as above, and the same reason: the difficulty
+ * picker would look functional while the engine fell back to its default, and a
+ * hostile `imageId` would reach `computeGridLayout` as `NaN` dimensions.
+ *
+ * `pieceCount` is not accepted from the client. It is derived from `difficulty`
+ * here and again in the engine, so the two can never disagree.
+ */
+export function validateJigsawSettings(
+  patch: Record<string, unknown>
+): { ok: true; settings: Record<string, unknown> } | { ok: false; error: string } {
+  const out: Record<string, unknown> = {};
+
+  for (const key of Object.keys(patch)) {
+    const value = patch[key];
+
+    switch (key) {
+      case 'imageId': {
+        if (value === undefined || value === null || value === '') {
+          out.imageId = null;
+          break;
+        }
+        if (typeof value !== 'string' || !UUID_RE.test(value)) {
+          return { ok: false, error: 'That picture cannot be selected.' };
+        }
+        out.imageId = value;
+        break;
+      }
+
+      case 'difficulty': {
+        if (typeof value !== 'string' || !(value in PIECES_BY_DIFFICULTY)) {
+          return { ok: false, error: 'Difficulty must be Easy, Normal, Hard or Expert.' };
+        }
+        out.difficulty = value;
+        out.pieceCount = PIECES_BY_DIFFICULTY[value as JigsawDifficulty];
+        break;
+      }
+
+      default:
+        continue;
+    }
+  }
+
+  return { ok: true, settings: out };
+}
+
 /**
  * Codenames turn timers. 0 means the host turned the timer off, which is a real
  * setting rather than a missing one, so the floor is 0 rather than 1 and the

@@ -12,6 +12,7 @@ import { CodenamesTimerSettingsCard } from '../components/lobby/CodenamesTimerSe
 import { SpyfallLocationCard } from '../components/lobby/SpyfallLocationCard';
 import { RPSSettingsCard } from '../components/lobby/RPSSettingsCard';
 import { NumberGridSettingsCard } from '../components/lobby/NumberGridSettingsCard';
+import { JigsawSettingsCard } from '../components/lobby/JigsawSettingsCard';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Users, Shield, ArrowRight } from 'lucide-react';
@@ -25,6 +26,7 @@ const GAME_NAMES: Record<string, string> = {
   codenames: 'Codenames',
   'rock-paper-scissors': 'Rock Paper Scissors',
   'number-grid': 'Number Grid',
+  jigsaw: 'Jigsaw Puzzle',
 };
 
 export function LobbyPage() {
@@ -100,13 +102,14 @@ export function LobbyPage() {
   const isRPSDuel = isRPS && rpsGameMode === 'DUEL';
 
   const isNumberGrid = room.gameType === 'number-grid';
+  const isJigsaw = room.gameType === 'jigsaw';
   const isSpyfall = room.gameType === 'spyfall';
 
   const isHostForced = room.gameType === 'werewolf' || room.gameType === 'salem';
-  const isHostMode = isCodenames || isNumberGrid ? false : isRPS ? !!room.settings?.hostMode : (isHostForced || room.settings?.hostMode !== false);
+  const isHostMode = isCodenames || isNumberGrid || isJigsaw ? false : isRPS ? !!room.settings?.hostMode : (isHostForced || room.settings?.hostMode !== false);
   const playingPlayers = isHostMode ? players.filter((p) => p.id !== room.hostId) : players;
-  const minPlayers = isNumberGrid ? 1 : isCodenames ? (isCodenamesTwoPlayer ? 2 : 4) : isRPS ? (isHostMode ? 3 : 2) : (isHostMode ? 5 : 4);
-  const enoughPlayers = isNumberGrid
+  const minPlayers = isNumberGrid || isJigsaw ? 1 : isCodenames ? (isCodenamesTwoPlayer ? 2 : 4) : isRPS ? (isHostMode ? 3 : 2) : (isHostMode ? 5 : 4);
+  const enoughPlayers = isNumberGrid || isJigsaw
     ? players.length >= 1
     : isCodenamesTwoPlayer
     ? players.length === 2
@@ -115,7 +118,10 @@ export function LobbyPage() {
     : isRPS
     ? playingPlayers.length >= 2
     : players.length >= minPlayers;
-  const allReady = (isNumberGrid && players.length === 1) || playingPlayers.every((p) => p.isReady);
+  const allReady = ((isNumberGrid || isJigsaw) && players.length === 1) || playingPlayers.every((p) => p.isReady);
+  // The server refuses to start a jigsaw with no picture, so the button says so
+  // here rather than bouncing off an error after the click.
+  const jigsawImageId = (room.settings as any)?.gameSettings?.imageId || null;
   const readyCount = playingPlayers.filter((p) => p.isReady).length;
   const currentPlayer = players.find((p) => p.id === user.id);
 
@@ -170,6 +176,10 @@ export function LobbyPage() {
       alert(isHostMode ? '1v1 Duel in Host Mode requires 1 Host + 2 Fighters (3 users total).' : 'Rock Paper Scissors (Duel) requires exactly 2 players.');
       return;
     }
+    if (isJigsaw && !jigsawImageId) {
+      alert('Choose a puzzle picture before starting.');
+      return;
+    }
     if (!enoughPlayers || !allReady) return;
     if (isRoleGame && !isRoleCountValid) {
       alert(`Role configuration count (${totalConfiguredRoles}) must match the number of active players (${playingPlayers.length}).`);
@@ -207,6 +217,8 @@ export function LobbyPage() {
                   : rpsGameMode === 'BATTLE_ROYALE'
                   ? 'Battle Royale Survival'
                   : 'Points Race Mode'
+                : isJigsaw
+                ? 'Co-op Assembly (1 to 20)'
                 : isHostMode
                 ? 'Host / Screen Mode'
                 : 'No Host Mode'}
@@ -237,6 +249,8 @@ export function LobbyPage() {
                 : 'Rock Paper Scissors supports 2 to 20 players'
               : isNumberGrid
               ? 'Number Rush: 1 to 20 players. Click numbers in ascending order under high pressure!'
+              : isJigsaw
+              ? 'Jigsaw: 1 to 20 players. Everyone assembles the same picture together against the clock.'
               : isHostMode
               ? 'Screen Mode: 1 Screen Host + 4 to 12 active players required (5+ users in room)'
               : '4 to 12 players required to play'}
@@ -518,6 +532,15 @@ export function LobbyPage() {
             />
           )}
 
+          {/* Jigsaw picture + difficulty */}
+          {isJigsaw && (
+            <JigsawSettingsCard
+              isHost={isHost}
+              settings={room.settings as any}
+              onUpdateSettings={updateSettings}
+            />
+          )}
+
           {/* Action Row */}
           <div className="flex gap-3">
             {(!isHost || !isHostMode) && (
@@ -540,11 +563,14 @@ export function LobbyPage() {
                   !allReady ||
                   (isRoleGame && !isRoleCountValid) ||
                   (isCodenamesTwoPlayer && players.length !== 2) ||
-                  (isRPSDuel && players.length !== 2)
+                  (isRPSDuel && players.length !== 2) ||
+                  (isJigsaw && !jigsawImageId)
                 }
                 onClick={handleStartGame}
               >
-                {!enoughPlayers
+                {isJigsaw && !jigsawImageId
+                  ? 'Choose a puzzle picture'
+                  : !enoughPlayers
                   ? isCodenamesTwoPlayer
                     ? `Need exactly 2 players (currently ${players.length})`
                     : `Need ${minPlayers - players.length} more player(s)`
@@ -634,6 +660,8 @@ export function LobbyPage() {
                 ? 'Werewolf Overview'
                 : isSalem
                 ? 'Salem 1692 Overview'
+                : isJigsaw
+                ? 'Jigsaw Overview'
                 : 'Spyfall Overview'}
             </h3>
             {isRPS ? (
@@ -660,6 +688,13 @@ export function LobbyPage() {
                   <li>Operatives deduce words on the 5×5 grid. Avoid the instant-loss Assassin!</li>
                 </ul>
               )
+            ) : isJigsaw ? (
+              <ul className="text-xs text-ink-muted space-y-2 list-disc list-inside">
+                <li>One picture, cut into <strong>12 to 96 pieces</strong>. Everyone shares the same board.</li>
+                <li>Drag a piece from the tray onto the board. Tap a board piece to send it back.</li>
+                <li>A piece <strong>locks</strong> the moment it lands in its true cell, by anyone.</li>
+                <li>The clock starts when the last player is ready, and the score is the time taken.</li>
+              </ul>
             ) : isRoleGame ? (
               <ul className="text-xs text-ink-muted space-y-2 list-disc list-inside">
                 <li>Social deduction between Town/Village and hidden evils.</li>

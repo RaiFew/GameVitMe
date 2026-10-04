@@ -77,6 +77,16 @@ export function GamesPage() {
       descriptionKey: 'games.descNumberGrid',
       status: 'Ready to play',
     },
+    {
+    id: 'jigsaw',
+    name: 'Jigsaw Puzzle',
+    category: 'Co-op & Puzzle',
+    categoryKey: 'games.catJigsaw',
+    players: '1–20 Players',
+    duration: '5–20 Min',
+    descriptionKey: 'games.descJigsaw',
+    status: 'Ready to play',
+    },
   ] as const;
 
   return (

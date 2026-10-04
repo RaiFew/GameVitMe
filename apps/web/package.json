@@ -10,13 +10,14 @@
     "i18n:doc": "tsx src/i18n/export-translations.ts"
   },
   "dependencies": {
+    "@party/codenames": "workspace:*",
+    "@party/jigsaw": "workspace:*",
+    "@party/number-grid": "workspace:*",
+    "@party/rock-paper-scissors": "workspace:*",
+    "@party/salem": "workspace:*",
     "@party/shared-types": "workspace:*",
     "@party/spyfall": "workspace:*",
     "@party/werewolf": "workspace:*",
-    "@party/salem": "workspace:*",
-    "@party/codenames": "workspace:*",
-    "@party/rock-paper-scissors": "workspace:*",
-    "@party/number-grid": "workspace:*",
     "@tanstack/react-query": "^5.0.0",
     "clsx": "^2.1.0",
     "framer-motion": "^11.0.0",

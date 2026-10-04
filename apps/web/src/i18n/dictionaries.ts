@@ -107,6 +107,9 @@ export const en = {
     'Fast-paced hand battles! Features 1v1 Fighting Game Duel with TV Host Screen mode, Battle Royale Survival Elimination, and Points Race.',
   'games.descNumberGrid':
     'Click numbered circles in ascending order from 2x2 up to 10x10. Features sequential rounds, custom grid layouts, HP penalty, and survival damage modes.',
+  'games.catJigsaw': 'Co-op & Puzzle',
+  'games.descJigsaw':
+    'One picture cut into 12 to 96 pieces that everyone assembles together against the clock. The host uploads the picture; it locks in the moment a piece lands in its true cell.',
 
   'profile.accountSettings': 'Account Settings',
   'profile.heading': 'Profile',
@@ -297,6 +300,8 @@ export const th: Record<TranslationKey, string> = {
   'games.descCodenames': 'สองทีมคู่แข่ง (แดง พบ น้ำเงิน) ช่วยกันทายการ์ดคำจากคำใบ้ของสปายมาสเตอร์ รองรับโหมดเล่นร่วมกัน 2 คน และอัปโหลดคลังคำศัพท์เองได้',
   'games.descRps': 'เกมดวลมือสุดมันวัดความไว! รองรับการดวล 1v1 ในโหมดจอหลักทีวี โหมดแบทเทิลรอยัลเอาชีวิตรอด และโหมดแข่งทำคะแนน',
   'games.descNumberGrid': 'กดวงกลมตัวเลขเรียงจากน้อยไปมาก ตั้งแต่ตาราง 2x2 ไปจนถึง 10x10 มีทั้งระบบเล่นต่อเนื่องตามด่าน กำหนดตารางได้เอง ระบบเสียเลือด และโหมดเอาชีวิตรอด',
+  'games.catJigsaw': 'เล่นร่วม & ปริศนา',
+  'games.descJigsaw': 'ภาพเดียวที่ถูกตัดเป็นชิ้น 12 ถึง 96 ชิ้น ให้ทุกคนช่วยกันประกอบแข่งกับเวลา เจ้าของห้องอัปโหลดภาพเอง และชิ้นจะถูกล็อกเมื่อวางถูกช่องเท่านั้น',
 
   'profile.accountSettings': 'ตั้งค่าบัญชี',
   'profile.heading': 'โปรไฟล์',

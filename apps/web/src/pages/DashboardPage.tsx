@@ -56,6 +56,13 @@ const FEATURED_GAMES = [
     players: '1–20 Players',
     descriptionKey: 'games.descNumberGrid',
   },
+  {
+    id: 'jigsaw',
+    name: 'Jigsaw Puzzle',
+    categoryKey: 'games.catJigsaw',
+    players: '1–20 Players',
+    descriptionKey: 'games.descJigsaw',
+  },
 ] as const;
 
 interface JoinFormProps {

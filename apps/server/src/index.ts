@@ -14,6 +14,7 @@ import roomRoutes from './routes/room.routes.js';
 import codenamesRoutes from './routes/codenames.routes.js';
 import spyfallRoutes from './routes/spyfall.routes.js';
 import rankingRoutes from './routes/ranking.routes.js';
+import jigsawRoutes from './routes/jigsaw.routes.js';
 
 import { GameRegistry } from '@party/game-engine';
 import SpyfallPlugin from '@party/spyfall';
@@ -22,6 +23,7 @@ import SalemPlugin from '@party/salem';
 import CodenamesPlugin from '@party/codenames';
 import RockPaperScissorsPlugin from '@party/rock-paper-scissors';
 import NumberGridPlugin from '@party/number-grid';
+import JigsawPlugin from '@party/jigsaw';
 
 async function bootstrap() {
   const fastify = Fastify({
@@ -58,6 +60,7 @@ async function bootstrap() {
   await fastify.register(codenamesRoutes);
   await fastify.register(spyfallRoutes);
   await fastify.register(rankingRoutes);
+  await fastify.register(jigsawRoutes);
 
   // Initialize Socket.io
   const io = initSocketGateway(fastify);
@@ -69,6 +72,7 @@ async function bootstrap() {
   GameRegistry.getInstance().register(CodenamesPlugin);
   GameRegistry.getInstance().register(RockPaperScissorsPlugin);
   GameRegistry.getInstance().register(NumberGridPlugin);
+  GameRegistry.getInstance().register(JigsawPlugin);
 
   // Global Error Handler
   fastify.setErrorHandler((error, request, reply) => {

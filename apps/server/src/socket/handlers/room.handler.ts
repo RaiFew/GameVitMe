@@ -2,7 +2,7 @@ import type { Server, Socket } from 'socket.io';
 import { roomManager } from '../../rooms/room-manager.js';
 import { updateRoomDefaultRolesIfUncustomized, calculateDefaultRoleCounts } from '../../rooms/role-defaults.js';
 import { hasValidRoomInvite } from '../../services/invitations.js';
-import { validateNumberGridSettings } from '../../rooms/settings-validation.js';
+import { validateNumberGridSettings, validateJigsawSettings } from '../../rooms/settings-validation.js';
 import { persistRoom } from '../../rooms/persist-room.js';
 import { GameRegistry } from '@party/game-engine';
 
@@ -17,7 +17,8 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
     const isCodenames = effectiveGameType === 'codenames';
     const isRPS = effectiveGameType === 'rock-paper-scissors';
     const isNumberGrid = effectiveGameType === 'number-grid';
-    const effectiveMaxPlayers = isCodenames || isRPS || isNumberGrid
+    const isJigsaw = effectiveGameType === 'jigsaw';
+    const effectiveMaxPlayers = isCodenames || isRPS || isNumberGrid || isJigsaw
       ? Math.min(Math.max(maxPlayers || 8, 1), 20)
       : Math.min(Math.max(maxPlayers || 8, 4), 13);
 
@@ -32,7 +33,8 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
       const isHostForced = effectiveGameType === 'werewolf' || effectiveGameType === 'salem';
       room.settings = {
         ...room.settings,
-        hostMode: isHostForced ? true : isCodenames || isNumberGrid ? false : hostMode !== false,
+        // Jigsaw is co-op: the host has to be a puzzler, not a spectator seat.
+        hostMode: isHostForced ? true : isCodenames || isNumberGrid || isJigsaw ? false : hostMode !== false,
         roundDurationSeconds: Number(roundDurationSeconds) || 480,
         roleAssignmentMode: (payload?.roleAssignmentMode as 'PHYSICAL' | 'RANDOM') || 'PHYSICAL',
         isRoleConfigurationCustomized: false,
@@ -442,6 +444,15 @@ export const registerRoomHandlers = (io: Server, socket: Socket) => {
         return;
       }
       patch = { ...settings, gameSettings: checked.settings };
+    }
+
+    if (room.gameType === 'jigsaw' && settings?.gameSettings) {
+      const checked = validateJigsawSettings(settings.gameSettings);
+      if (!checked.ok) {
+        if (callback) callback({ error: checked.error });
+        return;
+      }
+      patch = { ...settings, gameSettings: { ...room.settings.gameSettings, ...checked.settings } };
     }
 
     const updatedSettings = { ...room.settings, ...patch };
