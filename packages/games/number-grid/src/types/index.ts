@@ -118,6 +118,8 @@ export interface NumberGridSettings {
   variant?: NumberGridVariant;
   difficultyMode: DifficultyMode;
   totalRounds: number;
+  /** Default progression's ceiling: the run scales 2x2 up to this and holds. */
+  maxGridSize?: GridSize;
   customGridSizes?: GridSize[];
   maxHp: number; // 1 to 10 (default: 3)
   damageMode: DamageMode; // 'LAST_PLAYER' | 'EVERYONE_EXCEPT_FIRST'

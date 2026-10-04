@@ -67,6 +67,14 @@ export function validateNumberGridSettings(
         out.totalRounds = clamp(value, 1, 20, 9);
         break;
 
+      case 'maxGridSize': {
+        if (!GRID_SIZES.has(Number(value))) {
+          return { ok: false, error: 'Grid size must be between 2x2 and 10x10.' };
+        }
+        out.maxGridSize = Number(value) as GridSize;
+        break;
+      }
+
       case 'maxHp':
         out.maxHp = clamp(value, 1, 10, 3);
         break;

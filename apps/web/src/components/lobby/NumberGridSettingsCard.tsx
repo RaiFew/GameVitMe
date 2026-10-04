@@ -1,4 +1,5 @@
 import { Card } from '../ui/Card';
+import { calculateRoundGridSizes } from '@party/number-grid';
 import type { DifficultyMode, DamageMode, GridSize } from '@party/number-grid';
 import { Settings, Shield, Plus, Minus } from 'lucide-react';
 
@@ -27,7 +28,8 @@ export function NumberGridSettingsCard({
   };
 
   const difficultyMode: DifficultyMode = gs.difficultyMode || 'DEFAULT';
-  const totalRounds: number = Number(gs.totalRounds) || 9;
+  const totalRounds: number = Math.min(Math.max(Number(gs.totalRounds) || 9, 1), 20);
+  const maxGridSize: GridSize = Math.min(Math.max(Number(gs.maxGridSize) || 10, 2), 10) as GridSize;
   const maxHp: number = Number(gs.maxHp) || 3;
   const damageMode: DamageMode = gs.damageMode || 'LAST_PLAYER';
   const customGridSizes: GridSize[] = Array.isArray(gs.customGridSizes) && gs.customGridSizes.length > 0
@@ -75,7 +77,12 @@ export function NumberGridSettingsCard({
 
   const handleRoundsChange = (rounds: number) => {
     if (!isHost) return;
-    updateGameSettings({ totalRounds: rounds });
+    updateGameSettings({ totalRounds: Math.min(Math.max(rounds, 1), 20) });
+  };
+
+  const handleMaxGridChange = (size: GridSize) => {
+    if (!isHost) return;
+    updateGameSettings({ maxGridSize: size });
   };
 
   // Custom rounds editor
@@ -111,19 +118,18 @@ export function NumberGridSettingsCard({
 
   const handleResetProgression = () => {
     if (!isHost) return;
-    updateGameSettings({ difficultyMode: 'DEFAULT', totalRounds: 9 });
+    updateGameSettings({ difficultyMode: 'DEFAULT', totalRounds: 9, maxGridSize: 10 });
   };
 
-  // Mirrors the engine's own `calculateRoundGridSizes` so the host sees what
-  // they are about to play. RANDOM and CHAOS sizes are server-picked, so they
-  // are shown as a range rather than pretended to be known.
+  // The engine's own progression, not a second copy of it. RANDOM and CHAOS sizes
+  // are server-picked, so those are shown as a range rather than pretended to
+  // be known.
   const previewRounds: (string | number)[] = (() => {
-    if (isChaos) return Array.from({ length: Math.max(totalRounds, 1) }, () => '2–10');
-    if (difficultyMode === 'CUSTOM') return customGridSizes;
-    if (difficultyMode === 'RANDOM') {
-      return Array.from({ length: Math.max(totalRounds, 1) }, () => '2–10');
+    if (isChaos || difficultyMode === 'RANDOM') {
+      return Array.from({ length: totalRounds }, () => '2–10');
     }
-    return [2, 3, 4, 5, 6, 7, 8, 9, 10].slice(0, Math.max(totalRounds, 1));
+    if (difficultyMode === 'CUSTOM') return customGridSizes;
+    return calculateRoundGridSizes('DEFAULT', totalRounds, undefined, Math.random, maxGridSize);
   })();
 
   return (
@@ -198,7 +204,7 @@ export function NumberGridSettingsCard({
               <span className="text-xs font-mono font-bold text-ink-faint">{totalRounds} Rds</span>
             </div>
             <p className="text-[10px] font-mono text-ink-muted">
-              Starts at 2x2 and scales sequentially up to 10x10.
+              Scales from 2x2 up to the largest grid you pick below.
             </p>
           </button>
 
@@ -328,28 +334,76 @@ export function NumberGridSettingsCard({
         </div>
       )}
 
-      {/* Round count. Custom mode takes it from the round list instead. Default
-          stops at 9 because its progression is 2x2..10x10 and the engine repeats
-          10x10 for anything past that; Random has no such ceiling. */}
+      {/* Round count. Custom mode takes it from the round list instead. */}
       {(difficultyMode === 'DEFAULT' || difficultyMode === 'RANDOM') && (
         <div className="space-y-2 pt-2 border-t border-rule">
-          <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold block">
-            {difficultyMode === 'RANDOM' ? 'Number of Random Rounds' : 'Number of Rounds'}
-          </label>
-          <div className="flex gap-2">
-            {(difficultyMode === 'RANDOM' ? [3, 5, 7, 10, 15] : [3, 5, 7, 9]).map((rounds) => (
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold">
+              {difficultyMode === 'RANDOM' ? 'Number of Random Rounds' : 'Number of Rounds'}
+            </label>
+            <span className="text-xs font-mono font-bold text-ink">{totalRounds} Rounds</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {isHost && (
               <button
-                key={rounds}
+                type="button"
+                onClick={() => handleRoundsChange(totalRounds - 1)}
+                disabled={totalRounds <= 1}
+                className="p-1.5 border border-rule rounded-xs hover:border-rule-strong disabled:opacity-40"
+                aria-label="One fewer round"
+              >
+                <Minus size={12} />
+              </button>
+            )}
+            <input
+              type="number"
+              min={1}
+              max={20}
+              disabled={!isHost}
+              value={totalRounds}
+              onChange={(e) => handleRoundsChange(Number(e.target.value) || 1)}
+              className="flex-1 text-center text-sm font-mono font-bold text-ink bg-canvas-sunk border border-rule rounded-xs py-1.5 outline-none focus:border-ink disabled:opacity-80"
+            />
+            {isHost && (
+              <button
+                type="button"
+                onClick={() => handleRoundsChange(totalRounds + 1)}
+                disabled={totalRounds >= 20}
+                className="p-1.5 border border-rule rounded-xs hover:border-rule-strong disabled:opacity-40"
+                aria-label="One more round"
+              >
+                <Plus size={12} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Default progression's ceiling. */}
+      {difficultyMode === 'DEFAULT' && (
+        <div className="space-y-2 pt-2 border-t border-rule">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold">
+              Largest Grid
+            </label>
+            <span className="text-xs font-mono font-bold text-ink">
+              {maxGridSize}x{maxGridSize} ({maxGridSize * maxGridSize} nums)
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((s) => (
+              <button
+                key={s}
                 type="button"
                 disabled={!isHost}
-                onClick={() => handleRoundsChange(rounds)}
-                className={`flex-1 py-1.5 px-3 text-xs font-mono font-bold rounded-xs border transition-all ${
-                  totalRounds === rounds
+                onClick={() => handleMaxGridChange(s as GridSize)}
+                className={`flex-1 min-w-[3rem] py-1.5 px-2 text-xs font-mono font-bold rounded-xs border transition-all ${
+                  maxGridSize === s
                     ? 'border-rule-strong bg-ink text-canvas'
                     : 'border-rule hover:border-ink/40 bg-canvas-sunk text-ink'
                 } ${!isHost ? 'cursor-default opacity-80' : 'cursor-pointer'}`}
               >
-                {rounds} Rounds
+                {s}x{s}
               </button>
             ))}
           </div>

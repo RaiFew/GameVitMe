@@ -69,3 +69,20 @@ test('keys belonging to another game are dropped, not rejected', () => {
   assert.equal(s.difficultyMode, 'DEFAULT');
   assert.equal('someWerewolfKey' in s, false);
 });
+test('the largest-grid ceiling is accepted and range-checked', () => {
+  assert.equal(accept({ maxGridSize: 5 }).maxGridSize, 5);
+  assert.equal(accept({ maxGridSize: 2 }).maxGridSize, 2);
+  assert.equal(accept({ maxGridSize: 10 }).maxGridSize, 10);
+  // Anything outside the ladder would reach every player's preview and then be
+  // quietly rewritten by the engine's clamp.
+  for (const bad of [1, 11, 0, -3, 5.5, 'big', null]) {
+    assert.match(reject({ maxGridSize: bad }), /between 2x2 and 10x10/);
+  }
+});
+
+test('a custom progression ignores the ceiling, which only Default reads', () => {
+  const s = accept({ difficultyMode: 'CUSTOM', customGridSizes: [4, 4], maxGridSize: 9 });
+  assert.deepEqual(s.customGridSizes, [4, 4]);
+  assert.equal(s.totalRounds, 2);
+  assert.equal(s.maxGridSize, 9);
+});

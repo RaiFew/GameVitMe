@@ -79,6 +79,29 @@ describe('Number Grid Engine & Rules', () => {
       assert.deepEqual(sizes, [2, 3, 4, 5, 6, 7, 8, 9, 10]);
     });
 
+    it('spreads the default progression across the host round count up to their ceiling', () => {
+      assert.deepEqual(calculateRoundGridSizes('DEFAULT', 5, undefined, Math.random, 10), [
+        2, 4, 6, 8, 10,
+      ]);
+      assert.deepEqual(calculateRoundGridSizes('DEFAULT', 3, undefined, Math.random, 5), [2, 4, 5]);
+      // A one-round game is just the ceiling; there is nowhere to scale from.
+      assert.deepEqual(calculateRoundGridSizes('DEFAULT', 1, undefined, Math.random, 8), [8]);
+    });
+
+    it('holds at the ceiling when there are more rounds than steps to it', () => {
+      const sizes = calculateRoundGridSizes('DEFAULT', 6, undefined, Math.random, 4);
+      assert.equal(sizes.length, 6);
+      assert.equal(sizes[0], 2);
+      assert.equal(sizes[sizes.length - 1], 4);
+      for (const s of sizes) assert.ok(s >= 2 && s <= 4);
+    });
+
+    it('clamps a host-supplied ceiling instead of trusting it', () => {
+      // maxGridSize arrives in room settings, which any host can write.
+      assert.deepEqual(calculateRoundGridSizes('DEFAULT', 3, undefined, Math.random, 99), [2, 6, 10]);
+      assert.deepEqual(calculateRoundGridSizes('DEFAULT', 3, undefined, Math.random, 0), [2, 6, 10]);
+    });
+
     it('calculates Custom Round Grid Sizes', () => {
       const custom = [3, 3, 5, 7, 10] as const;
       const sizes = calculateRoundGridSizes('CUSTOM', 5, [...custom]);
@@ -272,8 +295,8 @@ describe('Number Grid Engine & Rules', () => {
 
       assert.equal(res.success, true);
       assert.equal(res.newState.currentRoundNumber, 2);
-      assert.equal(res.newState.currentRound.gridSize, 3); // 3x3 in round 2
-      assert.equal(res.newState.currentRound.totalNumbers, 9);
+      assert.equal(res.newState.currentRound.gridSize, 10); // 2 rounds to the 10x10 ceiling: 2, 10
+      assert.equal(res.newState.currentRound.totalNumbers, 100);
       assert.equal(res.newState.phase, 'PLAYING');
       assert.equal(res.newState.players['p1'].expectedNumber, 1);
       assert.equal(res.newState.players['p1'].completed, false);
@@ -352,7 +375,8 @@ describe('Number Grid Engine & Rules', () => {
       assert.equal(res.success, true);
       assert.equal(res.newState.currentRoundNumber, 2);
       assert.equal(res.newState.phase, 'PLAYING');
-      assert.equal(res.newState.currentRound.gridSize, 3);
+      // Three rounds scaling to the default 10x10 ceiling is 2, 6, 10.
+      assert.equal(res.newState.currentRound.gridSize, 6);
       assert.notDeepEqual(res.newState.currentRound.cards.map((c: any) => c.id), firstBoardIds);
     });
 

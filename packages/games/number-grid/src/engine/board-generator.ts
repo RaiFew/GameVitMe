@@ -75,6 +75,7 @@ export function calculateRoundGridSizes(
   // Passed in rather than calling Math.random directly, so a run is reproducible
   // from its seed like every other random decision a game makes.
   random: () => number = Math.random,
+  maxGridSize?: number,
 ): GridSize[] {
   const count = Math.max(1, Math.min(20, totalRounds || 9));
 
@@ -96,12 +97,14 @@ export function calculateRoundGridSizes(
     return list;
   }
 
-  // DEFAULT PROGRESSION: 2, 3, 4, 5, 6, 7, 8, 9, 10...
-  const defaultList: GridSize[] = [2, 3, 4, 5, 6, 7, 8, 9, 10];
+  // DEFAULT PROGRESSION: scales from 2x2 up to the host's ceiling, spread evenly
+  // across however many rounds were asked for. Nine rounds to a 10x10 ceiling
+  // reproduces the original 2,3,4,5,6,7,8,9,10 ladder exactly.
+  const top = clampGridSize(maxGridSize || 10);
   const result: GridSize[] = [];
   for (let r = 0; r < count; r++) {
-    const idx = Math.min(r, defaultList.length - 1);
-    result.push(defaultList[idx] ?? 3);
+    const size = count === 1 ? top : 2 + Math.round((r * (top - 2)) / (count - 1));
+    result.push(clampGridSize(size));
   }
   return result;
 }

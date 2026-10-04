@@ -37,6 +37,7 @@ export * from './projection/player-view.js';
 export const DEFAULT_NUMBER_GRID_SETTINGS: NumberGridSettings = {
   difficultyMode: 'DEFAULT',
   totalRounds: 9,
+  maxGridSize: 10,
   maxHp: 3,
   damageMode: 'LAST_PLAYER',
   hostMode: false,
@@ -134,6 +135,17 @@ export const numberGridGame: GameDefinition<
       description: 'Number of rounds in the match',
     },
     {
+      key: 'maxGridSize',
+      label: 'Largest Grid',
+      type: 'select',
+      default: 10,
+      options: [2, 3, 4, 5, 6, 7, 8, 9, 10].map((s) => ({
+        label: `${s}x${s}`,
+        value: s,
+      })),
+      description: 'Default progression scales from 2x2 up to this and holds there',
+    },
+    {
       key: 'maxHp',
       label: 'Player Health (HP)',
       type: 'number',
@@ -217,6 +229,9 @@ export const numberGridGame: GameDefinition<
           totalRounds,
           effectiveSettings.customGridSizes,
           ctx.random,
+          // Clamped inside the generator rather than trusted: room settings are
+          // host-writable, and every other size goes through clampGridSize.
+          Number(effectiveSettings.maxGridSize) || 10,
         );
 
     // Chaos randomizes from the very first round, including the size.
