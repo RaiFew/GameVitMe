@@ -17,8 +17,6 @@ import { RPSGame } from '../components/games/rps/RPSGame';
 import type { RPSPlayerView } from '@party/rock-paper-scissors';
 import { NumberGridGame } from '../components/games/number-grid/NumberGridGame';
 import type { NumberGridPlayerView } from '@party/number-grid';
-import { JigsawGame } from '../components/games/jigsaw/JigsawGame';
-import type { JigsawPlayerView } from '@party/jigsaw';
 import { MusicQuizGame } from '../components/games/music-quiz/MusicQuizGame';
 import type { MusicQuizPlayerView } from '@party/music-quiz';
 
@@ -200,13 +198,6 @@ export function GamePage() {
       ) : room.gameType === 'number-grid' ? (
         <NumberGridGame
           playerView={playerView as NumberGridPlayerView}
-          onAction={handleAction}
-          onReturnLobby={handleReturnLobby}
-          onPlayAgain={handlePlayAgain}
-        />
-      ) : room.gameType === 'jigsaw' ? (
-        <JigsawGame
-          playerView={playerView as JigsawPlayerView}
           onAction={handleAction}
           onReturnLobby={handleReturnLobby}
           onPlayAgain={handlePlayAgain}

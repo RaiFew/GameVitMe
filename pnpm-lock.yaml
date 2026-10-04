@@ -32,9 +32,6 @@ importers:
       '@party/game-engine':
         specifier: workspace:*
         version: link:../../packages/game-engine
-      '@party/jigsaw':
-        specifier: workspace:*
-        version: link:../../packages/games/jigsaw
       '@party/music-quiz':
         specifier: workspace:*
         version: link:../../packages/games/music-quiz
@@ -105,9 +102,6 @@ importers:
       '@party/codenames':
         specifier: workspace:*
         version: link:../../packages/games/codenames
-      '@party/jigsaw':
-        specifier: workspace:*
-        version: link:../../packages/games/jigsaw
       '@party/music-quiz':
         specifier: workspace:*
         version: link:../../packages/games/music-quiz
@@ -211,25 +205,6 @@ importers:
         version: 5.9.3
 
   packages/games/codenames:
-    dependencies:
-      '@party/game-engine':
-        specifier: workspace:*
-        version: link:../../game-engine
-      '@party/shared-types':
-        specifier: workspace:*
-        version: link:../../shared-types
-      '@types/node':
-        specifier: ^20.12.7
-        version: 20.19.43
-    devDependencies:
-      tsx:
-        specifier: ^4.7.2
-        version: 4.23.13
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-
-  packages/games/jigsaw:
     dependencies:
       '@party/game-engine':
         specifier: workspace:*

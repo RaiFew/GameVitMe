@@ -300,24 +300,6 @@ export const codenamesWordFiles = pgTable('codenames_word_files', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-/**
- * A jigsaw picture, stored as a data URL rather than in object storage. The repo
- * has no bucket, no multipart handler and no static file serving, and the client
- * already downscales to ~200KB before upload, so a text column is enough.
- * `width`/`height` are the decoded dimensions — the engine sizes the grid from
- * them, so they must be real, not client-asserted.
- */
-export const jigsawImages = pgTable('jigsaw_images', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  ownerId: text('owner_id').notNull(),
-  name: text('name').notNull(),
-  width: integer('width').notNull(),
-  height: integer('height').notNull(),
-  mimeType: text('mime_type').notNull(),
-  data: text('data').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-});
-
 export const spyfallLocationSets = pgTable('spyfall_location_sets', {
   id: uuid('id').primaryKey().defaultRandom(),
   ownerId: text('owner_id').notNull(),

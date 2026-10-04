@@ -57,13 +57,6 @@ const FEATURED_GAMES = [
     descriptionKey: 'games.descNumberGrid',
   },
   {
-    id: 'jigsaw',
-    name: 'Jigsaw Puzzle',
-    categoryKey: 'games.catJigsaw',
-    players: '1–20 Players',
-    descriptionKey: 'games.descJigsaw',
-  },
-  {
     id: 'music-quiz',
     name: 'Music Quiz',
     categoryKey: 'games.catMusicQuiz',

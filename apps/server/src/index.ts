@@ -14,7 +14,6 @@ import roomRoutes from './routes/room.routes.js';
 import codenamesRoutes from './routes/codenames.routes.js';
 import spyfallRoutes from './routes/spyfall.routes.js';
 import rankingRoutes from './routes/ranking.routes.js';
-import jigsawRoutes from './routes/jigsaw.routes.js';
 import musicQuizRoutes from './routes/music-quiz.routes.js';
 
 import { GameRegistry } from '@party/game-engine';
@@ -24,7 +23,6 @@ import SalemPlugin from '@party/salem';
 import CodenamesPlugin from '@party/codenames';
 import RockPaperScissorsPlugin from '@party/rock-paper-scissors';
 import NumberGridPlugin from '@party/number-grid';
-import JigsawPlugin from '@party/jigsaw';
 import MusicQuizPlugin from '@party/music-quiz';
 
 async function bootstrap() {
@@ -62,7 +60,6 @@ async function bootstrap() {
   await fastify.register(codenamesRoutes);
   await fastify.register(spyfallRoutes);
   await fastify.register(rankingRoutes);
-  await fastify.register(jigsawRoutes);
   await fastify.register(musicQuizRoutes);
 
   // Initialize Socket.io
@@ -75,7 +72,6 @@ async function bootstrap() {
   GameRegistry.getInstance().register(CodenamesPlugin);
   GameRegistry.getInstance().register(RockPaperScissorsPlugin);
   GameRegistry.getInstance().register(NumberGridPlugin);
-  GameRegistry.getInstance().register(JigsawPlugin);
   GameRegistry.getInstance().register(MusicQuizPlugin);
 
   // Global Error Handler

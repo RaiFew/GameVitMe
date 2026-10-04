@@ -19,7 +19,6 @@
     "@fastify/websocket": "^9.0.0",
     "@party/codenames": "workspace:*",
     "@party/game-engine": "workspace:*",
-    "@party/jigsaw": "workspace:*",
     "@party/music-quiz": "workspace:*",
     "@party/number-grid": "workspace:*",
     "@party/rock-paper-scissors": "workspace:*",

@@ -2,13 +2,12 @@ import type { Server, Socket } from 'socket.io';
 import { roomManager } from '../../rooms/room-manager.js';
 import { RoomRunner, GameRegistry } from '@party/game-engine';
 import { db } from '../../db/client.js';
-import { gameSessions, rooms, jigsawImages } from '../../db/schema.js';
+import { gameSessions, rooms } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { getCodenamesWordFile } from '../../routes/codenames.routes.js';
 import { getSpyfallLocationSets } from '../../routes/spyfall.routes.js';
 import { MIN_SPYFALL_LOCATIONS } from '@party/spyfall';
-import { PIECES_BY_DIFFICULTY, type JigsawDifficulty } from '@party/jigsaw';
 import { clampCodenamesTimer } from '../../rooms/settings-validation.js';
 import { buildSongPool, poolSupports } from '../../music-quiz/catalog.js';
 import { MIN_POOL_SIZE } from '@party/music-quiz';
@@ -169,17 +168,6 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
       if (room.players.length < 1) {
         const msg = 'Music Quiz needs at least 1 player.';
         socket.emit('game:action_error', { code: 'NOT_ENOUGH_PLAYERS', message: msg });
-        if (callback) callback({ error: msg });
-        return;
-      }
-    } else if (room.gameType === 'jigsaw') {
-      // Co-op against a clock, and a solo run is a legitimate game. Without this
-      // branch the generic gate below would demand 4 players and a solo puzzle
-      // could never start.
-      const imageId = (room.settings as any)?.gameSettings?.imageId;
-      if (!imageId) {
-        const msg = 'Upload a picture before starting the puzzle.';
-        socket.emit('game:action_error', { code: 'NO_IMAGE', message: msg });
         if (callback) callback({ error: msg });
         return;
       }
@@ -370,44 +358,6 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
         if (wordPoolSnapshot) {
           (settings as any).wordPoolSnapshot = wordPoolSnapshot;
         }
-      }
-
-      if (room.gameType === 'jigsaw') {
-        // The grid is laid out from the stored dimensions, so they have to come
-        // from the row rather than the room settings, and they are snapshotted
-        // here: the piece count and layout must survive the host editing the
-        // lobby card afterwards, exactly as codenames snapshots its word pool.
-        const gs = (roomSettings.gameSettings || {}) as Record<string, any>;
-        const difficulty = (gs.difficulty || 'NORMAL') as JigsawDifficulty;
-        const pictureId = gs.imageId as string | undefined;
-
-        const rows = pictureId
-          ? await db
-              .select({
-                id: jigsawImages.id,
-                ownerId: jigsawImages.ownerId,
-                width: jigsawImages.width,
-                height: jigsawImages.height,
-              })
-              .from(jigsawImages)
-              .where(eq(jigsawImages.id, pictureId as any))
-          : [];
-        const picture = rows[0];
-
-        // Only the uploader's own picture: the host is the only player who can
-        // edit these settings, so this cannot lock a guest out of a shared room.
-        if (!picture || picture.ownerId !== room.hostId) {
-          const msg = 'That picture could not be found. Upload it again.';
-          socket.emit('game:action_error', { code: 'IMAGE_NOT_FOUND', message: msg });
-          if (callback) callback({ error: msg });
-          return;
-        }
-
-        (settings as any).imageId = picture.id;
-        (settings as any).imageWidth = picture.width;
-        (settings as any).imageHeight = picture.height;
-        (settings as any).difficulty = difficulty;
-        (settings as any).pieceCount = PIECES_BY_DIFFICULTY[difficulty];
       }
 
       if (room.gameType === 'music-quiz') {

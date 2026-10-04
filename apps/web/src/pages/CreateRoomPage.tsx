@@ -12,12 +12,11 @@ import { Button } from '../components/ui/Button';
 // only the big-room games go to 20, everything else is capped at 13.
 const MIN_PLAYERS_BY_GAME: Record<string, number> = {
   'number-grid': 1,
-  jigsaw: 1,
   codenames: 2,
   'rock-paper-scissors': 2,
   'music-quiz': 2,
 };
-const BIG_ROOM_GAMES = new Set(['number-grid', 'jigsaw', 'codenames', 'rock-paper-scissors', 'music-quiz']);
+const BIG_ROOM_GAMES = new Set(['number-grid', 'codenames', 'rock-paper-scissors', 'music-quiz']);
 const playerRange = (gameId: string): [number, number] => [
   MIN_PLAYERS_BY_GAME[gameId] ?? 4,
   BIG_ROOM_GAMES.has(gameId) ? 20 : 13,
@@ -34,7 +33,6 @@ export function CreateRoomPage() {
     { id: 'codenames', name: 'Codenames' },
     { id: 'rock-paper-scissors', name: 'Rock Paper Scissors' },
     { id: 'number-grid', name: 'Number Grid' },
-    { id: 'jigsaw', name: 'Jigsaw Puzzle' },
     { id: 'music-quiz', name: 'Music Quiz' },
   ]);
   const [selectedGame, setSelectedGame] = useState(initialGame);
@@ -49,11 +47,10 @@ export function CreateRoomPage() {
   const isCodenames = selectedGame === 'codenames';
   const isRPS = selectedGame === 'rock-paper-scissors';
   const isNumberGrid = selectedGame === 'number-grid';
-  const isJigsaw = selectedGame === 'jigsaw';
   const isMusicQuiz = selectedGame === 'music-quiz';
   // Every one of these puts the host in the game as a player, so Host/TV Mode is
   // not a choice — offering it just made the page look unresponsive.
-  const isAllPlay = isCodenames || isNumberGrid || isJigsaw || isMusicQuiz;
+  const isAllPlay = isCodenames || isNumberGrid || isMusicQuiz;
   const [minPlayers, maxPlayerCount] = playerRange(selectedGame);
 
   useEffect(() => {
@@ -83,8 +80,8 @@ export function CreateRoomPage() {
         // Reconcile against the list the server actually serves, not against the
         // URL. A `?game=` the server does not know would otherwise leave the
         // select holding a value with no matching option, and the browser would
-        // quietly show the first game instead — URL saying jigsaw, box saying
-        // Spyfall, nothing on screen wrong enough to notice.
+        // quietly show the first game instead — URL naming a game the server does not
+        // serve, box saying Spyfall, nothing on screen wrong enough to notice.
         setSelectedGame((cur) => (list.some((g: any) => g.id === cur) ? cur : list[0].id));
       })
       .catch(() => {});
@@ -108,8 +105,6 @@ export function CreateRoomPage() {
         ? 'Number Rush Arena'
         : targetGame === 'rock-paper-scissors'
         ? 'RPS Battle Arena'
-        : targetGame === 'jigsaw'
-        ? 'Jigsaw Table'
         : targetGame === 'music-quiz'
         ? 'Music Quiz Night'
         : 'My Party Room');
@@ -250,11 +245,6 @@ export function CreateRoomPage() {
                   Speedrun & Elimination (1–20 Players)
                 </span>
               )}
-              {isJigsaw && (
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-ink-muted">
-                  Cooperative Assembly (1–20 Players)
-                </span>
-              )}
               {isMusicQuiz && (
                 <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-ink-muted">
                   Listen &amp; Race (2–20 Players)
@@ -290,8 +280,6 @@ export function CreateRoomPage() {
                     ? 'Disabled: In Codenames, the room host is an active player on a team.'
                     : isNumberGrid
                     ? 'Disabled: In Number Rush, all players (including host) play directly on their grid.'
-                    : isJigsaw
-                    ? 'Disabled: in a cooperative puzzle the host assembles pieces too, not a scoreboard.'
                     : isMusicQuiz
                     ? 'Disabled: everyone in the room is guessing, and the fastest correct answer wins.'
                     : isRPS
@@ -328,8 +316,6 @@ export function CreateRoomPage() {
                     ? 'Disabled: This social deduction game requires 1 dedicated Host Moderator.'
                     : isCodenames
                     ? 'All connected players (including host) are assigned to Red or Blue teams as Spymasters or Operatives.'
-                    : isJigsaw
-                    ? 'Everyone drags pieces into the same board, in real time, against the clock.'
                     : isMusicQuiz
                     ? 'Everyone hears the same clip and races to lock in an answer.'
                     : isNumberGrid
