@@ -3,7 +3,15 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 
-export default defineConfig({
+export default defineConfig(({ command }) => {
+  // api.ts falls back to window.location.origin, so a build with no
+  // VITE_API_URL ships a working-looking bundle that calls the web host for
+  // /api and every request 404s. Dev is exempt: the proxy above answers those.
+  if (command === 'build' && !process.env.VITE_API_URL) {
+    throw new Error('VITE_API_URL is not set — the bundle would point at itself.');
+  }
+
+  return {
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
@@ -35,4 +43,5 @@ export default defineConfig({
       },
     },
   },
+  };
 });
