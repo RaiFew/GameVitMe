@@ -3,6 +3,8 @@ import type { GridSize } from '@party/number-grid';
 const GRID_SIZES = new Set<number>([2, 3, 4, 5, 6, 7, 8, 9, 10]);
 const DIFFICULTY_MODES = new Set(['DEFAULT', 'CUSTOM', 'RANDOM']);
 const DAMAGE_MODES = new Set(['LAST_PLAYER', 'EVERYONE_EXCEPT_FIRST']);
+/** `provider:id`, the same key the preview endpoint hands the lobby card. */
+const TRACK_KEY_RE = /^(deezer|itunes):\d{1,15}$/;
 
 /**
  * Normal-room variants only. Ranked variants are server-chosen, so letting a
@@ -149,6 +151,22 @@ export function validateMusicQuizSettings(
       case 'rounds':
         out.rounds = clamp(value, 1, 50, 10);
         break;
+
+      case 'excludedIds': {
+        // Subtractive only. A client can drop tracks the server already fetched
+        // but cannot add any, so this can never widen the pool past what the
+        // provider search returned. Entries that are not `provider:id` on a known
+        // provider are dropped rather than rejected — the same lenient rule the
+        // unknown keys above follow.
+        if (!Array.isArray(value)) {
+          return { ok: false, error: 'The track list cannot be read.' };
+        }
+        const ids = value
+          .filter((v): v is string => typeof v === 'string' && TRACK_KEY_RE.test(v))
+          .slice(0, 200);
+        out.excludedIds = ids;
+        break;
+      }
 
       case 'excerptSeconds':
         out.excerptSeconds = clamp(value, 5, 30, 10);

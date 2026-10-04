@@ -368,9 +368,21 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
         const gs = (roomSettings.gameSettings || {}) as Record<string, any>;
         const built = await buildSongPool(typeof gs.query === 'string' ? gs.query : '');
 
-        if (built.pool.length < MIN_POOL_SIZE) {
+        // The host can drop tracks in the lobby, but only from what this search
+        // returned — the list is subtractive, so it cannot smuggle in a song.
+        // Re-fetched rather than trusted from settings, because the same query
+        // run twice can differ and the card showed what *this* run returned.
+        const excluded = new Set(Array.isArray(gs.excludedIds) ? gs.excludedIds : []);
+        const pool =
+          excluded.size > 0
+            ? built.pool.filter((t) => !excluded.has(`${t.provider}:${t.providerId}`))
+            : built.pool;
+
+        if (pool.length < MIN_POOL_SIZE) {
           const msg =
-            `Only ${built.pool.length} playable tracks came back for "${String(gs.query || '').slice(0, 40)}". Try a different artist or genre.`;
+            pool.length === 0
+              ? 'Every track was excluded, so there is nothing to play. Put a few back.'
+              : `Only ${pool.length} playable tracks left for "${String(gs.query || '').slice(0, 40)}". Try a different artist, or allow more tracks.`;
           socket.emit('game:action_error', { code: 'POOL_TOO_SMALL', message: msg });
           if (callback) callback({ error: msg });
           return;
@@ -379,13 +391,13 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
         const wanted =
           gs.questionType === 'ARTIST' || gs.questionType === 'BOTH' ? gs.questionType : 'TITLE';
 
-        (settings as any).pool = built.pool;
+        (settings as any).pool = pool;
         (settings as any).query = String(gs.query || '').slice(0, 80);
         // The pool has the last word on the question type: an artist search puts
         // one artist in the pool, and an ARTIST question over it would be four
         // buttons reading the same. The view carries the effective type, so the
         // UI asks for what is really being asked.
-        (settings as any).questionType = poolSupports(built.pool, wanted)
+        (settings as any).questionType = poolSupports(pool, wanted)
           ? wanted
           : built.questionType;
       }

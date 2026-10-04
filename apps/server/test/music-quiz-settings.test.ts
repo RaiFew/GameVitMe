@@ -74,4 +74,25 @@ describe('validateMusicQuizSettings', () => {
     assert.ok(r.ok);
     assert.deepEqual(r.settings, {});
   });
+
+  test('excludedIds survives as a plain list of track keys', () => {
+    const r = validateMusicQuizSettings({ excludedIds: ['deezer:123', 'itunes:456'] });
+    assert.ok(r.ok);
+    assert.deepEqual(r.settings.excludedIds, ['deezer:123', 'itunes:456']);
+  });
+
+  test('excludedIds cannot smuggle in a track of its own', () => {
+    // Subtractive by construction: anything that is not `provider:id` on a
+    // provider we know is dropped, so the list can only ever name tracks the
+    // server already fetched. The `pool` key stays unavailable for the same reason.
+    const r = validateMusicQuizSettings({
+      excludedIds: ['deezer:1', 'spotify:9', 'deezer:../../etc', '', 42, { id: 'deezer:1' }],
+    });
+    assert.ok(r.ok);
+    assert.deepEqual(r.settings.excludedIds, ['deezer:1']);
+  });
+
+  test('a non-array excludedIds is refused rather than ignored', () => {
+    assert.equal(validateMusicQuizSettings({ excludedIds: 'deezer:1' }).ok, false);
+  });
 });

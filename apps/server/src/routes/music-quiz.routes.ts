@@ -5,8 +5,11 @@ import type { TrackProvider } from '@party/music-quiz';
 
 const PROVIDERS = new Set<TrackProvider>(['deezer', 'itunes']);
 
-/** Enough for the longest configured run, and no more to fetch. */
-const SAMPLE_SIZE = 8;
+/**
+ * The whole pool is returned, not a sample: the lobby card lets the host drop
+ * individual tracks, and a card that only showed the first few would let them
+ * exclude a song they could not see. `buildSongPool` caps the pool itself.
+ */
 
 const musicQuizRoutes: FastifyPluginAsync = async (fastify) => {
   // ─── Playable clip for one track ─────────────────────────────────
@@ -46,7 +49,17 @@ const musicQuizRoutes: FastifyPluginAsync = async (fastify) => {
       // False means the host's chosen question type is not playable from this
       // pool, so the card prompts for a different one before start.
       supportsRequestedType: poolSupports(built.pool, questionType === 'ARTIST' || questionType === 'BOTH' ? questionType : 'TITLE'),
-      sample: built.pool.slice(0, SAMPLE_SIZE).map((t) => ({ title: t.title, artist: t.artist })),
+      // Ids come back so the card can name a track to exclude. This is the same
+      // `provider:providerId` the play screen already receives for every clip,
+      // so nothing here is privileged — the titles and artists are the provider's
+      // own, fetched server-side, and the host only ever subtracts from them.
+      pool: built.pool.map((t) => ({
+        key: `${t.provider}:${t.providerId}`,
+        provider: t.provider,
+        providerId: t.providerId,
+        title: t.title,
+        artist: t.artist,
+      })),
     };
   });
 };

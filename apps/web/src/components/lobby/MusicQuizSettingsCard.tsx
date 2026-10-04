@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card } from '../ui/Card';
 import { api } from '../../lib/api';
 import { Search, Music4, AlertCircle, Loader2 } from 'lucide-react';
@@ -15,18 +15,28 @@ const QUESTION_TYPES = [
   { id: 'BOTH', label: 'Both', note: 'title and artist' },
 ] as const;
 
+interface PoolTrack {
+  key: string;
+  title: string;
+  artist: string;
+}
+
 interface PoolPreview {
   count: number;
   questionType: string;
   supportsRequestedType: boolean;
-  sample: { title: string; artist: string }[];
+  pool: PoolTrack[];
 }
+
+/** Mirrors the server's floor, so the card warns before Start refuses. */
+const MIN_POOL = 8;
 
 export function MusicQuizSettingsCard({ isHost, settings, onUpdateSettings }: Props) {
   const gs = (settings?.gameSettings || {}) as Record<string, any>;
   const query: string = gs.query ?? '';
   const questionType: string = gs.questionType || 'TITLE';
   const rounds: number = Number(gs.rounds ?? 10);
+  const excludedIds: string[] = Array.isArray(gs.excludedIds) ? gs.excludedIds : [];
 
   const [draft, setDraft] = useState(query);
   const [preview, setPreview] = useState<PoolPreview | null>(null);
@@ -48,7 +58,7 @@ export function MusicQuizSettingsCard({ isHost, settings, onUpdateSettings }: Pr
         .post<PoolPreview>('/api/music-quiz/pool-preview', { query: draft, questionType })
         .then((res) => {
           setPreview(res);
-          if (res.count < 8) setError(`Only ${res.count} playable tracks came back. Try another artist or leave it blank for the chart.`);
+          if (res.count < MIN_POOL) setError(`Only ${res.count} playable tracks came back. Try another artist or leave it blank for the chart.`);
         })
         .catch((e: Error) => setError(e.message))
         .finally(() => setLooking(false));
@@ -64,6 +74,23 @@ export function MusicQuizSettingsCard({ isHost, settings, onUpdateSettings }: Pr
   };
 
   const commitQuery = () => update({ query: draft.trim() });
+
+  const excluded = useMemo(() => new Set(excludedIds), [excludedIds]);
+  // Counted off the tracks on screen, not off `preview.count` — that one is the
+  // provider's answer and does not know what the host has since switched off.
+  const remaining = preview ? preview.pool.length - preview.pool.filter((t) => excluded.has(t.key)).length : 0;
+
+  const toggle = (key: string) =>
+    update({
+      excludedIds: excluded.has(key) ? excludedIds.filter((k) => k !== key) : [...excludedIds, key],
+    });
+
+  // A new search is a new pool; carrying the old exclusions across would hide
+  // tracks that are not even in this one.
+  const changeQuery = (next: string) => {
+    setDraft(next);
+    if (next.trim() !== query) update({ query: next.trim(), excludedIds: [] });
+  };
 
   return (
     <Card className="p-5 border border-rule space-y-4">
@@ -92,7 +119,7 @@ export function MusicQuizSettingsCard({ isHost, settings, onUpdateSettings }: Pr
               disabled={!isHost}
               maxLength={80}
               placeholder="Leave blank for this week's chart"
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={(e) => changeQuery(e.target.value)}
               onBlur={commitQuery}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') commitQuery();
@@ -112,29 +139,71 @@ export function MusicQuizSettingsCard({ isHost, settings, onUpdateSettings }: Pr
         </div>
 
         {isHost && (
-          <div className="border border-rule rounded-xs bg-canvas-sunk p-2 min-h-[3.5rem]">
+          <div className="border border-rule rounded-xs bg-canvas-sunk">
             {looking ? (
-              <p className="text-[10px] font-mono text-ink-faint flex items-center gap-1.5">
+              <p className="text-[10px] font-mono text-ink-faint p-2 flex items-center gap-1.5">
                 <Loader2 size={12} className="animate-spin" /> Searching the catalog...
               </p>
-            ) : preview && preview.count > 0 ? (
+            ) : preview && preview.pool.length > 0 ? (
               <>
-                <p className="text-[10px] font-mono text-ink-muted mb-1.5">
-                  <span className="font-bold text-ink">{preview.count}</span> playable tracks. First
-                  few:
-                </p>
-                <ul className="space-y-0.5">
-                  {preview.sample.slice(0, 4).map((t, i) => (
-                    <li key={i} className="text-[10px] font-mono text-ink-faint truncate">
-                      {t.title} <span className="opacity-70">— {t.artist}</span>
-                    </li>
-                  ))}
+                <div className="flex items-center justify-between px-2 py-1.5 border-b border-rule">
+                  <p className="text-[10px] font-mono text-ink-muted">
+                    <span className="font-bold text-ink">{remaining}</span> of {preview.pool.length} tracks in play
+                  </p>
+                  {excludedIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => update({ excludedIds: [] })}
+                      className="text-[10px] font-mono font-bold uppercase text-ink-muted hover:text-ink underline underline-offset-2"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+                {/* Scrolls rather than grows: a 60-track pool would push the rounds
+                    slider off the card entirely. */}
+                <ul className="max-h-48 overflow-y-auto divide-y divide-rule/50">
+                  {preview.pool.map((t) => {
+                    const off = excluded.has(t.key);
+                    return (
+                      <li key={t.key}>
+                        <button
+                          type="button"
+                          onClick={() => toggle(t.key)}
+                          aria-pressed={!off}
+                          className={`w-full flex items-start gap-2 px-2 py-1.5 text-left transition-colors hover:bg-canvas ${
+                            off ? 'opacity-45' : ''
+                          }`}
+                        >
+                          <span
+                            aria-hidden
+                            className={`mt-[3px] shrink-0 w-3 h-3 border rounded-xs ${
+                              off ? 'border-rule' : 'border-ink bg-ink'
+                            }`}
+                          />
+                          <span className="min-w-0">
+                            <span className="block text-[11px] font-mono text-ink truncate">{t.title}</span>
+                            <span className="block text-[10px] font-mono text-ink-faint truncate">
+                              {t.artist}
+                            </span>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
               </>
             ) : (
-              <p className="text-[10px] font-mono text-ink-faint">No search yet.</p>
+              <p className="text-[10px] font-mono text-ink-faint p-2">No search yet.</p>
             )}
           </div>
+        )}
+
+        {preview && remaining > 0 && remaining < MIN_POOL && (
+          <p className="text-[10px] font-mono text-red-600 dark:text-red-400 flex items-center gap-1">
+            <AlertCircle size={12} /> {remaining} left — the game needs at least {MIN_POOL}. Put a few
+            back before starting.
+          </p>
         )}
 
         {error && (
