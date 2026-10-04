@@ -174,9 +174,12 @@ export function pieceOutlinePath(
   let cursor: Point = [x0, y0];
   for (const side of sides) {
     d += `M${f(cursor[0])} ${f(cursor[1])}`;
-    // twoCubics' own M becomes a L, so consecutive edges stay joined.
+    // twoCubics' own M becomes a L, so consecutive edges stay joined. It has to
+    // be replaced, not dropped: `M33 33` followed by `33 33C…` is one unparseable
+    // number run, and the whole outline — clip region included — then draws
+    // nothing. Integer cell sizes make that certain rather than incidental.
     if (side.tab) {
-      d += twoCubics(tabPoints(side.a, side.b, side.tab, amp, side.n[0], side.n[1])).slice(1);
+      d += 'L' + twoCubics(tabPoints(side.a, side.b, side.tab, amp, side.n[0], side.n[1])).slice(1);
     } else {
       d += line(side.a, side.b);
     }

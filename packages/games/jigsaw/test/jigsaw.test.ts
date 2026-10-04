@@ -10,6 +10,7 @@ import {
   seamPaths,
   pieceOutlinePath,
   pieceEdgesFor,
+  tabAmplitude,
   traySlotOf,
   PIECES_BY_DIFFICULTY,
 } from '../src/index.js';
@@ -196,7 +197,47 @@ describe('edge geometry', () => {
     assert.deepEqual(pieceEdgesFor(b, 2, 2, 4, 4).right, pieceEdgesFor(b, 2, 3, 4, 4).left);
     assert.deepEqual(pieceEdgesFor(b, 2, 2, 4, 4).bottom, pieceEdgesFor(b, 3, 2, 4, 4).top);
   });
+
+  test('every outline parses as SVG path data, whatever the cell size', () => {
+    // The bug this guards: `M33 33` was emitted straight into `33 33C…`, which a
+    // real parser reads as one number run and rejects — so the clip path drew
+    // nothing and the piece was invisible. It only showed up once a picture made
+    // the amplitude a whole number, which is why string equality missed it.
+    const cases: [number, number][] = [
+      [100, 60], // amplitude 10
+      [150, 200], // amplitude 33 — a 1200x600 picture cut 8x3
+      [96, 96],
+      [1400 / 7, 900 / 7],
+    ];
+    for (const [w, h] of cases) {
+      const amp = tabAmplitude(w, h);
+      const d = pieceOutlinePath(pieceEdgesFor(buildBoundaries(3, 3, 99), 1, 1, 3, 3), w, h, amp);
+      assert.ok(parsesAsPathData(d), `unparseable outline at cell ${w}x${h}: ${d.slice(0, 60)}`);
+    }
+  });
 });
+
+/**
+ * Strict path-data parser: every command must have exactly its operands, each a
+ * standalone number. `node:test` has no SVG engine, so this stands in for the one
+ * that would have caught the bad outline.
+ */
+function parsesAsPathData(d: string): boolean {
+  const arity: Record<string, number> = { M: 2, L: 2, C: 6, Z: 0 };
+  let i = 0;
+  while (i < d.length) {
+    const cmd = d[i]!;
+    if (!(cmd in arity)) return false;
+    i++;
+    for (let n = arity[cmd]!; n > 0; n--) {
+      while (d[i] === ' ') i++;
+      const num = /^-?\d+(\.\d+)?/.exec(d.slice(i));
+      if (!num) return false;
+      i += num[0].length;
+    }
+  }
+  return i === d.length;
+}
 
 describe('setup', () => {
   test('piece ids are in shuffled order, not solution order', () => {
