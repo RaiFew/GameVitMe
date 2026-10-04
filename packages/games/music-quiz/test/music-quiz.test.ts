@@ -380,7 +380,8 @@ describe('round flow', () => {
 
   test('a pool that cannot make a round ends the game instead of rendering nothing', () => {
     const ctx = harness();
-    const state = start({ pool: POOL.slice(0, 3) });
+    // One track is below the floor: an answer with nothing to rule it out.
+    const state = start({ pool: POOL.slice(0, 1) });
     assert.equal(state.phase, 'GAME_OVER');
     assert.deepEqual(state.winnerPlayerIds, []);
     assert.ok(musicQuizGame.checkGameEnd(state, ctx)?.isEnded);
@@ -388,9 +389,29 @@ describe('round flow', () => {
 
   test('a move after the game is over is refused', () => {
     const ctx = harness();
-    const state = start({ pool: POOL.slice(0, 3) });
+    const state = start({ pool: POOL.slice(0, 1) });
     refuse(state, ctx, 'ana', 'ANSWER', { index: 0 });
     refuse(state, ctx, 'ana', 'ADVANCE');
+  });
+
+  test('a three-track pool plays three rounds, one song each', () => {
+    const ctx = harness();
+    let state = start({ pool: POOL.slice(0, 3), rounds: 30 });
+    assert.equal(state.phase, 'ANSWERING');
+    assert.equal(state.totalRounds, 3, 'rounds are capped by the pool, not the slider');
+    assert.equal(state.round.choices.length, 3, 'choices shrink to what the pool has');
+
+    const asked = [state.round.track.providerId];
+    for (let i = 0; i < 2; i++) {
+      const revealed = musicQuizGame.onTimerExpired(state, 'answer_timer', ctx)!.newState!;
+      state = musicQuizGame.onTimerExpired(revealed, 'reveal_timer', ctx)!.newState!;
+      assert.equal(state.phase, 'ANSWERING', `round ${i + 2} should exist`);
+      asked.push(state.round.track.providerId);
+    }
+    assert.equal(new Set(asked).size, 3, 'no song is asked twice');
+
+    const revealed = musicQuizGame.onTimerExpired(state, 'answer_timer', ctx)!.newState!;
+    assert.equal(musicQuizGame.onTimerExpired(revealed, 'reveal_timer', ctx)!.newState!.phase, 'GAME_OVER');
   });
 
   test('an unknown action is refused rather than ignored', () => {

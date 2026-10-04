@@ -13,15 +13,16 @@ export function labelFor(track: QuizTrack, questionType: QuestionType): string {
 const norm = (s: string) => s.toLowerCase().replace(/[\s\-–—_'".,()!]+/g, '');
 
 /**
- * Builds one round: a track plus three distractors drawn from the same pool, so
- * the wrong answers are plausible rather than obviously wrong.
+ * Builds one round: the answer plus up to three distractors drawn from the same
+ * pool, so the wrong answers are plausible rather than obviously wrong.
  *
- * `usedKeys` are the tracks already played — a quiz that repeats a song reads as
- * a bug to the players even when the repetition is legitimate.
+ * `usedKeys` are the tracks already played. The *answer* is always an unplayed
+ * one, so a pool of three yields exactly three rounds; only a distractor may
+ * repeat, which is far less noticeable than the same song being asked twice.
  *
- * Returns null when the pool cannot supply four distinct labels. Four is not
- * negotiable: a shorter list is trivially guessable and a longer one is not the
- * game the brief asked for, so the caller degrades the question type instead.
+ * Returns null when the pool cannot supply two distinct labels — one choice is
+ * not a question. Four is a ceiling, not a requirement: a narrow pool asks what
+ * it can rather than refusing to start.
  */
 export function buildRound(opts: {
   pool: readonly QuizTrack[];
@@ -34,27 +35,29 @@ export function buildRound(opts: {
 }): QuizRound | null {
   const { pool, usedKeys, questionType, random, roundNumber, nowMs, answerSeconds } = opts;
 
-  const fresh = pool.filter((t) => !usedKeys.has(`${t.provider}:${t.providerId}`));
-  const candidates = fresh.length >= 4 ? fresh : pool;
-  if (candidates.length < 4) return null;
+  const wanted = Math.min(4, pool.length);
+  if (wanted < 2) return null;
 
-  const shuffled = shuffle(candidates, random);
-  const correct = shuffled[0]!;
+  const fresh = pool.filter((t) => !usedKeys.has(`${t.provider}:${t.providerId}`));
+  if (!fresh.length) return null;
+
+  const correct = shuffle(fresh, random)[0]!;
 
   // Labels, not tracks, are what collide: two different songs by one artist are
   // two good TITLE distractors but the same string, which would show a duplicate
-  // button. Walk the shuffled list until four distinct labels are found.
+  // button. Draw distractors from the whole pool, since a repeat there is
+  // harmless next to repeating the answer.
   const seen = new Set<string>([norm(labelFor(correct, questionType))]);
   const labels = [labelFor(correct, questionType)];
-  for (const t of shuffled.slice(1)) {
+  for (const t of shuffle(pool, random)) {
     const label = labelFor(t, questionType);
     const key = norm(label);
     if (seen.has(key)) continue;
     seen.add(key);
     labels.push(label);
-    if (labels.length === 4) break;
+    if (labels.length === wanted) break;
   }
-  if (labels.length < 4) return null;
+  if (labels.length < 2) return null;
 
   const choices = shuffle(labels, random);
   return {

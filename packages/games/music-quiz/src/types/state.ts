@@ -93,6 +93,12 @@ export interface MusicQuizMasterState {
   round: QuizRound;
   players: Record<string, MusicQuizPlayerState>;
   winnerPlayerIds: string[];
+  /**
+   * Every track already asked. Master-only: the player view does not carry it,
+   * since what has already played says nothing about what is coming. The server
+   * needs it so each round draws an unheard track rather than a recent one.
+   */
+  playedKeys: string[];
 }
 
 export interface MusicQuizPlayerView {

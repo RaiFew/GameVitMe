@@ -32,8 +32,8 @@ export const DEFAULT_MUSIC_QUIZ_SETTINGS: MusicQuizSettings = {
   query: '',
 };
 
-/** Fewer than this and the server will not start a quiz — see buildFirstRound. */
-export const MIN_POOL_SIZE = 8;
+/** A round needs an answer plus one distractor; fewer than this cannot start. */
+export const MIN_POOL_SIZE = 2;
 
 export const musicQuizGame: GameDefinition<
   MusicQuizMasterState,
@@ -126,9 +126,9 @@ export const musicQuizGame: GameDefinition<
 
     const now = Date.now();
     // A pool too small to build the first round means the provider search came
-    // back empty or the host's query matched nothing playable. An empty round
-    // here would render a blank board, so the game ends immediately with nobody
-    // winning and the lobby card explains why.
+    // back empty or the host excluded everything. An empty round here would
+    // render a blank board, so the game ends immediately with nobody winning
+    // and the lobby card explains why.
     const first = buildRound({
       pool,
       usedKeys: new Set(),
@@ -144,7 +144,10 @@ export const musicQuizGame: GameDefinition<
       sessionId: ctx.gameSessionId,
       phase: first ? 'ANSWERING' : 'GAME_OVER',
       settings: effective,
-      totalRounds: Math.max(1, Math.min(50, effective.rounds)),
+      playedKeys: first ? [`${first.track.provider}:${first.track.providerId}`] : [],
+      // Never more rounds than songs: every round answers an unplayed track, so
+      // a three-track pool is a three-round quiz rather than one that stops short.
+      totalRounds: Math.max(1, Math.min(50, effective.rounds, pool.length)),
       roundNumber: 1,
       round: first ?? emptyRound(now, effective.answerSeconds),
       players,
@@ -256,10 +259,9 @@ export const musicQuizGame: GameDefinition<
 
       if (state.roundNumber >= state.totalRounds) return finishGame(state);
 
-      const usedKeys = new Set<string>([`${state.round.track.provider}:${state.round.track.providerId}`]);
       const next = buildRound({
         pool: state.settings.pool ?? [],
-        usedKeys,
+        usedKeys: new Set(state.playedKeys),
         questionType: state.settings.questionType,
         random: ctx.random,
         roundNumber: state.roundNumber + 1,
@@ -273,7 +275,13 @@ export const musicQuizGame: GameDefinition<
       ctx.scheduleTimer(state.settings.answerSeconds * 1000, 'answer_timer');
       return {
         success: true,
-        newState: { ...state, phase: 'ANSWERING', roundNumber: next.roundNumber, round: next },
+        newState: {
+          ...state,
+          phase: 'ANSWERING',
+          roundNumber: next.roundNumber,
+          round: next,
+          playedKeys: [...state.playedKeys, `${next.track.provider}:${next.track.providerId}`],
+        },
       };
     }
 

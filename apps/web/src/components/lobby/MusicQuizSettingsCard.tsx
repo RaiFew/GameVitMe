@@ -29,7 +29,7 @@ interface PoolPreview {
 }
 
 /** Mirrors the server's floor, so the card warns before Start refuses. */
-const MIN_POOL = 8;
+const MIN_POOL = 2;
 
 export function MusicQuizSettingsCard({ isHost, settings, onUpdateSettings }: Props) {
   const gs = (settings?.gameSettings || {}) as Record<string, any>;
@@ -58,7 +58,7 @@ export function MusicQuizSettingsCard({ isHost, settings, onUpdateSettings }: Pr
         .post<PoolPreview>('/api/music-quiz/pool-preview', { query: draft, questionType })
         .then((res) => {
           setPreview(res);
-          if (res.count < MIN_POOL) setError(`Only ${res.count} playable tracks came back. Try another artist or leave it blank for the chart.`);
+          if (res.count < MIN_POOL) setError(`${res.count} playable tracks came back — too few to ask a question. Try another artist or leave it blank for the chart.`);
         })
         .catch((e: Error) => setError(e.message))
         .finally(() => setLooking(false));
@@ -79,6 +79,9 @@ export function MusicQuizSettingsCard({ isHost, settings, onUpdateSettings }: Pr
   // Counted off the tracks on screen, not off `preview.count` — that one is the
   // provider's answer and does not know what the host has since switched off.
   const remaining = preview ? preview.pool.length - preview.pool.filter((t) => excluded.has(t.key)).length : 0;
+  // A round answers an unplayed track, so the pool is the ceiling on rounds.
+  // Zero means "not known yet", which leaves the slider at its own range.
+  const maxRounds = remaining > 0 ? Math.min(30, remaining) : 0;
 
   const toggle = (key: string) =>
     update({
@@ -205,6 +208,12 @@ export function MusicQuizSettingsCard({ isHost, settings, onUpdateSettings }: Pr
             back before starting.
           </p>
         )}
+        {preview && remaining > MIN_POOL && remaining < rounds && (
+          <p className="text-[10px] font-mono text-ink-faint">
+            Only {remaining} tracks are in play, so this runs {remaining} rounds however the slider is
+            set — every round answers a song nobody has heard yet.
+          </p>
+        )}
 
         {error && (
           <p className="text-[10px] font-mono text-red-600 dark:text-red-400 flex items-center gap-1">
@@ -252,14 +261,16 @@ export function MusicQuizSettingsCard({ isHost, settings, onUpdateSettings }: Pr
           <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold">
             Rounds
           </label>
-          <span className="text-xs font-mono font-bold text-ink">{rounds}</span>
+          <span className="text-xs font-mono font-bold text-ink">
+            {maxRounds > 0 ? Math.min(rounds, maxRounds) : rounds}
+          </span>
         </div>
         <input
           type="range"
-          min={3}
-          max={30}
+          min={1}
+          max={Math.max(1, maxRounds || 30)}
           step={1}
-          value={rounds}
+          value={maxRounds > 0 ? Math.min(rounds, maxRounds) : rounds}
           disabled={!isHost}
           onChange={(e) => update({ rounds: Number(e.target.value) })}
           className="w-full accent-ink disabled:opacity-60"
