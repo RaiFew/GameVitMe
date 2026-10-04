@@ -63,7 +63,9 @@
     --surface-hover: #f4f4f3;
     --ink: #0a0a0a;
     --ink-muted: #5c5c5a;
-    --ink-faint: #8e8e8b;
+    /* Bumped from #8e8e8b, which was only ~3.1:1 on white. Now 4.7:1 on the
+       darker canvas-sunk, so the faintest text still clears AA. */
+    --ink-faint: #6e6e6b;
     --rule: #e3e3e0;
     --rule-strong: #0a0a0a;
 
@@ -83,7 +85,8 @@
     --surface-hover: #242421;
     --ink: #f4f4f2;
     --ink-muted: #a3a3a0;
-    --ink-faint: #777774;
+    /* 4.7:1 on canvas-sunk, up from #777774's 4.1:1. */
+    --ink-faint: #80807d;
     --rule: #2c2c29;
     --rule-strong: #f4f4f2;
 
