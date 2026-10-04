@@ -46,7 +46,9 @@ export function NumberGridSettingsCard({
     if (!isHost) return;
     const updates: Record<string, any> = { difficultyMode: mode };
     if (mode === 'DEFAULT') {
-      updates.totalRounds = 9;
+      // Round count is kept across mode switches. Resetting it to 9 here threw
+      // away the host's choice every time they came back to Default, and the
+      // "Reset to Default" button is the one place that should do that.
     } else if (mode === 'CUSTOM') {
       // The list above is a display default until it is actually sent. Without
       // this the server holds `difficultyMode: CUSTOM` with no sizes, and
@@ -71,10 +73,9 @@ export function NumberGridSettingsCard({
     updateGameSettings({ damageMode: mode });
   };
 
-  const handleRandomRoundsChange = (rounds: number) => {
+  const handleRoundsChange = (rounds: number) => {
     if (!isHost) return;
-    const clamped = Math.min(Math.max(rounds, 1), 15);
-    updateGameSettings({ totalRounds: clamped });
+    updateGameSettings({ totalRounds: rounds });
   };
 
   // Custom rounds editor
@@ -194,7 +195,7 @@ export function NumberGridSettingsCard({
           >
             <div className="flex items-center justify-between w-full mb-1">
               <span className="text-xs font-black uppercase text-ink">Default</span>
-              <span className="text-xs font-mono font-bold text-ink-faint">9 Rds</span>
+              <span className="text-xs font-mono font-bold text-ink-faint">{totalRounds} Rds</span>
             </div>
             <p className="text-[10px] font-mono text-ink-muted">
               Starts at 2x2 and scales sequentially up to 10x10.
@@ -327,19 +328,21 @@ export function NumberGridSettingsCard({
         </div>
       )}
 
-      {/* Random Mode Rounds Selector */}
-      {difficultyMode === 'RANDOM' && (
+      {/* Round count. Custom mode takes it from the round list instead. Default
+          stops at 9 because its progression is 2x2..10x10 and the engine repeats
+          10x10 for anything past that; Random has no such ceiling. */}
+      {(difficultyMode === 'DEFAULT' || difficultyMode === 'RANDOM') && (
         <div className="space-y-2 pt-2 border-t border-rule">
           <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold block">
-            Number of Random Rounds
+            {difficultyMode === 'RANDOM' ? 'Number of Random Rounds' : 'Number of Rounds'}
           </label>
           <div className="flex gap-2">
-            {[3, 5, 7, 10].map((rounds) => (
+            {(difficultyMode === 'RANDOM' ? [3, 5, 7, 10, 15] : [3, 5, 7, 9]).map((rounds) => (
               <button
                 key={rounds}
                 type="button"
                 disabled={!isHost}
-                onClick={() => handleRandomRoundsChange(rounds)}
+                onClick={() => handleRoundsChange(rounds)}
                 className={`flex-1 py-1.5 px-3 text-xs font-mono font-bold rounded-xs border transition-all ${
                   totalRounds === rounds
                     ? 'border-rule-strong bg-ink text-canvas'
