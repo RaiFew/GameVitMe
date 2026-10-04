@@ -38,6 +38,12 @@ export function NumberGridSettingsCard({
   // Normal-room Chaos. Ranked variants never reach this card — those are chosen
   // on the Ranked page, not configured by a host.
   const isChaos = gs.variant === 'CHAOS';
+  // Chaos picks a fresh grid size at random every round — the engine leaves
+  // `roundGridSizes` empty for it — so the entire difficulty-progression family
+  // is dead weight while Chaos is on. Showing those controls is worse than hiding
+  // them: a host changes "Largest Grid", nothing happens, and the toggle looks
+  // broken. Only rounds, HP and damage mode are still read.
+  const showProgression = !isChaos;
 
   const handleChaosToggle = (enabled: boolean) => {
     if (!isHost) return;
@@ -180,9 +186,17 @@ export function NumberGridSettingsCard({
             {isChaos ? 'On' : 'Off'}
           </span>
         </button>
+
+        {isChaos && (
+          <p className="text-[10px] font-mono text-ink-muted">
+            Chaos decides the numbers and the grid size itself, so the difficulty
+            progression below is hidden. Round count, HP and damage mode still apply.
+          </p>
+        )}
       </div>
 
       {/* Difficulty Mode Selector */}
+      {showProgression && (
       <div className="space-y-2">
         <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold block">
           Difficulty Progression
@@ -249,6 +263,7 @@ export function NumberGridSettingsCard({
           </button>
         </div>
       </div>
+      )}
 
       {/* Progression preview + reset. The engine owns the real progression, so
           this mirrors it rather than being a second source of truth. */}
@@ -257,7 +272,7 @@ export function NumberGridSettingsCard({
           <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold">
             Progression Preview
           </label>
-          {isHost && difficultyMode !== 'DEFAULT' && (
+          {isHost && showProgression && difficultyMode !== 'DEFAULT' && (
             <button
               type="button"
               onClick={handleResetProgression}
@@ -273,14 +288,14 @@ export function NumberGridSettingsCard({
               key={idx}
               className="px-1.5 py-1 text-[10px] font-mono border border-rule bg-canvas-sunk text-ink-muted rounded-xs"
             >
-              R{idx + 1}: {size}x{size}
+              R{idx + 1}: {typeof size === 'number' ? `${size}x${size}` : size}
             </span>
           ))}
         </div>
       </div>
 
       {/* Custom Rounds Configurator */}
-      {difficultyMode === 'CUSTOM' && (
+      {showProgression && difficultyMode === 'CUSTOM' && (
         <div className="space-y-3 p-3 bg-canvas-sunk/50 border border-rule rounded-xs">
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold">
@@ -334,8 +349,9 @@ export function NumberGridSettingsCard({
         </div>
       )}
 
-      {/* Round count. Custom mode takes it from the round list instead. */}
-      {(difficultyMode === 'DEFAULT' || difficultyMode === 'RANDOM') && (
+      {/* Round count. Custom mode takes it from the round list instead — but Chaos
+          still reads it, so the picker stays up for it. */}
+      {(isChaos || difficultyMode === 'DEFAULT' || difficultyMode === 'RANDOM') && (
         <div className="space-y-2 pt-2 border-t border-rule">
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold">
@@ -380,7 +396,7 @@ export function NumberGridSettingsCard({
       )}
 
       {/* Default progression's ceiling. */}
-      {difficultyMode === 'DEFAULT' && (
+      {showProgression && difficultyMode === 'DEFAULT' && (
         <div className="space-y-2 pt-2 border-t border-rule">
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted font-bold">
