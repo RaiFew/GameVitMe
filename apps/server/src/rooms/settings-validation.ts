@@ -163,7 +163,7 @@ export function validateMusicQuizSettings(
         }
         const ids = value
           .filter((v): v is string => typeof v === 'string' && TRACK_KEY_RE.test(v))
-          .slice(0, 200);
+          .slice(0, 5000);
         out.excludedIds = ids;
         break;
       }

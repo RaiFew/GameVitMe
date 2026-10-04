@@ -16,9 +16,18 @@ const DEEZER = 'https://api.deezer.com';
 const ITUNES = 'https://itunes.apple.com';
 const TIMEOUT_MS = 6000;
 
-/** Enough for the longest configured run plus distractors, with slack. */
-const MAX_POOL = 60;
-const MAX_ALBUMS = 8;
+/**
+ * The chart is a fixed list, so it needs a ceiling. An artist query does not:
+ * it walks the whole discography, which for Taylor Swift is 126 albums and well
+ * over a thousand playable tracks. The game still only plays `rounds` of them.
+ */
+const MAX_CHART = 100;
+const MAX_ALBUMS = 200;
+/** Deezer caps `limit` at 100 and pages with `index`. */
+const ALBUMS_PER_PAGE = 100;
+const TRACKS_PER_ALBUM = 100;
+/** Parallel album fetches; sequential costs ~2.3x for the same result. */
+const ALBUM_BATCH = 12;
 
 async function json(url: string): Promise<any | null> {
   try {
@@ -75,26 +84,42 @@ async function deezerArtistPool(query: string): Promise<QuizTrack[]> {
   const artist = found?.data?.find((a: any) => a?.nb_album > 0);
   if (!artist?.id) return [];
 
-  const albums = await json(`${DEEZER}/artist/${artist.id}/albums?limit=${MAX_ALBUMS}`);
+  // Every album, not just the first page. Deezer pages with `index` and stops
+  // returning a short page once the discography runs out.
+  const albumIds: number[] = [];
+  for (let index = 0; albumIds.length < MAX_ALBUMS; index += ALBUMS_PER_PAGE) {
+    const page = await json(
+      `${DEEZER}/artist/${artist.id}/albums?limit=${ALBUMS_PER_PAGE}&index=${index}`
+    );
+    const data = (page?.data ?? []) as Array<{ id: number }>;
+    albumIds.push(...data.map((a) => a.id));
+    if (data.length < ALBUMS_PER_PAGE) break;
+  }
+
   const out: QuizTrack[] = [];
-  for (const album of albums?.data ?? []) {
-    const tracks = await json(`${DEEZER}/album/${album.id}/tracks?limit=50`);
-    for (const t of (tracks?.data ?? []) as DeezerTrack[]) {
-      if (!t.preview) continue;
-      out.push({
-        provider: 'deezer',
-        providerId: String(t.id),
-        title: t.title,
-        artist: t.artist?.name ?? query,
-      });
+  for (let i = 0; i < albumIds.length; i += ALBUM_BATCH) {
+    const pages = await Promise.all(
+      albumIds
+        .slice(i, i + ALBUM_BATCH)
+        .map((id) => json(`${DEEZER}/album/${id}/tracks?limit=${TRACKS_PER_ALBUM}`))
+    );
+    for (const page of pages) {
+      for (const t of (page?.data ?? []) as DeezerTrack[]) {
+        if (!t.preview) continue;
+        out.push({
+          provider: 'deezer',
+          providerId: String(t.id),
+          title: t.title,
+          artist: t.artist?.name ?? query,
+        });
+      }
     }
-    if (out.length >= MAX_POOL) break;
   }
   return out;
 }
 
 async function deezerSearchPool(query: string): Promise<QuizTrack[]> {
-  const res = await json(`${DEEZER}/search?q=${encodeURIComponent(query)}&limit=50`);
+  const res = await json(`${DEEZER}/search?q=${encodeURIComponent(query)}&limit=${TRACKS_PER_ALBUM}`);
   const out: QuizTrack[] = [];
   for (const t of (res?.data ?? []) as DeezerTrack[]) {
     if (!t.preview || !matchesQuery(t, query)) continue;
@@ -109,7 +134,7 @@ async function deezerSearchPool(query: string): Promise<QuizTrack[]> {
 }
 
 async function deezerChartPool(): Promise<QuizTrack[]> {
-  const res = await json(`${DEEZER}/chart/0/tracks?limit=${MAX_POOL}`);
+  const res = await json(`${DEEZER}/chart/0/tracks?limit=${MAX_CHART}`);
   const out: QuizTrack[] = [];
   for (const t of (res?.data ?? []) as DeezerTrack[]) {
     if (!t.preview) continue;
