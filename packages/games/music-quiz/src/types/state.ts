@@ -103,6 +103,8 @@ export interface MusicQuizMasterState {
 
 export interface MusicQuizPlayerView {
   roomId: string;
+  /** The reader's own seat, so the results screen can place them. */
+  playerId: string;
   phase: MusicQuizPhase;
   roundNumber: number;
   totalRounds: number;

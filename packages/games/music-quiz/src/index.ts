@@ -202,27 +202,19 @@ export const musicQuizGame: GameDefinition<
           ? move.playerId
           : fastest;
 
+      // The score is deliberately not credited here — `openReveal` does it. A
+      // scoreboard that moves the instant a choice is pressed tells the player
+      // they were right before the reveal does.
       return {
         success: true,
-        newState: {
-          ...state,
-          round: { ...state.round, answers, fastestPlayerId },
-          players: {
-            ...state.players,
-            [move.playerId]: {
-              ...prev,
-              score: prev.score + points,
-              correctCount: prev.correctCount + (correct ? 1 : 0),
-            },
-          },
-        },
+        newState: { ...state, round: { ...state.round, answers, fastestPlayerId } },
       };
     }
 
     // ADVANCE: open the reveal, which shows the answer and the standings. The
     // answer timer's arming is replaced, since the reveal is on the clock now.
     ctx.scheduleTimer(REVEAL_SECONDS * 1000, 'reveal_timer');
-    return { success: true, newState: { ...state, phase: 'REVEAL', round: openReveal(state, now) } };
+    return { success: true, newState: { ...openReveal(state, now), phase: 'REVEAL' } };
   },
 
   getPlayerView(state, _playerId, _ctx) {
@@ -250,7 +242,7 @@ export const musicQuizGame: GameDefinition<
       ctx.scheduleTimer(REVEAL_SECONDS * 1000, 'reveal_timer');
       return {
         success: true,
-        newState: { ...state, phase: 'REVEAL', round: openReveal(state, Date.now()) },
+        newState: { ...openReveal(state, Date.now()), phase: 'REVEAL' },
       };
     }
 
@@ -289,9 +281,29 @@ export const musicQuizGame: GameDefinition<
   },
 };
 
-/** One stamp, shared by every client, so they all stop the clip at the same instant. */
-function openReveal(state: MusicQuizMasterState, nowMs: number) {
-  return { ...state.round, revealEndsAtMs: nowMs + REVEAL_SECONDS * 1000 };
+/**
+ * Opens the reveal and settles the round's points.
+ *
+ * One stamp, shared by every client, so they all stop the clip at the same
+ * instant — and the one place a round's score is credited, so the number only
+ * moves once the answer is actually on screen.
+ */
+function openReveal(state: MusicQuizMasterState, nowMs: number): MusicQuizMasterState {
+  const players = { ...state.players };
+  for (const [playerId, a] of Object.entries(state.round.answers)) {
+    const p = players[playerId];
+    if (!p) continue;
+    players[playerId] = {
+      ...p,
+      score: p.score + a.points,
+      correctCount: p.correctCount + (a.correct ? 1 : 0),
+    };
+  }
+  return {
+    ...state,
+    players,
+    round: { ...state.round, revealEndsAtMs: nowMs + REVEAL_SECONDS * 1000 },
+  };
 }
 
 function finishGame(state: MusicQuizMasterState): MoveResult<MusicQuizMasterState> {

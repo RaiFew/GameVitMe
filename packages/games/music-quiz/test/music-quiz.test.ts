@@ -234,12 +234,14 @@ describe('answering', () => {
     assert.equal(ctx.armed, 'answer_timer');
   });
 
-  test('a correct answer scores by speed', () => {
+  test('a correct answer scores by speed, but only once it is revealed', () => {
     const ctx = harness();
     let state = start();
     // Five seconds into a twenty-second window: three quarters of the maximum.
     state = send(state, ctx, 'ana', 'ANSWER', { index: state.round.correctIndex },
       state.round.questionStartedAtMs + 5000);
+    assert.equal(state.players.ana!.score, 0, 'the score waits for the reveal');
+    state = musicQuizGame.onTimerExpired(state, 'answer_timer', ctx)!.newState!;
     assert.equal(state.players.ana!.score, 750);
     assert.equal(state.players.ana!.correctCount, 1);
   });
@@ -269,6 +271,7 @@ describe('answering', () => {
     state = send(state, ctx, 'bo', 'ANSWER', { index: state.round.correctIndex },
       state.round.questionStartedAtMs + 12000);
     assert.equal(state.round.fastestPlayerId, 'ana');
+    state = send(state, ctx, 'ana', 'ADVANCE');
     assert.ok(state.players.ana!.score > state.players.bo!.score);
   });
 
@@ -309,7 +312,7 @@ describe('solo play', () => {
     assert.deepEqual(Object.keys(state.players), ['ana']);
 
     state = send(state, ctx, 'ana', 'ANSWER', { index: state.round.correctIndex });
-    assert.ok(state.players.ana!.score > 0, 'the correct answer scores');
+    assert.equal(state.players.ana!.score, 0, 'nothing is credited before the reveal');
 
     // Answer every round: the reveal timer rolls on until the last one ends it.
     let rounds = 1;

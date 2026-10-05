@@ -18,6 +18,8 @@ const QUESTION_PROMPTS = {
   BOTH: 'Which song and artist is this?',
 } as const;
 
+const ORDINALS = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'];
+
 export function MusicQuizGame({ playerView, onAction, onReturnLobby, onPlayAgain }: Props) {
   const { phase, choices, roundNumber, totalRounds, revealed, myAnswerIndex, serverNow } = playerView;
   const { state, error, peaks, needsGesture, play, retry, volume, setVolume } = useClipPlayer(playerView);
@@ -296,13 +298,18 @@ function Results({
   onReturnLobby: () => void;
 }) {
   const { scoreboard, winners } = playerView;
+  const myRank = scoreboard.findIndex((p) => p.playerId === playerView.playerId);
+  const me = scoreboard[myRank];
+  const place = myRank < 0 ? '' : ORDINALS[myRank] ?? `${myRank + 1}th`;
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6">
       <Card className="p-8 border border-rule w-full max-w-md space-y-5 text-center font-mono">
         <div>
           <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-ink-muted block">
-            Quiz over
+            Congrats
           </span>
+          <p className="text-sm font-black text-ink mt-0.5">you got {place} place</p>
+          {me && <p className="text-sm font-black text-ink">with {me.score.toLocaleString()} pts</p>}
           <p className="text-xs font-mono text-ink-muted mt-1">
             {playerView.totalRounds} question{playerView.totalRounds === 1 ? '' : 's'} played
           </p>

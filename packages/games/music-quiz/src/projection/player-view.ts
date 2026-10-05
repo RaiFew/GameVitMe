@@ -20,6 +20,7 @@ export function projectMusicQuizPlayerView(
 
   return {
     roomId: state.roomId,
+    playerId,
     phase: state.phase,
     roundNumber: state.roundNumber,
     totalRounds: state.totalRounds,
