@@ -43,7 +43,13 @@ function loadVolume(): number {
  *    promise; a second tap while the first is resolving is a no-op.
  */
 export function useClipPlayer(view: MusicQuizPlayerView) {
+  // One element for the whole session, not one per round. Autoplay permission is
+  // tracked per element: a fresh `new Audio()` starts with no permission and has
+  // to earn it again, which on stricter browsers means only the first round plays
+  // by itself. Reusing the element keeps the permission the first play won.
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  /** Which round the element is currently loaded with — the staleness token. */
+  const loadedRoundRef = useRef<number | null>(null);
   const playingRef = useRef<Promise<void> | null>(null);
   const liveRef = useRef(true);
   /** Server-minus-local, recaptured on every broadcast like the countdown. */
@@ -84,10 +90,14 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
 
     let live = true;
     liveRef.current = true;
-    const el = new Audio();
+    const el = audioRef.current ?? new Audio();
     el.preload = 'auto';
     audioRef.current = el;
+    loadedRoundRef.current = roundNumber;
     el.volume = volumeRef.current;
+    el.pause();
+    el.removeAttribute('src');
+    el.load();
     setState('loading');
     setError('');
     setNeedsGesture(true);
@@ -127,9 +137,6 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
     return () => {
       live = false;
       liveRef.current = false;
-      el.pause();
-      el.src = '';
-      audioRef.current = null;
       playingRef.current = null;
     };
   }, [audio?.provider, audio?.providerId, roundNumber, startAt]);
@@ -199,13 +206,16 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
+    // The round this stop belongs to. The element is reused across rounds, so
+    // identity no longer tells a stale timer from a live one.
+    const stopRound = loadedRoundRef.current;
 
     const stopAt =
       view.phase === 'REVEAL' ? view.revealEndsAtMs : view.phase === 'GAME_OVER' ? serverNowRef.current : null;
     if (stopAt == null) return;
 
     setTimeout(() => {
-      if (audioRef.current !== el) return; // the next round already owns the state
+      if (loadedRoundRef.current !== stopRound) return; // the next round already owns the element
       el.pause();
       setState('ended');
     }, Math.max(0, stopAt - skewRef.current - Date.now()));
