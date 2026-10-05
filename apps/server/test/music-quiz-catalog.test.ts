@@ -29,10 +29,18 @@ describe('resolvePreviewUrl', () => {
     assert.equal(calls.length, 2);
   });
 
-  test('gives up after the retry rather than looping', async () => {
+  test('gives up after the retries rather than looping', async () => {
     const calls = stubFetch([{}]);
     assert.equal(await resolvePreviewUrl('deezer', '99'), null);
-    assert.equal(calls.length, 2);
+    assert.equal(calls.length, 4);
+  });
+
+  test('recovers on the last attempt, not just the second', async () => {
+    // The provider is read hard for a few seconds, so a lone back-to-back retry
+    // lands in the same window; the growing gaps are what actually recover it.
+    const calls = stubFetch([{}, {}, {}, { preview: 'https://cdn/last.mp3' }]);
+    assert.equal(await resolvePreviewUrl('deezer', '1234'), 'https://cdn/last.mp3');
+    assert.equal(calls.length, 4);
   });
 
   test('does not ask twice when the first answer is good', async () => {

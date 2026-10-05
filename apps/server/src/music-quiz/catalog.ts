@@ -225,11 +225,16 @@ async function fetchDeezerPreview(providerId: string): Promise<string | null> {
 }
 
 /**
- * Deezer answers 200 with the `preview` field simply absent when several of its
- * endpoints are being read at once — measured at roughly half the lookups in a
- * ten-wide burst, and never on a lone request. The clip is not missing, the
- * answer is, so asking again is the whole fix.
+ * Deezer answers 200 with `{"error":{"message":"Quota limit exceeded","code":4}}`
+ * and no `preview` once its per-ip quota is spent — measured at 91 of 192
+ * responses under a sustained burst, and never on a quiet server. The clip
+ * exists, the answer is missing, so asking again is the whole fix. A back-to-back
+ * ask lands inside the same window and fails too, which is why the gaps grow.
+ * Only a failing lookup pays for them: a preview that is there is returned by
+ * the first ask, with no delay at all.
  */
+const RETRY_GAPS_MS = [0, 300, 900, 2500];
+
 async function fetchPreviewOnce(
   provider: TrackProvider,
   providerId: string
@@ -240,7 +245,12 @@ async function fetchPreviewOnce(
 }
 
 async function fetchPreview(provider: TrackProvider, providerId: string): Promise<string | null> {
-  return (await fetchPreviewOnce(provider, providerId)) ?? fetchPreviewOnce(provider, providerId);
+  for (const gap of RETRY_GAPS_MS) {
+    if (gap) await new Promise((r) => setTimeout(r, gap));
+    const url = await fetchPreviewOnce(provider, providerId);
+    if (url) return url;
+  }
+  return null;
 }
 
 async function fetchItunesPreview(providerId: string): Promise<string | null> {
