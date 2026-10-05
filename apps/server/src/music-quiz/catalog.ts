@@ -224,6 +224,25 @@ async function fetchDeezerPreview(providerId: string): Promise<string | null> {
   return res?.preview || null;
 }
 
+/**
+ * Deezer answers 200 with the `preview` field simply absent when several of its
+ * endpoints are being read at once — measured at roughly half the lookups in a
+ * ten-wide burst, and never on a lone request. The clip is not missing, the
+ * answer is, so asking again is the whole fix.
+ */
+async function fetchPreviewOnce(
+  provider: TrackProvider,
+  providerId: string
+): Promise<string | null> {
+  return provider === 'itunes'
+    ? fetchItunesPreview(providerId)
+    : fetchDeezerPreview(providerId);
+}
+
+async function fetchPreview(provider: TrackProvider, providerId: string): Promise<string | null> {
+  return (await fetchPreviewOnce(provider, providerId)) ?? fetchPreviewOnce(provider, providerId);
+}
+
 async function fetchItunesPreview(providerId: string): Promise<string | null> {
   const res = await json(`${ITUNES}/lookup?id=${encodeURIComponent(providerId)}&entity=song`);
   return res?.results?.[0]?.previewUrl || null;
@@ -243,7 +262,7 @@ export async function resolvePreviewUrl(
   const hit = previewCache.get(key);
   if (hit && Date.now() - hit.at < PREVIEW_TTL_MS) return hit.url;
 
-  const url = provider === 'itunes' ? await fetchItunesPreview(providerId) : await fetchDeezerPreview(providerId);
+  const url = await fetchPreview(provider, providerId);
   if (!url) return null;
 
   if (previewCache.size >= PREVIEW_CACHE_MAX) {
