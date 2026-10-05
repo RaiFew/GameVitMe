@@ -52,7 +52,14 @@ interface DeezerTrack {
   title: string;
   preview?: string;
   artist?: { name?: string };
+  album?: { cover_medium?: string };
+  /** Album art hash, on album-track rows. Search and chart rows carry a url. */
+  md5_image?: string;
 }
+
+/** Deezer's own image url format, from the hash an album-track row carries. */
+const coverFromMd5 = (md5: string) =>
+  `https://cdn-images.dzcdn.net/images/cover/${md5}/250x250-000000-80-0-0.jpg`;
 
 /** Deezer's own search is title-fuzzy and pulls in unrelated artists, so a
  *  free-text query keeps only tracks that actually mention it. */
@@ -111,6 +118,7 @@ async function deezerArtistPool(query: string): Promise<QuizTrack[]> {
           providerId: String(t.id),
           title: t.title,
           artist: t.artist?.name ?? query,
+          cover: t.md5_image ? coverFromMd5(t.md5_image) : undefined,
         });
       }
     }
@@ -128,6 +136,7 @@ async function deezerSearchPool(query: string): Promise<QuizTrack[]> {
       providerId: String(t.id),
       title: t.title,
       artist: t.artist?.name ?? '',
+      cover: t.album?.cover_medium,
     });
   }
   return out;
@@ -143,6 +152,7 @@ async function deezerChartPool(): Promise<QuizTrack[]> {
       providerId: String(t.id),
       title: t.title,
       artist: t.artist?.name ?? '',
+      cover: t.album?.cover_medium,
     });
   }
   return out;
@@ -161,6 +171,7 @@ async function itunesPool(query: string): Promise<QuizTrack[]> {
       providerId: String(t.trackId ?? t.collectionId),
       title: t.trackName,
       artist: t.artistName ?? '',
+      cover: t.artworkUrl100,
     });
   }
   return out;

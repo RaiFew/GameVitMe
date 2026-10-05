@@ -24,6 +24,8 @@ const POOL: QuizTrack[] = Array.from({ length: 12 }, (_, i) => ({
   providerId: `t${i}`,
   title: `Song ${i}`,
   artist: `Artist ${i}`,
+  // Carried so the anti-leak assertion has something real to catch.
+  cover: `https://cdn-images.dzcdn.net/images/cover/cover-${i}.jpg`,
 }));
 
 function harness(seed = 0.42): GameContext & { armed: string | null } {
@@ -202,6 +204,10 @@ describe('anti-leak', () => {
     assert.ok(!json.includes('correctIndex'), 'correctIndex leaked');
     assert.ok(!json.includes('fastestPlayerId'), 'fastestPlayerId leaked');
     assert.ok(!json.includes('answers'), 'per-player answers leaked');
+    // Album art is the lobby picker's job only. It names the album, so it is
+    // the answer just as much as the title is.
+    assert.ok(!json.includes('cover'), 'album art leaked');
+    assert.ok(!json.includes('cdn-images.dzcdn.net'), 'album art url leaked');
     // The audio key is the only handle on the track, and it is not an answer.
     assert.equal(view.audio?.providerId, state.round.track.providerId);
     assert.equal(view.revealed, null);

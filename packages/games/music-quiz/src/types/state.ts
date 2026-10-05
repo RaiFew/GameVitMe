@@ -16,6 +16,15 @@ export interface QuizTrack {
   providerId: string;
   title: string;
   artist: string;
+  /**
+   * Album art, for the lobby picker only — two artists can share a name, and the
+   * art is how a host tells them apart before committing.
+   *
+   * It is master-only for the same reason the title is: album art names the
+   * album, so it is the answer. The player view builds its fields one by one and
+   * never carries this, and `anti-leak` asserts it stays out.
+   */
+  cover?: string;
 }
 
 export interface MusicQuizSettings {

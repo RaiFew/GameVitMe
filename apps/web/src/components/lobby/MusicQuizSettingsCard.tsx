@@ -19,6 +19,7 @@ interface PoolTrack {
   key: string;
   title: string;
   artist: string;
+  cover?: string;
 }
 
 interface PoolPreview {
@@ -185,7 +186,17 @@ export function MusicQuizSettingsCard({ isHost, settings, onUpdateSettings }: Pr
                             }`}
                           />
                           <span className="min-w-0">
-                            <span className="block text-[11px] font-mono text-ink truncate">{t.title}</span>
+                            <span className="flex items-baseline gap-1.5">
+                              {t.cover && (
+                                <img
+                                  src={t.cover}
+                                  alt=""
+                                  loading="lazy"
+                                  className="size-6 shrink-0 -translate-y-[1px] rounded-xs object-cover border border-rule"
+                                />
+                              )}
+                              <span className="block text-[11px] font-mono text-ink truncate">{t.title}</span>
+                            </span>
                             <span className="block text-[10px] font-mono text-ink-faint truncate">
                               {t.artist}
                             </span>

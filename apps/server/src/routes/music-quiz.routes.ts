@@ -53,12 +53,15 @@ const musicQuizRoutes: FastifyPluginAsync = async (fastify) => {
       // `provider:providerId` the play screen already receives for every clip,
       // so nothing here is privileged — the titles and artists are the provider's
       // own, fetched server-side, and the host only ever subtracts from them.
+      // The cover is here too, and only here: it is what tells two same-named
+      // artists apart, and it never reaches the player view.
       pool: built.pool.map((t) => ({
         key: `${t.provider}:${t.providerId}`,
         provider: t.provider,
         providerId: t.providerId,
         title: t.title,
         artist: t.artist,
+        cover: t.cover,
       })),
     };
   });
