@@ -26,11 +26,13 @@ function loadVolume(): number {
  *
  * Three things the naive version got wrong, and this file is mostly about them:
  *
- * 1. **Nothing autoplays.** Every mobile browser blocks audio until the user has
- *    interacted with the page, and a phone that silently shows a dead disc looks
- *    broken. The round therefore opens on an explicit TAP TO PLAY. The shared
- *    answer deadline runs from the server's clock regardless, so waiting for the
- *    tap costs the player nothing but cannot be gamed either.
+ * 1. **The clip autoplays, with a tap-to-play fallback.** Reaching a room takes
+ *    several taps, so the autoplay policy normally lets the clip start by itself
+ *    and the tap-to-play button never appears. Where it does not, a rejected
+ *    play() is a "tap to play" situation rather than a broken clip, so the
+ *    button comes back instead of an error. The shared answer deadline runs from
+ *    the server's clock regardless, so either path costs the player nothing and
+ *    cannot be gamed either.
  *
  * 2. **The clip outlives the ANSWERING phase.** The effect is keyed on the
  *    round, not the phase, so opening the reveal does not tear the element down —
@@ -156,6 +158,13 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
         setNeedsGesture(false);
       } catch (e) {
         if (!liveRef.current) return;
+        // A blocked autoplay is not a broken clip — the round opens with the
+        // tap-to-play button instead, which is a click the browser accepts.
+        if (e instanceof DOMException && e.name === 'NotAllowedError') {
+          setState('ready');
+          setNeedsGesture(true);
+          return;
+        }
         setError(e instanceof Error ? e.message : 'Playback was blocked.');
         setState('error');
       }
@@ -165,6 +174,15 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
     await task;
     playingRef.current = null;
   }, [startAt]);
+
+  /**
+   * Start the clip as soon as its url is known. `ready` is left in place when
+   * the browser refuses, so this does not re-run and cannot loop; the fallback
+   * is the button, not another attempt.
+   */
+  useEffect(() => {
+    if (state === 'ready') void play();
+  }, [state, play]);
 
   /**
    * The reveal's own job: let the clip run on and stop it at the instant the
