@@ -211,6 +211,21 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
       }
     }
 
+    // One start at a time per room. A start awaits the DB and (for music quiz) a
+    // provider search that can take seconds, so a second click used to run a
+    // second start in parallel: both built a runner, the later assignment
+    // overwrote the earlier one without destroying it, and that orphan kept its
+    // timers and kept broadcasting old rounds — the previous quiz's songs
+    // "coming back" in the next one. `game:return_lobby` clears the token, which
+    // cancels a start still in flight.
+    if ((room as any).startToken) {
+      if (callback) callback({ error: 'The game is already starting.' });
+      return;
+    }
+    const startToken = Symbol('start');
+    (room as any).startToken = startToken;
+    const cancelled = () => (room as any).startToken !== startToken;
+
     try {
       room.status = 'playing';
 
@@ -378,11 +393,18 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
             ? built.pool.filter((t) => !excluded.has(`${t.provider}:${t.providerId}`))
             : built.pool;
 
+        if (cancelled()) {
+          if (callback) callback({ error: 'The start was cancelled.' });
+          return;
+        }
+
         if (pool.length < MIN_POOL_SIZE) {
           const msg =
             pool.length === 0
               ? 'Every track was excluded, so there is nothing to play. Put a few back.'
               : `Only ${pool.length} playable tracks left for "${String(gs.query || '').slice(0, 40)}". Try a different artist, or allow more tracks.`;
+          // Was left at 'playing' with no runner, stranding the room.
+          room.status = 'waiting';
           socket.emit('game:action_error', { code: 'POOL_TOO_SMALL', message: msg });
           if (callback) callback({ error: msg });
           return;
@@ -453,9 +475,17 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
           Number.isFinite(lives) ? Math.min(5, Math.max(1, Math.round(lives))) : 3;
       }
 
+      if (cancelled()) {
+        if (callback) callback({ error: 'The start was cancelled.' });
+        return;
+      }
+
       runner.setup(settings);
 
-      // Store runner instance on room
+      // Store runner instance on room. Whatever is there now is replaced, so it
+      // is destroyed here — never left running unreachable.
+      const prevRunner = (room as any).gameRunner as RoomRunner | undefined;
+      if (prevRunner && prevRunner !== runner) prevRunner.destroy();
       (room as any).gameRunner = runner;
 
       // Notify all players in room that round started
@@ -471,6 +501,8 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
     } catch (err: any) {
       room.status = 'waiting';
       if (callback) callback({ error: err.message });
+    } finally {
+      if ((room as any).startToken === startToken) delete (room as any).startToken;
     }
   });
 
@@ -586,7 +618,8 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
       return;
     }
 
-    // Destroy runner
+    // Cancel a start still awaiting its pool, then destroy the runner.
+    delete (room as any).startToken;
     if ((room as any).gameRunner) {
       ((room as any).gameRunner as RoomRunner).destroy();
       delete (room as any).gameRunner;

@@ -209,6 +209,11 @@ class RoomManager {
       }
       room.timers.forEach((timer) => clearTimeout(timer));
       room.timers.clear();
+      // The runner's timers outlive the room otherwise, and keep pushing the dead
+      // game's views to its players' user channels — into whatever they play next.
+      (room as any).gameRunner?.destroy?.();
+      delete (room as any).gameRunner;
+      delete (room as any).startToken;
       this.rooms.delete(roomId);
     }
   }

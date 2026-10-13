@@ -113,6 +113,7 @@ async function deezerArtistPool(query: string): Promise<QuizTrack[]> {
     for (const page of pages) {
       for (const t of (page?.data ?? []) as DeezerTrack[]) {
         if (!t.preview) continue;
+        rememberPreview('deezer', String(t.id), t.preview);
         out.push({
           provider: 'deezer',
           providerId: String(t.id),
@@ -131,6 +132,7 @@ async function deezerSearchPool(query: string): Promise<QuizTrack[]> {
   const out: QuizTrack[] = [];
   for (const t of (res?.data ?? []) as DeezerTrack[]) {
     if (!t.preview || !matchesQuery(t, query)) continue;
+    rememberPreview('deezer', String(t.id), t.preview);
     out.push({
       provider: 'deezer',
       providerId: String(t.id),
@@ -147,6 +149,7 @@ async function deezerChartPool(): Promise<QuizTrack[]> {
   const out: QuizTrack[] = [];
   for (const t of (res?.data ?? []) as DeezerTrack[]) {
     if (!t.preview) continue;
+    rememberPreview('deezer', String(t.id), t.preview);
     out.push({
       provider: 'deezer',
       providerId: String(t.id),
@@ -166,6 +169,7 @@ async function itunesPool(query: string): Promise<QuizTrack[]> {
   const out: QuizTrack[] = [];
   for (const t of res?.results ?? []) {
     if (!t?.previewUrl || !t.trackName) continue;
+    rememberPreview('itunes', String(t.trackId ?? t.collectionId), t.previewUrl);
     out.push({
       provider: 'itunes',
       providerId: String(t.trackId ?? t.collectionId),
@@ -192,8 +196,34 @@ export interface BuiltPool {
  * the type is decided here and the view carries the truth, and the lobby card
  * says so before anyone starts.
  */
-export async function buildSongPool(queryRaw: string): Promise<BuiltPool> {
+/**
+ * An artist pool is one request per album — 100+ for a long discography — and
+ * the lobby card and `game:start` each asked for the same one. Cached briefly,
+ * with the in-flight promise shared, so start reuses the search the card just
+ * showed and concurrent asks collapse into one.
+ */
+const poolCache = new Map<string, { at: number; built: Promise<BuiltPool> }>();
+const POOL_TTL_MS = 10 * 60 * 1000;
+const POOL_CACHE_MAX = 50;
+
+export function buildSongPool(queryRaw: string): Promise<BuiltPool> {
   const query = (queryRaw || '').trim().slice(0, 80);
+  const key = norm(query);
+  const hit = poolCache.get(key);
+  if (hit && Date.now() - hit.at < POOL_TTL_MS) return hit.built;
+
+  const built = buildSongPoolUncached(query);
+  if (poolCache.size >= POOL_CACHE_MAX) poolCache.delete(poolCache.keys().next().value as string);
+  poolCache.set(key, { at: Date.now(), built });
+  // A failed or empty search is not worth remembering.
+  built.then(
+    (b) => b.pool.length || poolCache.delete(key),
+    () => poolCache.delete(key)
+  );
+  return built;
+}
+
+async function buildSongPoolUncached(query: string): Promise<BuiltPool> {
 
   if (!query) {
     const chart = dedupe(await deezerChartPool());
@@ -228,7 +258,23 @@ export async function buildSongPool(queryRaw: string): Promise<BuiltPool> {
  */
 const previewCache = new Map<string, { url: string; at: number }>();
 const PREVIEW_TTL_MS = 5 * 60 * 1000;
-const PREVIEW_CACHE_MAX = 200;
+const previewInFlight = new Map<string, Promise<string | null>>();
+// Sized for a seeded artist pool (one entry per track, a few hundred bytes each).
+const PREVIEW_CACHE_MAX = 5000;
+
+/**
+ * The search that built the pool already returned a fresh preview url for every
+ * track. Remembering it means the first rounds after a start resolve without a
+ * provider round trip (and without spending its rate-limited quota).
+ */
+function rememberPreview(provider: TrackProvider, providerId: string, url: string): void {
+  const key = trackKey(provider, providerId);
+  previewCache.delete(key);
+  if (previewCache.size >= PREVIEW_CACHE_MAX) {
+    previewCache.delete(previewCache.keys().next().value as string);
+  }
+  previewCache.set(key, { url, at: Date.now() });
+}
 
 async function fetchDeezerPreview(providerId: string): Promise<string | null> {
   const res = await json(`${DEEZER}/track/${encodeURIComponent(providerId)}`);
@@ -283,14 +329,20 @@ export async function resolvePreviewUrl(
   const hit = previewCache.get(key);
   if (hit && Date.now() - hit.at < PREVIEW_TTL_MS) return hit.url;
 
-  const url = await fetchPreview(provider, providerId);
-  if (!url) return null;
-
-  if (previewCache.size >= PREVIEW_CACHE_MAX) {
-    previewCache.delete(previewCache.keys().next().value as string);
+  // Concurrent asks for one clip (every player in the room, at the same
+  // instant) share a single provider lookup.
+  const pending = previewInFlight.get(key);
+  if (pending) return pending;
+  const task = fetchPreview(provider, providerId).then((url) => {
+    if (url) rememberPreview(provider, providerId, url);
+    return url;
+  });
+  previewInFlight.set(key, task);
+  try {
+    return await task;
+  } finally {
+    previewInFlight.delete(key);
   }
-  previewCache.set(key, { url, at: Date.now() });
-  return url;
 }
 
 /** Exposed for the readiness check the lobby card runs against the pool. */

@@ -52,19 +52,28 @@ export function MusicQuizSettingsCard({ isHost, settings, onUpdateSettings }: Pr
   useEffect(() => {
     if (!isHost) return;
     if (timer.current) clearTimeout(timer.current);
+    // A superseded search is aborted, not just ignored: an artist search can take
+    // seconds, and a slow earlier answer landing after a newer one used to put
+    // the previous artist's list back on the card.
+    const ctrl = new AbortController();
     timer.current = setTimeout(() => {
       setLooking(true);
       setError('');
       api
-        .post<PoolPreview>('/api/music-quiz/pool-preview', { query: draft, questionType })
+        .post<PoolPreview>('/api/music-quiz/pool-preview', { query: draft, questionType }, ctrl.signal)
         .then((res) => {
           setPreview(res);
           if (res.count < MIN_POOL) setError(`${res.count} playable tracks came back — too few to ask a question. Try another artist or leave it blank for the chart.`);
         })
-        .catch((e: Error) => setError(e.message))
-        .finally(() => setLooking(false));
+        .catch((e: Error) => {
+          if (!ctrl.signal.aborted) setError(e.message);
+        })
+        .finally(() => {
+          if (!ctrl.signal.aborted) setLooking(false);
+        });
     }, 500);
     return () => {
+      ctrl.abort();
       if (timer.current) clearTimeout(timer.current);
     };
   }, [draft, questionType, isHost]);
@@ -74,7 +83,12 @@ export function MusicQuizSettingsCard({ isHost, settings, onUpdateSettings }: Pr
     onUpdateSettings({ gameSettings: { ...gs, ...patch } });
   };
 
-  const commitQuery = () => update({ query: draft.trim() });
+  // A new search is a new pool; carrying the old exclusions across would hide
+  // tracks that are not even in this one. Committed on blur/Enter/Search rather
+  // than per keystroke, which broadcast a room update to every player each key.
+  const commitQuery = () => {
+    if (draft.trim() !== query) update({ query: draft.trim(), excludedIds: [] });
+  };
 
   const excluded = useMemo(() => new Set(excludedIds), [excludedIds]);
   // Counted off the tracks on screen, not off `preview.count` — that one is the
@@ -89,12 +103,7 @@ export function MusicQuizSettingsCard({ isHost, settings, onUpdateSettings }: Pr
       excludedIds: excluded.has(key) ? excludedIds.filter((k) => k !== key) : [...excludedIds, key],
     });
 
-  // A new search is a new pool; carrying the old exclusions across would hide
-  // tracks that are not even in this one.
-  const changeQuery = (next: string) => {
-    setDraft(next);
-    if (next.trim() !== query) update({ query: next.trim(), excludedIds: [] });
-  };
+  const changeQuery = (next: string) => setDraft(next);
 
   return (
     <Card className="p-5 border border-rule space-y-4">

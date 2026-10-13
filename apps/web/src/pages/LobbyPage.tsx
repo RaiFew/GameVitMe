@@ -17,6 +17,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Users, Shield, ArrowRight } from 'lucide-react';
 import { useUserSettingsStore } from '../stores/userSettingsStore';
+import { useGameStore } from '../stores/gameStore';
 
 /** The games a host can switch a room between, matching the create-room list. */
 const GAME_NAMES: Record<string, string> = {
@@ -44,6 +45,8 @@ export function LobbyPage() {
   const [minutes, setMinutes] = useState(String(Math.floor(initialDuration / 60)));
   const [seconds, setSeconds] = useState(String(initialDuration % 60).padStart(2, '0'));
   const [timerError, setTimerError] = useState('');
+  /** A start can take seconds (music quiz searches the provider); one at a time. */
+  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     if (room?.settings?.roundDurationSeconds) {
@@ -55,7 +58,11 @@ export function LobbyPage() {
 
   useEffect(() => {
     if (!socket) return;
-    const handleGameStarted = () => {
+    const handleGameStarted = (info: any) => {
+      // GamePage is not mounted yet, so its listener misses this event. Without
+      // this the previous game's view (old song included) renders until the new
+      // run's first push lands.
+      useGameStore.getState().startSession(info?.sessionId ?? null);
       navigate(`/game/${roomCode}`);
     };
     socket.on('game:started', handleGameStarted);
@@ -180,7 +187,10 @@ export function LobbyPage() {
       alert(`Role configuration count (${totalConfiguredRoles}) must match the number of active players (${playingPlayers.length}).`);
       return;
     }
+    if (starting) return;
+    setStarting(true);
     socket?.emit('game:start', { roomId: room.id }, (res: any) => {
+      setStarting(false);
       if (res?.error) {
         alert(res.error);
       }
@@ -558,11 +568,14 @@ export function LobbyPage() {
                   !allReady ||
                   (isRoleGame && !isRoleCountValid) ||
                   (isCodenamesTwoPlayer && players.length !== 2) ||
-                  (isRPSDuel && players.length !== 2)
+                  (isRPSDuel && players.length !== 2) ||
+                  starting
                 }
                 onClick={handleStartGame}
               >
-                {!enoughPlayers
+                {starting
+                  ? 'Starting...'
+                  : !enoughPlayers
                   ? isCodenamesTwoPlayer
                     ? `Need exactly 2 players (currently ${players.length})`
                     : `Need ${minPlayers - players.length} more player(s)`
