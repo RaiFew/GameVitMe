@@ -25,7 +25,9 @@ async function request<T>(method: string, url: string, body?: unknown, signal?: 
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({}));
-    throw new Error(error.error || error.message || res.statusText || 'Request failed');
+    throw Object.assign(new Error(error.error || error.message || res.statusText || 'Request failed'), {
+      status: res.status,
+    });
   }
 
   const text = await res.text();
