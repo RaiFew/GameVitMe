@@ -48,8 +48,10 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
   // to earn it again, which on stricter browsers means only the first round plays
   // by itself. Reusing the element keeps the permission the first play won.
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  /** Which round the element is currently loaded with — the staleness token. */
+  /** Which load the element currently holds — the staleness token. A counter,
+   *  not the round number: round 1 of the next quiz is not round 1 of this one. */
   const loadedRoundRef = useRef<number | null>(null);
+  const loadSeqRef = useRef(0);
   const playingRef = useRef<Promise<void> | null>(null);
   const liveRef = useRef(true);
   /** Server-minus-local, recaptured on every broadcast like the countdown. */
@@ -78,6 +80,23 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
   const audio = view.audio;
   const startAt = view.playbackStartAtMs;
   const roundNumber = view.roundNumber;
+  const sessionId = view.sessionId;
+
+  // Leaving the game (lobby, disband, a new run) unmounts this. The element is
+  // not owned by the DOM, so without this the clip played on into the lobby and
+  // the next quiz.
+  useEffect(
+    () => () => {
+      const el = audioRef.current;
+      if (!el) return;
+      el.pause();
+      el.removeAttribute('src');
+      el.load();
+      audioRef.current = null;
+      loadedRoundRef.current = null;
+    },
+    []
+  );
 
   useEffect(() => {
     skewRef.current = view.serverNow - Date.now();
@@ -90,10 +109,13 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
 
     let live = true;
     liveRef.current = true;
+    // Aborts this round's preview lookup and waveform download the moment the
+    // round, the session or the component goes away.
+    const ctrl = new AbortController();
     const el = audioRef.current ?? new Audio();
     el.preload = 'auto';
     audioRef.current = el;
-    loadedRoundRef.current = roundNumber;
+    loadedRoundRef.current = ++loadSeqRef.current;
     el.volume = volumeRef.current;
     el.pause();
     el.removeAttribute('src');
@@ -113,22 +135,25 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
     (async () => {
       try {
         const res = await api.get<{ url: string }>(
-          `/api/music-quiz/preview?provider=${audio.provider}&providerId=${encodeURIComponent(audio.providerId)}`
+          `/api/music-quiz/preview?provider=${audio.provider}&providerId=${encodeURIComponent(audio.providerId)}`,
+          ctrl.signal
         );
         if (!live) return;
+        if (!res?.url) throw new Error('No preview is available for that track.');
+        // Before `src`: changing CORS mode after the url is set refetches the clip.
+        el.crossOrigin = 'anonymous';
         el.src = res.url;
 
-        // The waveform is decoded from the same fetch the browser is already
-        // making, so it adds no second download. A failed decode is cosmetic:
-        // the audio still plays.
-        el.crossOrigin = 'anonymous';
-        void drawPeaks(el)
+        // The waveform is a second, abortable download of the same small clip
+        // (usually served from the HTTP cache). A failed decode is cosmetic: the
+        // audio still plays.
+        void drawPeaks(el.src, ctrl.signal)
           .then((p) => live && p.length && setPeaks(p))
           .catch(() => {});
 
         setState('ready');
       } catch (e) {
-        if (!live) return;
+        if (!live || ctrl.signal.aborted) return;
         setError(e instanceof Error ? e.message : 'The clip could not be loaded.');
         setState('error');
       }
@@ -138,8 +163,9 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
       live = false;
       liveRef.current = false;
       playingRef.current = null;
+      ctrl.abort();
     };
-  }, [audio?.provider, audio?.providerId, roundNumber, startAt]);
+  }, [sessionId, audio?.provider, audio?.providerId, roundNumber, startAt]);
 
   /**
    * Starts the clip. `fromStart` is the replay button; the first play waits for
@@ -152,11 +178,15 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
     // play() — browsers reject it anyway, and it reads as a broken button.
     if (playingRef.current) return playingRef.current;
 
+    const round = loadedRoundRef.current;
     const task = (async () => {
       if (!fromStart) {
         const delay = startAt - skewRef.current - Date.now();
         if (delay > 0) await new Promise((r) => setTimeout(r, delay));
       }
+      // The round moved on (or the game was left) during the wait: this play
+      // belongs to a clip that is no longer loaded.
+      if (audioRef.current !== el || loadedRoundRef.current !== round || !liveRef.current) return;
       if (fromStart && el.src) el.currentTime = 0;
       try {
         await el.play();
@@ -230,8 +260,8 @@ export function useClipPlayer(view: MusicQuizPlayerView) {
 
 /** Amplitude only — the bars carry no title, artist or album art, so the
  *  waveform cannot leak the answer the clip is the question about. */
-async function drawPeaks(el: HTMLAudioElement, bars = 56): Promise<number[]> {
-  const res = await fetch(el.src);
+async function drawPeaks(src: string, signal: AbortSignal, bars = 56): Promise<number[]> {
+  const res = await fetch(src, { signal });
   const buf = await res.arrayBuffer();
   const ctx = new AudioContext();
   try {

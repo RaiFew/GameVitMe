@@ -219,9 +219,12 @@ export class RoomRunner<TState = unknown, TPlayerView = unknown, TSettings = unk
     return this.state;
   }
 
-  /** Clean up timers */
+  /** Clean up timers and go silent: a destroyed runner must never emit again. */
   destroy(): void {
     this.timerManager.clearAll();
     this.state = null;
+    this.broadcastFn = null;
+    this.emitToPlayerFn = null;
+    this.onGameEndFn = undefined;
   }
 }

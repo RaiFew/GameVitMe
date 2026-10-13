@@ -569,3 +569,11 @@ describe('the reveal', () => {
     assert.deepEqual(r.newState!.round.answers, {});
   });
 });
+describe('session isolation', () => {
+  test('the view names its session, so a client can drop a previous run', () => {
+    const ctx = harness();
+    const state = musicQuizGame.setup(ctx, { ...DEFAULT_MUSIC_QUIZ_SETTINGS, pool: POOL });
+    assert.equal(musicQuizGame.getPlayerView(state, 'ana', ctx).sessionId, 'session-music');
+  });
+
+});

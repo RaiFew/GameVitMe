@@ -14,9 +14,10 @@ function getHeaders(): Record<string, string> {
  * Resolves to the parsed response body, with its natural shape preserved: a list
  * endpoint resolves to an array, an object endpoint to that object.
  */
-async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
+async function request<T>(method: string, url: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(`${BASE_URL}${url}`, {
     method,
+    signal,
     credentials: 'include',
     headers: getHeaders(),
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -32,8 +33,8 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
 }
 
 export const api = {
-  get: <T>(url: string) => request<T>('GET', url),
-  post: <T>(url: string, data?: unknown) => request<T>('POST', url, data),
+  get: <T>(url: string, signal?: AbortSignal) => request<T>('GET', url, undefined, signal),
+  post: <T>(url: string, data?: unknown, signal?: AbortSignal) => request<T>('POST', url, data, signal),
   put: <T>(url: string, data?: unknown) => request<T>('PUT', url, data),
   delete: <T>(url: string) => request<T>('DELETE', url),
 };

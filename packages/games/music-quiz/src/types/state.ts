@@ -114,6 +114,8 @@ export interface MusicQuizPlayerView {
   roomId: string;
   /** The reader's own seat, so the results screen can place them. */
   playerId: string;
+  /** Which run this view belongs to; the client drops views from any other. */
+  sessionId: string;
   phase: MusicQuizPhase;
   roundNumber: number;
   totalRounds: number;
