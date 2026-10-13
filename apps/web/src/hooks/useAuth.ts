@@ -83,6 +83,20 @@ export function useAuth() {
             setUser(sessionUser);
           } else if (!hasUser()) {
             clearUser();
+          } else {
+            // Better Auth's get-session reads cookies only, so a Bearer-token
+            // (guest) session always looks empty here and the stored user was
+            // kept unconditionally. An expired token then stayed "signed in" —
+            // the socket still connects — while every HTTP route answered 401
+            // (the music search's "Unauthorized"). Ask a route that does read
+            // the token, and sign out only on a real 401.
+            const tokenAtCheck = useAuthStore.getState().token;
+            await api.get('/api/users/me').catch((e: { status?: number }) => {
+              // A handoff that landed meanwhile replaced the token; keep it.
+              if (mounted && e?.status === 401 && useAuthStore.getState().token === tokenAtCheck) {
+                clearUser();
+              }
+            });
           }
         }
       } catch (err) {
