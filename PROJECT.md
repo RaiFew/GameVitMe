@@ -1,6 +1,6 @@
 # GameVitMe
 
-A real-time multiplayer party-game platform. Six browser games, private or public
+A real-time multiplayer party-game platform. Seven browser games, private or public
 rooms, guest or registered play, and a server-authoritative ranked system.
 
 ---
@@ -49,7 +49,7 @@ each player's projected view to them and only them.
 
 **The load-bearing idea:** games are pure engine packages. A game module never
 touches the database, the socket, or the clock's wall time directly. That is why
-all six games run through identical plumbing, and why ranked anti-cheat is
+all seven games run through identical plumbing, and why ranked anti-cheat is
 inherited rather than rebuilt.
 
 ### Why a ranked run is just a normal room
@@ -101,6 +101,12 @@ Enums: `user_status`, `friendship_status`, `room_status`, `game_session_status`,
 | `codenames` | Codenames | 2–20 | two teams; 2-player mode needs exactly 2 |
 | `rock-paper-scissors` | Rock Paper Scissors | 2–20 | Duel / Battle Royale / Points Race |
 | `number-grid` | Number Grid / Number Rush | 1–20 | also the only ranked game |
+| `music-quiz` | Music Quiz | 1–20 | song pool from Deezer/iTunes previews |
+
+A Jigsaw game existed briefly and was removed in `a6e2222` (2026-10-05), along
+with its `jigsaw_images` table (migration 0006). If `packages/games/jigsaw/`
+is on disk, it is only ignored build output (`dist/`, `.turbo/`) and can be
+deleted.
 
 ### Spyfall
 16 shuffled locations, one secret. Exactly one Spy; everyone else gets a random
@@ -202,6 +208,69 @@ per round), `totalRounds` (9, 1–20), `maxHp` (3, 1–10), `damageMode`
 
 Ranked variants' settings are server-fixed: a client chooses *which* mode to
 play, never how it is scored.
+
+### Music Quiz
+Each round plays a provider's own 30-second preview clip and asks one
+four-choice question. Everyone answers the same question at once; scoring is
+per player, so one player is a complete game.
+
+**Song pool.** Built on the server in `apps/server/src/music-quiz/catalog.ts`
+from the host's `query`:
+
+- blank → Deezer's chart (up to 100 tracks)
+- an artist → that artist's whole Deezer discography (up to 200 albums)
+- otherwise → a Deezer track search, filtered to tracks that mention the query
+- nothing playable → iTunes search as the fallback
+
+Tracks are deduplicated on title + artist. The host can untick tracks in the
+lobby card (`excludedIds`), but only from what the search returned: the list
+is subtractive, so it cannot add a song. At `game:start` the pool is
+snapshotted into settings, so editing the lobby card mid-game does not change
+the questions. Fewer than 2 playable tracks refuses the start (`POOL_TOO_SMALL`).
+
+**Rounds.** Each round takes one unplayed track, and its three distractors
+are other labels from the pool. `totalRounds = min(rounds, pool size)`, and the
+quiz ends early if the pool runs out instead of repeating a song.
+`questionType` is `TITLE`, `ARTIST` or `BOTH`. The pool has the final say:
+`ARTIST` needs at least 4 distinct artists, so a one-artist search asks for
+titles instead, and the view carries the type actually being asked.
+
+**Phases.** `ANSWERING → REVEAL → (ANSWERING | GAME_OVER)`. The clip starts
+1.5 s after the round opens (`PLAYBACK_LEAD_MS`) so every client starts in
+sync. `ADVANCE` (either button) opens the reveal once every connected player
+has answered or the deadline has passed. The reveal lasts 5 s, then the next
+round opens on a timer.
+
+- One answer per player per round. An answer after the deadline is refused
+  even if the timer has not fired yet.
+- Score: `round(maxPoints × (1 − elapsed / answerWindow))` for a correct
+  answer, 0 otherwise. `elapsed` is measured on the server's clock from when
+  the round opened.
+- Points are credited only when the reveal opens, so the scoreboard never
+  gives the answer away early.
+- The fastest correct answer is shown at the reveal. Everyone tied for the
+  top score wins; nobody wins if the top score is 0.
+
+**What the client sees.** While a round is `ANSWERING`, the view names only
+`audio: { provider, providerId }`: no title, artist, cover or correct index.
+Those appear at `REVEAL`. The client fetches the playable url from
+`GET /api/music-quiz/preview` each round. Preview urls are signed and expire
+after about 15 minutes, so they are never stored in game state.
+
+**Caching.** Built pools are cached for 10 minutes, keyed on the normalised
+query, and concurrent builds share one in-flight request. The lobby card's
+search and `game:start` therefore make one provider walk between them.
+Preview urls are cached for 5 minutes. The cache is seeded from the url each
+search row already carries, so most rounds need no provider call. Lookups
+that miss retry with growing gaps, because Deezer answers rate-limited
+requests with a 200 that has no preview. Every view carries `sessionId`, and
+the client drops views from any other session.
+
+Settings: `query` (blank = chart), `rounds` (10, 1–50; the lobby slider tops
+out at 30 or the pool size), `questionType` (TITLE), `excerptSeconds` (10,
+5–30), `answerSeconds` (20, 5–60), `maxPoints` (1000, 100–5000). The reveal is
+fixed at 5 s. Volume is a per-browser preference in `localStorage`, never game
+state.
 
 ---
 
@@ -330,7 +399,13 @@ recovery from that state.
 `finished`, `action_error`, `returned_to_lobby`, and `game:state` /
 `game:state` sync pushes. `game:action_error` codes include
 `RANKED_LOGIN_REQUIRED`, `RANKED_NOT_SOLO`, `INVALID_PLAYER_COUNT`,
-`NOT_ENOUGH_PLAYERS`, `ROLE_CONFIG_INCOMPLETE`, `TOO_MANY_ROLES`.
+`NOT_ENOUGH_PLAYERS`, `ROLE_CONFIG_INCOMPLETE`, `TOO_MANY_ROLES`, `POOL_TOO_SMALL`,
+`RATE_LIMITED`, `INVALID_MOVE`.
+
+Only one `game:start` runs per room at a time. A second one gets
+"The game is already starting.", and `game:return_lobby` cancels a start that
+is still in flight. A runner that is replaced or whose room is destroyed is
+destroyed with it, and a destroyed runner never emits again.
 
 **Chat:** `chat:message` → `chat:new_message`.
 **Friends:** `friend:request_received`, `friend:request_accepted`.
@@ -347,6 +422,7 @@ recovery from that state.
 | `invitation.routes.ts` | `/api/invitations`, `/api/invitations/sent`, `/api/invitations/accept`, `/api/invitations/decline` |
 | `room.routes.ts` | `/api/games`, `/api/rooms`, `/api/rooms/:code` |
 | `codenames.routes.ts` | `/api/codenames/word-files` (GET/POST), `/api/codenames/word-files/:id` (GET/DELETE) |
+| `music-quiz.routes.ts` | `/api/music-quiz/preview` (GET), `/api/music-quiz/pool-preview` (POST), both auth-required |
 | `ranking.routes.ts` | see §6 |
 
 ---
@@ -366,7 +442,7 @@ pnpm dev                            # turbo: all packages + both apps
 ```bash
 pnpm -r type-check                  # all packages + both apps
 pnpm build
-pnpm -r test                        # 125 tests across all game packages
+pnpm -r test                        # 280 tests across the engine, games and server
 npx tsx apps/server/src/ranking/ranking.check.ts   # DB-backed ranking gate + write path
 ```
 
@@ -413,6 +489,10 @@ No schema change, no new route, no new page.
 | 11 | **Joins leaked listeners and failed early.** `room:state` and `room:error` were attached *after* the emit and removed only on the error path, so every join attempt left handlers on the shared socket — a stale `room:state` handler would call `setRoom` for a room the user had already left. The 6s deadline also fired while the join was still in flight, reporting a failure for a room that appeared moments later. | Listeners attach before the emit and are torn down on every exit path. Deadline raised to 15s. |
 | 12 | **Joins hung forever against a slow database.** The private-room path awaited `hasValidRoomInvite` with no bound; if the pool was saturated the handler never answered, so the client gave up on its own timer with a generic "request timed out". | The wait is bounded and returns a real, actionable error instead of silence. |
 | 13 | **Cloudflare accepted WebSocket upgrades it never wired up.** Measured against `api.frostespresso.site`: a socket.io connection whose *first* request is a WebSocket upgrade completes the handshake and fires `connect`, then drops every emit — **0/3** such connections ever delivered an ack, against **8/8** that started on polling. Raw polling GETs through the same proxy intermittently returned 502. Because socket.io reconnects on the last-used transport, one bad upgrade could strand a client on the dead transport permanently, which is why "still can't join" persisted across the server-side fixes. | Transport order pinned to start on polling (`transports: ['polling', 'websocket']`), and a join timeout now recycles the engine for a fresh handshake and retries once, so only a second failure reaches the user. |
+| 14 | **A previous quiz's songs came back in the next one.** `game:start` awaits the song search (seconds for a long discography), and nothing stopped a second start in that window. Both built a `RoomRunner`; the later one overwrote `room.gameRunner` without destroying the first. That orphan kept its timers and kept pushing old rounds to `user:<id>`, and `game:return_lobby` could not reach it. Reproduced: a double-clicked Laufey start, then an Ed Sheeran quiz, received Laufey rounds. | One start per room (`startToken`); `return_lobby` cancels an in-flight start; a replaced runner is destroyed before assignment; `RoomRunner.destroy()` drops its emit callbacks. Client side, views carry `sessionId` and `gameStore` drops any other session's view. |
+| 15 | **Disbanding a room left its game running.** `destroyRoom` cleared the room's timers but not its runner's, so a dead game kept pushing views to its players. | `destroyRoom` destroys the runner. |
+| 16 | **The quiz clip kept playing after leaving the game.** The `Audio` element is not in the DOM and was never stopped on unmount. Starting from the lobby also kept the old view in the store, so the new game screen briefly rendered the previous quiz. `useGameState`'s cleanup called `off(event)` without a handler, which removed *every* component's listener for that event. | `useClipPlayer` stops and releases the element on unmount, and aborts preview and waveform fetches on every round change. LobbyPage calls `startSession` on `game:started`. Listeners are removed by reference. |
+| 17 | **A stale saved session looked signed in.** Better Auth's `get-session` reads cookies only, so a Bearer-token (guest) session always came back empty and `useAuth` kept the saved user unconditionally. Once the token expired, the socket still connected (handshake fallback) while every `requireAuth` route returned 401, which showed up as "Unauthorized" on the song search. | When `get-session` is empty, `useAuth` checks `/api/users/me` and signs out on a real 401. `api` errors now carry `status`. |
 
 ---
 
